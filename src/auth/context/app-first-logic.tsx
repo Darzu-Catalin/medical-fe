@@ -11,6 +11,7 @@ import { setUser, setPermissions } from 'src/redux/slices/auth'
 import { SplashScreen } from 'src/components/ui/minimals/loading-screen'
 
 import { getSession, setSession } from './utils'
+import { DISABLE_AUTH } from '@/config-global'
 
 // ----------------------------------------------------------------------
 
@@ -27,6 +28,13 @@ export function AppFirstLogic({ children }: Props) {
     // set Main-Company header to axios instance
     try {
       setLoading(true)
+      if (DISABLE_AUTH) {
+        // Bypass fetching user; mark as unauthenticated but loaded
+        dispatch(setUser({} as any))
+        dispatch(setPermissions(['*']))
+        setLoading(false)
+        return
+      }
       const accessToken = getSession()
 
       if (accessToken) {

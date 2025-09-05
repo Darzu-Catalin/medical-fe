@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect } from 'react';
+import { DISABLE_AUTH } from '@/config-global'
 import { paths } from '@/routes/paths';
 import { useAppSelector } from '@/redux/store';
 
@@ -13,6 +14,7 @@ export default function HomePageView() {
     // redirect to dashboard if user is logged in or to login page if not
 
     useEffect(() => {
+        if (DISABLE_AUTH) return
         if (!user) {
             router.push(paths.auth.login);
         } else {

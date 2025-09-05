@@ -1,5 +1,6 @@
 import { m } from 'framer-motion'
 import { userCan } from '@/utils/permissions.utils'
+import { DISABLE_AUTH } from '@/config-global'
 
 import Container from '@mui/material/Container'
 import Typography from '@mui/material/Typography'
@@ -28,8 +29,7 @@ export default function RoleBasedGuard({
   sx,
 }: RoleBasedGuardProp) {
   // Logic here to get current user.requests.ts role
-
-  if (typeof permissions !== 'undefined' && !userCan(permissions)) {
+  if (!DISABLE_AUTH && typeof permissions !== 'undefined' && !userCan(permissions)) {
     return hasContent ? (
       <Container component={MotionContainer} sx={{ textAlign: 'center', ...sx }}>
         <m.div variants={varBounce().in}>

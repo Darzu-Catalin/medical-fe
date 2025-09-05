@@ -1,4 +1,5 @@
 import { store } from '@/redux/store'
+import { DISABLE_AUTH } from '@/config-global'
 import { useState, useEffect, useCallback } from 'react'
 
 // routes
@@ -20,6 +21,10 @@ export default function AuthGuard({ children }: AuthGuardProps) {
   const [checked, setChecked] = useState(false)
 
   const check = useCallback(() => {
+    if (DISABLE_AUTH) {
+      setChecked(true)
+      return
+    }
     const { user } = store.getState().auth
     if (!user) {
       const searchParams = new URLSearchParams({ returnTo: window.location.href }).toString()

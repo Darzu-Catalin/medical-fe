@@ -16,3 +16,6 @@ export const LOCAL_PREFIX = 'as-needed'
 // ROOT PATH AFTER LOGIN SUCCESSFUL
 export const PATH_AFTER_LOGIN = paths.dashboard.root // as '/dashboard'
 
+// TEMPORARY: Disable auth/guards globally. Set to false to re-enable.
+export const DISABLE_AUTH = true
+

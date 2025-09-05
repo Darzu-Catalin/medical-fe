@@ -69,6 +69,9 @@ export default function LoginView() {
   const onSubmit = useCallback(
     async (data: FormValuesProps) => {
       try {
+        router.push(paths.dashboard.user.list)
+
+        return
         const response = await getVerificationCodeRequest(
           {
             email: data.email,
