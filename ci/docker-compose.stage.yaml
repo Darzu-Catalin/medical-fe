@@ -1,0 +1,20 @@
+services:
+  app:
+    container_name: app-name-stage
+    image: app-name-live
+    build:
+      context: ../  # unde se afla Dockerfile si .env
+      dockerfile: ci/Dockerfile
+      args:
+      # Toate variabilele din env trebuiescv definite aici
+        NEXT_PUBLIC_HOST_API: ${NEXT_PUBLIC_HOST_API}
+        NEXT_PUBLIC_ASSETS_API: ${NEXT_PUBLIC_ASSETS_API}
+    ports:
+      - "127.0.0.1:3000:3000" # aici alegem portul daca este nevoie de alt port
+    env_file:
+      - ../.env
+    environment:
+      # Toate variabilele din env trebuiescv definite si aici
+      NEXT_PUBLIC_HOST_API: ${NEXT_PUBLIC_HOST_API}
+      NEXT_PUBLIC_ASSETS_API: ${NEXT_PUBLIC_ASSETS_API}
+    restart: always

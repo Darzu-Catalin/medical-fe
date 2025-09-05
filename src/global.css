@@ -1,0 +1,43 @@
+/* scrollbar */
+@import 'simplebar-react/dist/simplebar.min.css';
+
+/* spinner */
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+.spin {
+  animation: spin 1s linear infinite;
+}
+
+.csv-importer .csv-importer-1wtfepp {
+  background: #7a5ef8;
+  color: #fff;
+}
+
+.csv-importer .csv-importer-1wtfepp:hover {
+  background: #7a5ef8;
+  color: #fff;
+}
+
+.Spreadsheet__table {
+  width: 100%;
+}
+.MuiAccordion-root::before {
+  display: none;
+}
+
+
+.duplicate-row {
+  background-color: #f443365c;
+}
+
+.duplicate-row:hover {
+  background-color: #f443365c !important;
+  color: white !important;
+}

@@ -1,0 +1,77 @@
+{
+  "General": {
+    "test": "Este un test",
+    "onTheDateOf": "La data de",
+    "wasCreated": "a fost creat",
+    "hasBeenChanged": "a fost modificat",
+    "wasAddedWithTheValue": "a fost adăugat cu valoarea",
+    "from": "din",
+    "into": "în",
+    "detailsChanges": "Ce s-a schimbat"
+  },
+  "Address": {
+    "city": "Oraș",
+    "street": "Stradă",
+    "number": "Număr",
+    "postalCode": "Cod Poștal",
+    "country": "Țară",
+    "county": "Județ"
+  },
+  "AuthPage": {
+    "title": "Înregistrare",
+    "description": "Te rugăm să te înregistrezi pentru a continua"
+  },
+  "RegisterPage": {
+    "title": "Înregistrare",
+    "description": "Te rugăm să te înregistrezi pentru a continua"
+  },
+  "NotFoundPage": {
+    "title": "Pagina nu a fost găsită",
+    "description": "Pagina pe care o căutați nu există."
+  },
+  "ForgotPasswordPage": {
+    "title": "Ai uitat parola?",
+    "description": "Introduceți adresa de e-mail pentru a vă trimite un link de resetare a parolei."
+  },
+  "Form": {
+    "empty": "Fără date",
+    "changeUserData": "Modifică datele",
+    "submit": "Trimite",
+    "enterVehicleData": "Introduceți datele mașinii",
+    "email": "Email",
+    "phone": "Telefon",
+    "firstName": "Prenume",
+    "lastName": "Nume",
+    "receiverNameRequired": "Numele destinatarului este obligatoriu",
+    "isRequired": "Este obligatoriu",
+    "invalidEmail": "Email invalid",
+    "nothingToSave": "Nu s-a schimbat nimic",
+    "success": "Datele au fost salvate cu succes",
+    "birthDate": "Data nașterii",
+    "save": "Salvează",
+    "aboutUser": "Despre tine",
+    "aboutCar": "Despre mașina ta",
+    "vehicleNumber": "Numărul mașinii",
+    "vin": "VIN (ultimele 6 caractere)\t",
+    "number": "Număr de înmatriculare",
+    "mileage": "Kilometri bord",
+    "favoriteVulcanization": "Locație auto",
+    "tireShop": "Vulcanizare",
+    "addImageOrDocument": "Adaugă imagine sau document",
+    "vehicleInformation": "Informații despre mașină",
+    "imagesAndDocuments": "Imagini și documente",
+    "model": "Model",
+    "year": "An",
+    "fileName": "Numele fișierului",
+    "fileType": "Tipul fișierului",
+    "documentType": "Tipul documentului",
+    "createdAt": "Creat la",
+    "dateOfUpload": "Data încărcării",
+    "noFiles": "Nu există fișiere",
+    "fuel": "Combustibil",
+    "transmission": "Transmisie"
+  },
+  "FormFinishedPage": {
+    "formFinished": "Formularul a fost trimis cu succes"
+  }
+}

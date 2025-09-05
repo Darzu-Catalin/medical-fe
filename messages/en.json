@@ -1,0 +1,77 @@
+{
+  "General": {
+    "test": "This is a test",
+    "onTheDateOf": "On the date of",
+    "wasCreated": "was created",
+    "hasBeenChanged": "the following have been changed",
+    "wasAddedWithTheValue": "was added with the value",
+    "from": "from",
+    "into": "into",
+    "detailsChanges": "Details changes"
+  },
+  "Address": {
+    "city": "City",
+    "street": "Street",
+    "number": "Number",
+    "postalCode": "Postal Code",
+    "country": "Country",
+    "county": "County"
+  },
+  "AuthPage": {
+    "title": "Login",
+    "description": "Please login to continue"
+  },
+  "RegisterPage": {
+    "title": "Register",
+    "description": "Please register to continue"
+  },
+  "NotFoundPage": {
+    "title": "Page not found",
+    "description": "The page you are looking for does not exist"
+  },
+  "ForgotPasswordPage": {
+    "title": "Forgot Password",
+    "description": "Please enter your email address to reset your password"
+  },
+  "Form": {
+    "empty": "No data",
+    "changeUserData": "Change user data",
+    "submit": "Submit",
+    "enterVehicleData": "Please enter your car data",
+    "email": "Email",
+    "phone": "Phone",
+    "firstName": "First Name",
+    "lastName": "Last Name",
+    "receiverNameRequired": "Receiver name is required",
+    "isRequired": "is required",
+    "invalidEmail": "Invalid email",
+    "nothingToSave": "Nothing to save",
+    "success": "Data updated successfully",
+    "birthDate": "Birth Date",
+    "save": "Save",
+    "aboutUser": "About you",
+    "aboutCar": "About your car",
+    "vehicleNumber": "Vehicle Number",
+    "vin": "VIN (last 6 characters)",
+    "number": "License Plate",
+    "mileage": "Mileage",
+    "favoriteVulcanization": "Vehicle Location",
+    "tireShop": "Tire Shop",
+    "addImageOrDocument": "Add image or document",
+    "vehicleInformation": "Vehicle Information",
+    "imagesAndDocuments": "Images and Documents",
+    "model": "Model",
+    "year": "Year",
+    "fileName": "File Name",
+    "fileType": "File Type",
+    "documentType": "Document Type",
+    "createdAt": "Created At",
+    "dateOfUpload": "Upload date",
+    "noFiles": "There are no files",
+    "fuel": "Fuel",
+    "transmission": "Transmission"
+  },
+  "FormFinishedPage": {
+    "formFinished": "The form has been successfully submitted"
+  }
+}

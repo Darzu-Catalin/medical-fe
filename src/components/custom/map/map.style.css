@@ -1,0 +1,57 @@
+.stadiamaps-search-box input {
+  width: 100% !important;
+  border-radius: 33px !important;
+  border: none !important;
+  background: #fff !important;
+  color: #000 !important;
+  padding: 2px 16px !important;
+  font-size: 14px !important;
+}
+
+.results .search-attribution {
+  display: none !important;
+}
+
+.stadiamaps-search-box .results {
+  background: #fff;
+  color: #000;
+}
+
+.stadiamaps-search-box .results .result:hover, .stadiamaps-search-box .results .result.hover {
+  background: #f2f2f2 !important;
+}
+
+.stadiamaps-search-box .results .result {
+  border-bottom: 1px solid #eee !important;
+}
+
+.stadiamaps-search-box .results .results-list {
+  border-radius: 10px !important;
+  overflow-y: auto !important;
+}
+
+.results-list {
+  border-radius: 10px !important;
+}
+
+.stadiamaps-search-box .input-container .cancel {
+  background: #000;
+  opacity: 1;
+  top: 2px;
+}
+
+.stadiamaps-search-box .input-container .cancel:before, .stadiamaps-search-box .input-container .cancel:after {
+  background: #fff;
+}
+
+.stadiamaps-search-box .input-container .cancel:before, .stadiamaps-search-box .input-container .cancel:before {
+  background: #fff;
+}
+
+.stadiamaps-search-box .results .result-label {
+  font-size: 14px;
+}
+
+.maplibregl-ctrl-attrib.maplibregl-compact {
+  display: none !important;
+}
