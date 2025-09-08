@@ -144,7 +144,7 @@ export default function LoginView() {
               alignItems: 'center',
             }}
           >
-            Utilizatori demo
+            Alege tipul utilizatorului
           </Typography>
           <Box
             sx={{
@@ -156,7 +156,6 @@ export default function LoginView() {
           >
             <LoadingButton
               fullWidth
-              disabled
               color="inherit"
               size="small"
               type="button"
@@ -166,11 +165,10 @@ export default function LoginView() {
                 methods.trigger('email')
               }}
             >
-              Agent
+              Pacient
             </LoadingButton>
 
             <LoadingButton
-              disabled
               fullWidth
               color="inherit"
               size="small"
@@ -184,7 +182,7 @@ export default function LoginView() {
                 methods.trigger('email')
               }}
             >
-              Operator
+              Medic
             </LoadingButton>
 
             <LoadingButton

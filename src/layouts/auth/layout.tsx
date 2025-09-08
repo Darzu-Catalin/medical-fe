@@ -57,7 +57,7 @@ export default function AuthClassicLayout({ children, image, title }: Props) {
             theme.palette.background.default,
             theme.palette.mode === 'light' ? 0.0 : 0.0
           ),
-          imgUrl: `/assets/background/${"autonom"}_background.png`,
+          imgUrl: `/assets/background/medical_background.png`,
         }),
       }}
     />
