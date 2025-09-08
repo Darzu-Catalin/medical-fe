@@ -7,8 +7,6 @@ import { useForm } from 'react-hook-form'
 import { useState, useCallback } from 'react'
 import { yupResolver } from '@hookform/resolvers/yup'
 import { setInitialEmail } from '@/redux/slices/app-settings'
-import { useAppDispatch } from 'src/redux/store'
-import { loginAsync } from '@/redux/slices/auth'
 
 import Alert from '@mui/material/Alert'
 import Stack from '@mui/material/Stack'
@@ -30,7 +28,7 @@ import { validateEmailInput } from '@/utils/validationUtils'
 import { getVerificationCodeRequest } from '@/requests/admin/user.requests'
 
 // config
-// config
+import { useAppDispatch } from 'src/redux/store'
 
 // components
 import FormProvider, { RHFTextField } from 'src/components/ui/minimals/hook-form'
@@ -38,11 +36,14 @@ import FormProvider, { RHFTextField } from 'src/components/ui/minimals/hook-form
 // ----------------------------------------------------------------------
 
 type FormValuesProps = {
-  email: string
-  password: string
+    email: string
+    password: string
+    confirmPassword: string
+    firstName: string
+    lastName: string
 }
 
-export default function LoginView() {
+export default function RegisterView() {
   const [errorMsg, setErrorMsg] = useState('')
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -50,18 +51,26 @@ export default function LoginView() {
   const returnTo = searchParams.get('returnTo')
 
 
-  const LoginSchema = Yup.object().shape({
+  const RegisterSchema = Yup.object().shape({
     email: Yup.string().trim().lowercase().required('E obligatoriu').email('Email invalid'),
-    password: Yup.string().required('E obligatoriu'),
+    firstName: Yup.string().required('E obligatoriu'),
+    lastName: Yup.string().required('E obligatoriu'),
+    password: Yup.string().min(6, 'Minim 6 caractere').required('E obligatoriu'),
+    confirmPassword: Yup.string()
+      .oneOf([Yup.ref('password')], 'Parolele nu coincid')
+      .required('E obligatoriu'),
   })
 
   const defaultValues: FormValuesProps = {
     email: '',
     password: '',
+    confirmPassword: '',
+    firstName: '',
+    lastName: '',
   }
 
   const methods = useForm<FormValuesProps>({
-    resolver: yupResolver(LoginSchema),
+    resolver: yupResolver(RegisterSchema),
     defaultValues,
   })
 
@@ -74,13 +83,21 @@ export default function LoginView() {
   const onSubmit = useCallback(
     async (data: FormValuesProps) => {
       try {
-        const action = await dispatch(loginAsync({ email: data.email, password: data.password }))
-        if (loginAsync.rejected.match(action)) {
-          const payload = action.payload as any
-          enqueueSnackbar(payload?.message || 'Eroare la autentificare', { variant: 'error' })
-          return
+        const response = await getVerificationCodeRequest(
+          {
+            email: data.email,
+          }
+        )
+
+
+        if (response.error) {
+          enqueueSnackbar(response.message, { variant: 'error' })
+          return 
         }
-        router.push(paths.dashboard.root)
+
+  dispatch(setInitialEmail(data.email))
+  // go to verification code
+  router.push(paths.auth.verifyEmail)
       
       } catch (error) {
         console.error(error)
@@ -101,14 +118,14 @@ export default function LoginView() {
           mb: -2,
         }}
       >
-        Loghează-te
+        Înregistrează-te
       </Typography>
 
       <Stack direction="row" spacing={0.5}>
-        <Typography variant="body2">Nu ai cont?</Typography>
+        <Typography variant="body2">Ai deja un cont?</Typography>
 
-        <Link component={RouterLink} href={paths.auth.register} variant="subtitle2">
-          Creează unul
+        <Link component={RouterLink} href={paths.auth.login} variant="subtitle2">
+            Loghează-te
         </Link>
       </Stack>
     </Stack>
@@ -125,6 +142,10 @@ export default function LoginView() {
 
   <RHFTextField name="email" label="Email" type="email" inputProps={{ onInput: validateEmailInput, inputMode: 'email', autoComplete: 'email' }} />
   <RHFTextField name="password" label="Password" type="password" />
+  <RHFTextField name="confirmPassword" label="Confirm Password" type="password" />
+  <RHFTextField name="firstName" label="Name" />
+  <RHFTextField name="lastName" label="Surname" />
+
 
       {/* 3 autoload users demo button */}
       {/* Admin */}
@@ -151,6 +172,7 @@ export default function LoginView() {
           >
             <LoadingButton
               fullWidth
+              disabled
               color="inherit"
               size="small"
               type="button"
@@ -164,6 +186,7 @@ export default function LoginView() {
             </LoadingButton>
 
             <LoadingButton
+              disabled
               fullWidth
               color="inherit"
               size="small"
@@ -188,8 +211,6 @@ export default function LoginView() {
               variant="outlined"
               onClick={() => {
                 methods.setValue('email', `thegoodplace_autonom@ejump.ro`)
-                methods.setValue('password', 'Autonom1234!')
-                methods.trigger('password')
                 methods.trigger('email')
               }}
             >
@@ -207,7 +228,7 @@ export default function LoginView() {
         variant="contained"
         loading={isSubmitting}
       >
-        Login
+  Înregistrează-te
       </LoadingButton>
     </Stack>
   )

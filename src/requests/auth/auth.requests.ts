@@ -7,7 +7,7 @@ export const loginUserRequest = async (payload: {
   password: string
 }): Promise<ApiResponseType> => {
   try {
-    const response = await axiosInstance.post('/user/login', {
+    const response = await axiosInstance.post('/Auth/login', {
       ...payload,
     })
     return ApiResponse.success(response.data)
