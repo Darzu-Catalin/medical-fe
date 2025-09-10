@@ -1,86 +1,78 @@
 'use client';
 
-import { Box, Typography, Card, Grid, Divider, CardContent, Tabs, Tab, Badge } from '@mui/material';
+import { Box, Typography, Card, Grid, Divider, CardContent, Tabs, Tab, TextField, Button } from '@mui/material';
 import { useState, useEffect } from 'react';
-
-const mockPatientData = {
-  profile: {
-    name: 'John Smith',
-    idnp: '2001234567890',
-    dob: '1990-05-15',
-    bloodType: 'A+',
-    phone: '+373 69 123 456',
-    address: 'Chisinau, Stefan cel Mare 123',
-  },
-  allergies: ['Penicillin', 'Peanuts'],
-  visits: [
-    {
-      id: '1',
-      date: '2024-01-15',
-      doctor: 'Dr. Sarah Johnson',
-      symptoms: 'Fever, headache, body aches',
-      diagnosis: 'Viral infection',
-      prescription: 'Rest, fluids, paracetamol 500mg every 6h',
-      notes: 'bady teeth',
-    },
-    {
-      id: '2',
-      date: '2023-11-20',
-      doctor: 'Dr. Michael Brown',
-      symptoms: 'Annual checkup',
-      diagnosis: 'Healthy',
-      prescription: 'Continue lifestyle, multivitamin',
-      notes: 'bady teeth',
-    },
-  ],
-};
-
 
 const PatientsDashboardView = () => {
   const [activeTab, setActiveTab] = useState(0);
+  const [dashboardData, setDashboardData] = useState<any | null>(null);
+  const [loading, setLoading] = useState(false);
 
-  const [patientData, setPatientData] = useState<any | null>(null);
-const [loading, setLoading] = useState(true);
+  const fetchDashboardData = async () => {
+    setLoading(true);
+    try {
+      const token = localStorage.getItem('token');
+      console.log('Token from localStorage:', token); // Log the token for debugging
 
-useEffect(() => {
-    const fetchPatient = async () => {
-      try {
-        const res = await fetch('http://localhost:5152/api/admin/test/users-count'); // change port if needed
-        if (!res.ok) throw new Error('Failed to fetch');
-        const data = await res.json();
-  
-        // Take the first user to test
-        if (data.Users && data.Users.length > 0) {
-          setPatientData(data.Users[0]);
-          console.log('Fetched patient:', data.Users[0]);
-        }
-      } catch (err) {
-        console.error('Error fetching patient data:', err);
-      } finally {
-        setLoading(false);
+      if (!token) {
+        console.error('No token found in localStorage.');
+        alert('You are not logged in. Please log in to continue.');
+        return;
       }
-    };
-  
-    fetchPatient();
+
+      const res = await fetch('http://localhost:5152/api/patient/dashboard', {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!res.ok) {
+        if (res.status === 401) {
+          throw new Error('Unauthorized. Please check your credentials.');
+        }
+        throw new Error('Failed to fetch dashboard data');
+      }
+
+      const data = await res.json();
+      console.log('Dashboard API Response:', data); // Log the entire API response
+
+      if (data && data.data) {
+        console.log('Dashboard Data:', data.data); // Log the dashboard data
+        setDashboardData(data.data); // Set the dashboard data
+      } else {
+        console.warn('No dashboard data found in the response.');
+        setDashboardData(null);
+      }
+    } catch (err) {
+      console.error('Error fetching dashboard data:', err);
+      setDashboardData(null);
+      if (err.message.includes('Unauthorized')) {
+        alert('Your session has expired. Please log in again.');
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchDashboardData();
   }, []);
-  
 
-  if (loading) return <p>Loading patient data...</p>;
-  if (!patientData) return <p>No patient data found.</p>;
+  useEffect(() => {
+    console.log('Updated dashboardData:', dashboardData); // Log dashboardData whenever it changes
+  }, [dashboardData]);
+
   return (
-
     <Box sx={{ p: 3 }}>
-        
       <Typography variant="h4" gutterBottom>
         Patient Dashboard
-      </Typography>
-      <Typography variant="body1" gutterBottom>
-        View personal record.
       </Typography>
 
       {/* Tabs */}
       <Tabs value={activeTab} onChange={(_, value) => setActiveTab(value)} sx={{ mb: 3 }}>
-        <Tab label="Home"/>
+        <Tab label="Home" />
         <Tab label="Profile" />
         <Tab label="Vaccines" />
         <Tab label="Visits" />
@@ -88,212 +80,150 @@ useEffect(() => {
       </Tabs>
 
       {/* Tab content */}
-      {activeTab === 0 && (
-        <Grid container spacing={2}>
-            <Grid item xs={12} md={4}>
+      {dashboardData ? (
+        <>
+          {activeTab === 0 && (
+            <Grid container spacing={2}>
+              <Grid item xs={12} md={4}>
                 <Card>
-                    <CardContent>
-                        <Typography variant="h6">Last Visit</Typography>
-                        <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-                            <Typography variant="body2" color="text.secondary">Date:</Typography>
-                            <Typography variant="body2" color="text.secondary">{mockPatientData.visits[1].date}</Typography>
-                        </Box>
-                        <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-                            <Typography variant="body2" color="text.secondary">Doctor:</Typography>
-                            <Typography variant="body2" color="text.secondary">{mockPatientData.visits[1].doctor}</Typography>
-                        </Box>
-                        <Divider sx={{ my: 2 }} />
-                        
-                        <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-                            <Typography variant="body2" color="text.secondary">Diagnosis:</Typography>
-                            <Typography variant="body2" color="text.secondary">{mockPatientData.visits[1].diagnosis}</Typography>
-                        </Box>
-
-                        <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-                            <Typography variant="body2" color="text.secondary">Notes:</Typography>
-                            <Typography variant="body2" color="text.secondary">{mockPatientData.visits[1].notes}</Typography>
-                        </Box>
-                        </CardContent>
-                </Card>
-            </Grid>
-
-               {/* Example Card 2 */}
-                <Grid item xs={12} md={4}>
-                <Card sx={{ p: 2 }}>
-                    <CardContent>
-                    <Typography variant="h6">Upcoming Vaccines</Typography>
-                    <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
-                        
-                    </Box>
-                    </CardContent>
-                </Card>
-                </Grid>
-
-                {/* Example Card 3 */}
-                <Grid item xs={12} md={4}>
-                <Card sx={{ p: 2 }}>
-                    <CardContent>
+                  <CardContent>
                     <Typography variant="h6">Contact Info</Typography>
-                    <Typography>Phone: {mockPatientData.profile.phone}</Typography>
-                    <Typography>Address: {mockPatientData.profile.address}</Typography>
-                    </CardContent>
+                    <Typography>Phone: {dashboardData.profile?.phoneNumber || 'N/A'}</Typography>
+                    <Typography>Address: {dashboardData.profile?.address || 'N/A'}</Typography>
+                  </CardContent>
                 </Card>
+              </Grid>
+            </Grid>
+          )}
+
+          {activeTab === 1 && (
+            <Card sx={{ mb: 3, p: 2 }}>
+              <CardContent>
+                <Typography variant="h6" gutterBottom>
+                  Personal Information
+                </Typography>
+                <Typography variant="body2" color="text.secondary" gutterBottom>
+                  Your basic health profile information
+                </Typography>
+
+                <Grid container spacing={2} sx={{ mt: 1 }}>
+                  <Grid item xs={12} md={6}>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                      <Typography variant="body2" color="text.secondary">Full Name:</Typography>
+                      <Typography fontWeight={500}>
+                        {dashboardData.profile?.firstName} {dashboardData.profile?.lastName}
+                      </Typography>
+                    </Box>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                      <Typography variant="body2" color="text.secondary">IDNP:</Typography>
+                      <Typography fontWeight={500}>{dashboardData.profile?.idnp || 'N/A'}</Typography>
+                    </Box>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                      <Typography variant="body2" color="text.secondary">Date of Birth:</Typography>
+                      <Typography fontWeight={500}>
+                        {dashboardData.profile?.dateOfBirth
+                          ? new Intl.DateTimeFormat('en-US', { year: 'numeric', month: 'long', day: 'numeric' }).format(new Date(dashboardData.profile.dateOfBirth))
+                          : 'N/A'}
+                      </Typography>
+                    </Box>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                      <Typography variant="body2" color="text.secondary">Blood Type:</Typography>
+                      <Typography color="primary" sx={{ px: 1 }}>{dashboardData.profile?.bloodType || 'N/A'}</Typography>
+                    </Box>
+                  </Grid>
+
+                  <Grid item xs={12} md={6}>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                      <Typography variant="body2" color="text.secondary">Phone:</Typography>
+                      <Typography fontWeight={500}>{dashboardData.profile?.phone || 'N/A'}</Typography>
+                    </Box>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                      <Typography variant="body2" color="text.secondary">Address:</Typography>
+                      <Typography fontWeight={500}>{dashboardData.profile?.address || 'N/A'}</Typography>
+                    </Box>
+                  </Grid>
                 </Grid>
-        </Grid>
-      )}
 
-      {activeTab === 1 && (
-        <Card sx={{ mb: 3, p: 2 }}>
-        <CardContent>
-          <Typography variant="h6" gutterBottom>
-            Personal Information
-          </Typography>
-          <Typography variant="body2" color="text.secondary" gutterBottom>
-            Your basic health profile information
-          </Typography>
-    
-          <Grid container spacing={2} sx={{ mt: 1 }}>
-            <Grid item xs={12} md={6}>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-                <Typography variant="body2" color="text.secondary">Full Name:</Typography>
-                <Typography fontWeight={500}> {patientData.FirstName} {patientData.LastName}</Typography>
-              </Box>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-                <Typography variant="body2" color="text.secondary">IDNP:</Typography>
-                <Typography fontWeight={500}>{mockPatientData.profile.idnp}</Typography>
-              </Box>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-                <Typography variant="body2" color="text.secondary">Date of Birth:</Typography>
-                <Typography fontWeight={500}>{mockPatientData.profile.dob}</Typography>
-              </Box>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-                <Typography variant="body2" color="text.secondary">Blood Type:</Typography>
-                <Badge color="primary" sx={{ px: 1 }}>{mockPatientData.profile.bloodType}</Badge>
-              </Box>
-            </Grid>
-    
-            <Grid item xs={12} md={6}>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-                <Typography variant="body2" color="text.secondary">Phone:</Typography>
-                <Typography fontWeight={500}>{mockPatientData.profile.phone}</Typography>
-              </Box>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-                <Typography variant="body2" color="text.secondary">Address:</Typography>
-                <Typography fontWeight={500}>{mockPatientData.profile.address}</Typography>
-              </Box>
-            </Grid>
-          </Grid>
-    
-          <Divider sx={{ my: 2 }} />
-    
-          <Box>
-            <Typography variant="subtitle1" gutterBottom>
-              Known Allergies
-            </Typography>
-            <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
-              {mockPatientData.allergies.map((allergy) => (
-                <Badge
-                  key={allergy}
-                  color="error"
-                  sx={{ px: 1 }}
-                >
-                  {allergy}
-                </Badge>
-              ))}
-            </Box>
-          </Box>
-        </CardContent>
-      </Card>
-      )}
+                <Divider sx={{ my: 2 }} />
 
-      {activeTab === 2 && (
-        <Card sx={{ mb: 3 }}>
-            <CardContent>
-            <Typography variant="h6" gutterBottom>
-            Vaccination History           
-             </Typography>
-            <Typography variant="body2" color="text.secondary" gutterBottom>
-            Your complete vaccination record
-            </Typography>
-            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 2 }}>
-                <Card variant="outlined">
-                <CardContent>
-                    <Typography variant="subtitle1">Vaccine 1</Typography>
-                    <Typography variant="body2">Details about vaccine 1</Typography>
-                </CardContent>
-                </Card>
-            </Box>
-            </CardContent>
-        </Card>
+                <Box>
+                  <Typography variant="subtitle1" gutterBottom>
+                    Known Allergies
+                  </Typography>
 
-      )}
-
-{activeTab === 3 && (
-  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-    {mockPatientData.visits.map((visit) => (
-      <Card key={visit.id} variant="outlined">
-        <CardContent>
-          {/* Header: date and doctor */}
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
-            <Typography fontWeight={600}>{visit.date}</Typography>
-            <Badge
-              color="primary"
-              sx={{ px: 1, borderRadius: 1 }}
-            >
-              {visit.doctor}
-            </Badge>
-          </Box>
-
-          {/* Visit details in two columns */}
-          <Grid container spacing={2}>
-            <Grid item xs={12} md={6}>
-              <Box sx={{ mb: 1 }}>
-                <Typography variant="body2" color="text.secondary">
-                  Symptoms:
-                </Typography>
-                <Typography fontWeight={500}>{visit.symptoms}</Typography>
-              </Box>
-              <Box sx={{ mb: 1 }}>
-                <Typography variant="body2" color="text.secondary">
-                  Diagnosis:
-                </Typography>
-                <Typography fontWeight={500}>{visit.diagnosis}</Typography>
-              </Box>
-            </Grid>
-
-            <Grid item xs={12} md={6}>
-              <Box sx={{ mb: 1 }}>
-                <Typography variant="body2" color="text.secondary">
-                  Prescription:
-                </Typography>
-                <Typography fontWeight={500}>{visit.prescription}</Typography>
-              </Box>
-              <Box sx={{ mb: 1 }}>
-                <Typography variant="body2" color="text.secondary">
-                  Doctor's Notes:
-                </Typography>
-                <Typography fontWeight={500}>
-                  {visit.notes || '—'}
-                </Typography>
-              </Box>
-            </Grid>
-          </Grid>
-        </CardContent>
-      </Card>
-    ))}
-  </Box>
-)}
-
-
-{activeTab === 4 && (
-            <Card sx={{ mb: 3 }}>
-            <CardContent>
-             
-            </CardContent>
+                  {dashboardData.profile?.activeAllergies && dashboardData.profile.activeAllergies.length > 0 ? (
+                    <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+                      {dashboardData.profile.activeAllergies.map((allergy: any, index: number) => (
+                        <Typography
+                          key={index}
+                          sx={{
+                            display: 'inline-block',
+                            backgroundColor: '#f8d7da',
+                            color: '#721c24',
+                            padding: '4px 8px',
+                            borderRadius: '4px',
+                            fontSize: '0.875rem',
+                          }}
+                        >
+                          {allergy.AllergenName}
+                        </Typography>
+                      ))}
+                    </Box>
+                  ) : (
+                    <Typography color="text.secondary">No known allergies.</Typography>
+                  )}
+                </Box>
+              </CardContent>
             </Card>
-        )}
+          )}
 
+          {activeTab === 2 && (
+            <Card sx={{ mb: 3 }}>
+              <CardContent>
+                <Typography variant="h6" gutterBottom>
+                  Vaccination History
+                </Typography>
+                {dashboardData.profile?.recentVaccinations && dashboardData.profile.recentVaccinations.length > 0 ? (
+                  <ul>
+                    {dashboardData.profile.recentVaccinations.map((vaccine: any, index: number) => (
+                      <li key={index}>
+                        {vaccine.VaccineName} - {new Date(vaccine.DateAdministered).toLocaleDateString()}
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <Typography color="text.secondary">No vaccinations recorded.</Typography>
+                )}
+              </CardContent>
+            </Card>
+          )}
 
+          {activeTab === 3 && (
+            <Card sx={{ mb: 3 }}>
+              <CardContent>
+                <Typography variant="h6" gutterBottom>
+                  Visit History
+                </Typography>
+                {dashboardData.visits && dashboardData.visits.length > 0 ? (
+                  <ul>
+                    {dashboardData.visits.map((visit: any, index: number) => (
+                      <li key={index}>
+                        {new Date(visit.VisitDate).toLocaleDateString()} - {visit.Diagnosis}
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <Typography color="text.secondary">No visits yet.</Typography>
+                )}
+              </CardContent>
+            </Card>
+          )}
+        </>
+      ) : (
+        <Typography variant="body1" color="text.secondary">
+          No dashboard data found. Please try again later.
+        </Typography>
+      )}
     </Box>
   );
 };
