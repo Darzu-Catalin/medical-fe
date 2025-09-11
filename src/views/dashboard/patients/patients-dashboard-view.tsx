@@ -20,7 +20,12 @@ const PatientsDashboardView = () => {
         return;
       }
 
-      const res = await fetch('http://localhost:5152/api/patient/dashboard', {
+      const apiBaseUrl = process.env.NEXT_PUBLIC_HOST_API;
+      if (!apiBaseUrl) {
+        throw new Error('API base URL is not defined in the environment variables.');
+      }
+
+      const res = await fetch(`${apiBaseUrl}/api/patient/dashboard`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
