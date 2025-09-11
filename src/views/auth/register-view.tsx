@@ -152,11 +152,12 @@ export default function RegisterView() {
   )
 
   const renderHead = (
-    <Stack spacing={2} sx={{ mb: 5 }}>
+    <Stack spacing={2} sx={{ mb: 3 }}>
       <Typography
         variant="h4"
         sx={{
           mb: -2,
+          mt: 4,
         }}
       >
         Înregistrează-te
@@ -188,16 +189,63 @@ export default function RegisterView() {
   <RHFTextField name="lastName" label="Surname" />
   <RHFTextField name="phoneNumber" label="Phone Number" type="tel" inputProps={{ onInput: validatePhoneInput, inputMode: 'tel', autoComplete: 'tel' }} />
   <RHFTextField name="dateOfBirth" label="Date of Birth" type="date" InputLabelProps={{ shrink: true }} />
-  <RHFTextField name="gender" label="Gender (code)" type="number" inputProps={{ min: 0 }} />
   <RHFTextField name="address" label="Address" />
   <RHFTextField name="idnp" label="IDNP" />
-  <RHFTextField name="userRole" label="User Role (code)" type="number" inputProps={{ min: 0 }} />
-  
 
 
-      {/* 3 autoload users demo button */}
-      {/* Admin */}
-      {/* eslint-disable-next-line no-constant-condition */}
+    {/* Gender Selection Buttons */}
+  <Typography
+    variant="caption"
+    component="div"
+    sx={{
+      display: 'inline-flex',
+      alignItems: 'center',
+    }}
+  >
+    Gender
+  </Typography>
+  <Box
+    sx={{
+      mb: 0,
+      mt: -1,
+      display: 'flex',
+      gap: 1,
+    }}
+  >
+    <LoadingButton
+      fullWidth
+      color={methods.watch('gender') === 1 ? 'primary' : 'inherit'}
+      size="small"
+      type="button"
+      variant={methods.watch('gender') === 1 ? 'contained' : 'outlined'}
+      onClick={() => {
+        const currentValue = methods.getValues('gender')
+        const newValue = currentValue === 1 ? undefined : 1
+        methods.setValue('gender', newValue)
+        methods.trigger('gender')
+      }}
+    >
+      Male
+    </LoadingButton>
+
+    <LoadingButton
+      fullWidth
+      color={methods.watch('gender') === 2 ? 'primary' : 'inherit'}
+      size="small"
+      type="button"
+      variant={methods.watch('gender') === 2 ? 'contained' : 'outlined'}
+      onClick={() => {
+        const currentValue = methods.getValues('gender')
+        const newValue = currentValue === 2 ? undefined : 2
+        methods.setValue('gender', newValue)
+        methods.trigger('gender')
+      }}
+    >
+      Female
+    </LoadingButton>
+  </Box>
+
+
       {window.location.hostname === 'localhost' ? (
         <>
           <Typography
@@ -208,11 +256,12 @@ export default function RegisterView() {
               alignItems: 'center',
             }}
           >
-            Utilizatori demo
+            User Role
           </Typography>
           <Box
             sx={{
               mb: 2,
+              mt: -1,
               display: 'flex',
               justifyContent: 'space-between',
               alignItems: 'center',
@@ -220,32 +269,34 @@ export default function RegisterView() {
           >
             <LoadingButton
               fullWidth
-              disabled
-              color="inherit"
+              color={methods.watch('userRole') === 1 ? 'primary' : 'inherit'}
               size="small"
               type="button"
-              variant="outlined"
+              variant={methods.watch('userRole') === 1 ? 'contained' : 'outlined'}
               onClick={() => {
-                methods.setValue('email', `thegoodplace_agent@ejump.ro`)
-                methods.trigger('email')
+                const currentValue = methods.getValues('userRole')
+                const newValue = currentValue === 1 ? undefined : 1
+                methods.setValue('userRole', newValue)
+                methods.trigger('userRole')
               }}
             >
               User
             </LoadingButton>
 
             <LoadingButton
-              disabled
               fullWidth
-              color="inherit"
+              color={methods.watch('userRole') === 2 ? 'primary' : 'inherit'}
               size="small"
               type="button"
               sx={{
                 mx: 1,
               }}
-              variant="outlined"
+              variant={methods.watch('userRole') === 2 ? 'contained' : 'outlined'}
               onClick={() => {
-                methods.setValue('email', `thegoodplace_operator@ejump.ro`)
-                methods.trigger('email')
+                const currentValue = methods.getValues('userRole')
+                const newValue = currentValue === 2 ? undefined : 2
+                methods.setValue('userRole', newValue)
+                methods.trigger('userRole')
               }}
             >
               Doctor
@@ -253,13 +304,15 @@ export default function RegisterView() {
 
             <LoadingButton
               fullWidth
-              color="inherit"
+              color={methods.watch('userRole') === 3 ? 'primary' : 'inherit'}
               size="small"
               type="button"
-              variant="outlined"
+              variant={methods.watch('userRole') === 3 ? 'contained' : 'outlined'}
               onClick={() => {
-                methods.setValue('email', `thegoodplace_autonom@ejump.ro`)
-                methods.trigger('email')
+                const currentValue = methods.getValues('userRole')
+                const newValue = currentValue === 3 ? undefined : 3
+                methods.setValue('userRole', newValue)
+                methods.trigger('userRole')
               }}
             >
               Administrator

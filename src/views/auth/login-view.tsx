@@ -126,78 +126,7 @@ export default function LoginView() {
   <RHFTextField name="email" label="Email" type="email" inputProps={{ onInput: validateEmailInput, inputMode: 'email', autoComplete: 'email' }} />
   <RHFTextField name="password" label="Password" type="password" />
 
-      {/* 3 autoload users demo button */}
-      {/* Admin */}
-      {/* eslint-disable-next-line no-constant-condition */}
-      {window.location.hostname === 'localhost' ? (
-        <>
-          <Typography
-            variant="caption"
-            component="div"
-            sx={{
-              display: 'inline-flex',
-              alignItems: 'center',
-            }}
-          >
-            Utilizatori demo
-          </Typography>
-          <Box
-            sx={{
-              mb: 2,
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-            }}
-          >
-            <LoadingButton
-              fullWidth
-              color="inherit"
-              size="small"
-              type="button"
-              variant="outlined"
-              onClick={() => {
-                methods.setValue('email', `thegoodplace_agent@ejump.ro`)
-                methods.trigger('email')
-              }}
-            >
-              User
-            </LoadingButton>
-
-            <LoadingButton
-              fullWidth
-              color="inherit"
-              size="small"
-              type="button"
-              sx={{
-                mx: 1,
-              }}
-              variant="outlined"
-              onClick={() => {
-                methods.setValue('email', `thegoodplace_operator@ejump.ro`)
-                methods.trigger('email')
-              }}
-            >
-              Doctor
-            </LoadingButton>
-
-            <LoadingButton
-              fullWidth
-              color="inherit"
-              size="small"
-              type="button"
-              variant="outlined"
-              onClick={() => {
-                methods.setValue('email', `thegoodplace_autonom@ejump.ro`)
-                methods.setValue('password', 'Autonom1234!')
-                methods.trigger('password')
-                methods.trigger('email')
-              }}
-            >
-              Administrator
-            </LoadingButton>
-          </Box>
-        </>
-      ) : null}
+     
       <LoadingButton
         disabled={!isValid}
         fullWidth
