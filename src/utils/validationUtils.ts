@@ -17,7 +17,8 @@ export const validatePhoneInput = (event: React.FormEvent<HTMLInputElement>) => 
 };
 
 export const validateEmailInput = (event: React.FormEvent<HTMLInputElement>) => {
-    const invalidChars = /[^a-zA-Z0-9@._-]/g;
+    // Allow common email chars including '+'
+    const invalidChars = /[^a-zA-Z0-9@._+\-]/g;
     const inputElement = event.target as HTMLInputElement;
     if (invalidChars.test(inputElement.value)) {
         inputElement.value = inputElement.value.replace(invalidChars, '');

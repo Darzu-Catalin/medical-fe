@@ -22,6 +22,7 @@ import { useSnackbar } from 'notistack'
 import { setSession } from '@/auth/context/utils'
 import { setUser, setPermissions } from '@/redux/slices/auth'
 import { magicLoginRequest } from '@/requests/auth/auth.requests'
+import { verifyCodeLoginRequest } from '@/requests/auth/auth.requests'
 import { getVerificationCodeRequest } from '@/requests/admin/user.requests'
 
 import { Box } from '@mui/material'
@@ -78,8 +79,10 @@ export default function VerifyEmailView() {
           router.replace('/auth/login')
         }
 
-        const result = await magicLoginRequest({
+        console.log('verifyCodeLoginRequest:', verifyCodeLoginRequest)
+        const result = await verifyCodeLoginRequest({
           code: data.code,
+          email: initialEmail,
         })
 
         if (result.error) {
@@ -93,8 +96,9 @@ export default function VerifyEmailView() {
         dispatch(setUser(result.user))
         dispatch(setPermissions(result.permissions))
         setSession(result.token)
-        // Return to home page
-        // router.replace('/app')
+        
+        // Navigate to dashboard after successful verification
+        router.push('/dashboard')
       } catch (error) {
         setErrorMsg(error.message)
       }
