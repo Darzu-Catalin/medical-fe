@@ -18,7 +18,7 @@ export const gridGetUsers = async (payload: GridSearchPayloadType): Promise<ApiR
 // getVerificationCode
 export const getVerificationCodeRequest = async (payload: any): Promise<ApiResponseType> => {
   try {
-    const response = await axiosInstance.post('/user/get-verification-code', payload)
+    const response = await axiosInstance.post('/Auth/get-verification-code', payload)
     return ApiResponse.success(response.data)
   } catch (error) {
     return ApiResponse.error(error)

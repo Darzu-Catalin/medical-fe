@@ -17,15 +17,9 @@ export default function ProviderListView() {
       button={{ name: 'Adaugă furnizor', href: paths.dashboard.provider.new }}
     >
       <OrbitDataGrid
-        hardCodedFilters={[
-          { field: 'is_person', operator: '=', value: false },
-          { field: 'is_provider', operator: '=', value: true },
-        ]}
-        hasExport
         fetcher={gridGetPartners}
-        entityName="providers"
         columns={partnerColumns}
-        selectable={false}
+        entityName="providers"
       />
     </BasicDashboardView>
   )

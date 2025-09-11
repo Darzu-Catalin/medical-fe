@@ -85,15 +85,7 @@ export default function WorkplaceListView() {
         </Box>
         }
       />
-      <OrbitDataGrid
-        onChangeParams={(params: any) => {
-          setDataGridParams(params)
-        }}
-        fetcher={gridGetWorkplace}
-        entityName="workplace"
-        hasExport
-        columns={workplaceColumns}
-      />
+      
     </BasicDashboardView>
   )
 }
