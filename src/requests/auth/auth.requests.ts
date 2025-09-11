@@ -58,7 +58,48 @@ export const magicLoginRequest = async (payload: {
   code: string
 }): Promise<ApiResponseType> => {
   try {
-    const response = await axiosInstance.post('/user/magic-login', {
+    const response = await axiosInstance.post('/Auth/magic-login', {
+      ...payload,
+    })
+
+    return ApiResponse.success(response.data)
+  } catch (error) {
+    return ApiResponse.error(error)
+  }
+}
+
+export const registerUserRequest = async (payload: {
+  email: string
+  password: string
+  confirmPassword: string
+  firstName: string
+  lastName: string
+  phoneNumber?: string
+  dateOfBirth?: string
+  gender?: number
+  address?: string
+  idnp?: string
+  userRole?: number
+}): Promise<ApiResponseType> => {
+  try {
+    console.log('Making request to /Auth/register with payload:', payload)
+    const response = await axiosInstance.post('/Auth/register', {
+      ...payload,
+    })
+
+    return ApiResponse.success(response.data)
+  } catch (error) {
+    return ApiResponse.error(error)
+  }
+}
+
+export const verifyCodeLoginRequest = async (payload: {
+  code: string
+  email: string
+}): Promise<ApiResponseType> => {
+  try {
+    console.log('Making request to /Auth/verify-code with payload:', payload)
+    const response = await axiosInstance.post('/Auth/verify-code', {
       ...payload,
     })
 

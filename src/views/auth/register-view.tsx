@@ -24,8 +24,9 @@ import { useRouter, useSearchParams } from 'src/routes/hooks'
 
 import { enqueueSnackbar } from 'notistack'
 // validation
-import { validateEmailInput } from '@/utils/validationUtils'
+import { validateEmailInput, validatePhoneInput } from '@/utils/validationUtils'
 import { getVerificationCodeRequest } from '@/requests/admin/user.requests'
+import { registerUserRequest } from '@/requests/auth/auth.requests'
 
 // config
 import { useAppDispatch } from 'src/redux/store'
@@ -41,6 +42,12 @@ type FormValuesProps = {
     confirmPassword: string
     firstName: string
     lastName: string
+  phoneNumber?: string
+  dateOfBirth?: string
+  gender?: number
+  address?: string
+  idnp?: string
+  userRole?: number
 }
 
 export default function RegisterView() {
@@ -59,6 +66,14 @@ export default function RegisterView() {
     confirmPassword: Yup.string()
       .oneOf([Yup.ref('password')], 'Parolele nu coincid')
       .required('E obligatoriu'),
+  phoneNumber: Yup.string().optional(),
+  // Accept browser yyyy-MM-dd and convert on submit if needed
+  dateOfBirth: Yup.string().optional(),
+  // numeric code per backend (e.g., 1 male, 2 female)
+  gender: Yup.number().transform((v, o) => (o === '' ? undefined : v)).optional(),
+  address: Yup.string().optional(),
+  idnp: Yup.string().optional(),
+  userRole: Yup.number().transform((v, o) => (o === '' ? undefined : v)).optional(),
   })
 
   const defaultValues: FormValuesProps = {
@@ -67,6 +82,12 @@ export default function RegisterView() {
     confirmPassword: '',
     firstName: '',
     lastName: '',
+  phoneNumber: '',
+  dateOfBirth: '',
+  gender: undefined,
+  address: '',
+  idnp: '',
+  userRole: undefined,
   }
 
   const methods = useForm<FormValuesProps>({
@@ -83,21 +104,41 @@ export default function RegisterView() {
   const onSubmit = useCallback(
     async (data: FormValuesProps) => {
       try {
+        // First, register the user
+        const registerResponse = await registerUserRequest({
+          email: data.email,
+          password: data.password,
+          confirmPassword: data.confirmPassword,
+          firstName: data.firstName,
+          lastName: data.lastName,
+          phoneNumber: data.phoneNumber,
+          dateOfBirth: data.dateOfBirth,
+          gender: data.gender,
+          address: data.address,
+          idnp: data.idnp,
+          userRole: data.userRole,
+        })
+
+        if (registerResponse.error) { 
+          enqueueSnackbar(registerResponse.message, { variant: 'error' })
+          return 
+        }
+
+        // After successful registration, request verification code
         const response = await getVerificationCodeRequest(
           {
             email: data.email,
           }
         )
 
-
         if (response.error) {
           enqueueSnackbar(response.message, { variant: 'error' })
           return 
         }
 
-  dispatch(setInitialEmail(data.email))
-  // go to verification code
-  router.push(paths.auth.verifyEmail)
+        dispatch(setInitialEmail(data.email))
+        // go to verification code
+        router.push(paths.auth.verifyEmail)
       
       } catch (error) {
         console.error(error)
@@ -145,6 +186,13 @@ export default function RegisterView() {
   <RHFTextField name="confirmPassword" label="Confirm Password" type="password" />
   <RHFTextField name="firstName" label="Name" />
   <RHFTextField name="lastName" label="Surname" />
+  <RHFTextField name="phoneNumber" label="Phone Number" type="tel" inputProps={{ onInput: validatePhoneInput, inputMode: 'tel', autoComplete: 'tel' }} />
+  <RHFTextField name="dateOfBirth" label="Date of Birth" type="date" InputLabelProps={{ shrink: true }} />
+  <RHFTextField name="gender" label="Gender (code)" type="number" inputProps={{ min: 0 }} />
+  <RHFTextField name="address" label="Address" />
+  <RHFTextField name="idnp" label="IDNP" />
+  <RHFTextField name="userRole" label="User Role (code)" type="number" inputProps={{ min: 0 }} />
+  
 
 
       {/* 3 autoload users demo button */}
