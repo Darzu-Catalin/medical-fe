@@ -68,6 +68,30 @@ export const magicLoginRequest = async (payload: {
   }
 }
 
+// Helper: convert various input date strings to ISO 8601 UTC
+const toIsoUtc = (value?: string): string | undefined => {
+  if (!value) return undefined
+  // dd-MM-yyyy
+  const ddmmyyyy = /^(\d{2})-(\d{2})-(\d{4})$/
+  const m1 = value.match(ddmmyyyy)
+  if (m1) {
+    const [, dd, mm, yyyy] = m1
+    const d = new Date(Date.UTC(Number(yyyy), Number(mm) - 1, Number(dd), 0, 0, 0, 0))
+    return d.toISOString()
+  }
+  // yyyy-MM-dd
+  const yyyymmdd = /^(\d{4})-(\d{2})-(\d{2})$/
+  const m2 = value.match(yyyymmdd)
+  if (m2) {
+    const [, yyyy, mm, dd] = m2
+    const d = new Date(Date.UTC(Number(yyyy), Number(mm) - 1, Number(dd), 0, 0, 0, 0))
+    return d.toISOString()
+  }
+  // Fallback to Date parse (handles strings like Mon Sep 01 2025 ...)
+  const d = new Date(value)
+  return Number.isNaN(d.getTime()) ? undefined : d.toISOString()
+}
+
 export const registerUserRequest = async (payload: {
   email: string
   password: string
@@ -82,10 +106,13 @@ export const registerUserRequest = async (payload: {
   userRole?: number
 }): Promise<ApiResponseType> => {
   try {
-    console.log('Making request to /Auth/register with payload:', payload)
-    const response = await axiosInstance.post('/Auth/register', {
+    const body = {
       ...payload,
-    })
+      dateOfBirth: toIsoUtc(payload.dateOfBirth),
+    }
+
+    console.log('Making request to /Auth/register with payload:', body)
+    const response = await axiosInstance.post('/Auth/register', body)
 
     return ApiResponse.success(response.data)
   } catch (error) {

@@ -14,11 +14,7 @@ const PatientsDashboardView = () => {
       const token = localStorage.getItem('token');
       console.log('Token from localStorage:', token); // Log the token for debugging
 
-      if (!token) {
-        console.error('No token found in localStorage.');
-        alert('You are not logged in. Please log in to continue.');
-        return;
-      }
+    
 
       const apiBaseUrl = process.env.NEXT_PUBLIC_HOST_API;
       if (!apiBaseUrl) {
