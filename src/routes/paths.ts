@@ -48,5 +48,11 @@ export const paths = {
     calendar: {
       root: `${ROOTS.DASHBOARD}/calendar`,
     },
+    vaccines: {
+      root: `${ROOTS.DASHBOARD}/vaccines`,
+    },
+    auditLog: {
+      root: `${ROOTS.DASHBOARD}/audit-log`,
+    },
   },
 }

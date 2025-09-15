@@ -6,6 +6,10 @@ import AuthClassicLayout from '@/layouts/auth/layout'
 // auth
 import { GuestGuard } from 'src/auth/guard'
 
+// date pickers
+import { LocalizationProvider } from '@mui/x-date-pickers'
+import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns'
+
 // ----------------------------------------------------------------------
 
 type Props = {
@@ -15,7 +19,9 @@ type Props = {
 export default function Layout({ children }: Props) {
   return (
     <GuestGuard>
-      <AuthClassicLayout>{children}</AuthClassicLayout>
+      <LocalizationProvider dateAdapter={AdapterDateFns}>
+        <AuthClassicLayout>{children}</AuthClassicLayout>
+      </LocalizationProvider>
     </GuestGuard>
   )
 }

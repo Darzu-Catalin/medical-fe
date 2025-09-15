@@ -1,4 +1,4 @@
-import DashboardView from '@/views/dashboard/page/dashboard-view'
+import PatientsDashboardView from '@/views/dashboard/patients/patients-dashboard-view'
 
 
 // ----------------------------------------------------------------------
@@ -9,6 +9,6 @@ import DashboardView from '@/views/dashboard/page/dashboard-view'
 
 export default function Page() {
   return (
-    <DashboardView />
+  <PatientsDashboardView />
   )
 }

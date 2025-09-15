@@ -48,17 +48,7 @@ export default function ClientListView() {
             paddingTop: 2,
           }}
         >
-          <OrbitDataGrid
-            hardCodedFilters={[
-              { field: 'is_person', operator: '=', value: false },
-              { field: 'is_client', operator: '=', value: true },
-            ]}
-            hasExport
-            fetcher={gridGetPartners}
-            entityName="partners"
-            columns={partnerColumns}
-            selectable={false}
-          />
+          
         </TabPanel>
       </TabContext>
     </BasicDashboardView>

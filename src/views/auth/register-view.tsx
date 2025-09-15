@@ -4,7 +4,7 @@
 
 import * as Yup from 'yup'
 import { useForm } from 'react-hook-form'
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import { yupResolver } from '@hookform/resolvers/yup'
 import { setInitialEmail } from '@/redux/slices/app-settings'
 
@@ -32,7 +32,7 @@ import { registerUserRequest } from '@/requests/auth/auth.requests'
 import { useAppDispatch } from 'src/redux/store'
 
 // components
-import FormProvider, { RHFTextField } from 'src/components/ui/minimals/hook-form'
+import FormProvider, { RHFTextField, RHFDatePicker} from 'src/components/ui/minimals/hook-form'
 
 // ----------------------------------------------------------------------
 
@@ -95,7 +95,9 @@ export default function RegisterView() {
     defaultValues,
   })
 
-
+  useEffect(() => {
+    console.log('dateOfBirth changed:', methods.watch('dateOfBirth'))
+  }, [methods.watch('dateOfBirth')])
   const {
     handleSubmit,
     formState: { isSubmitting, isValid },
@@ -182,15 +184,15 @@ export default function RegisterView() {
     >
       {!!errorMsg && <Alert severity="error">{errorMsg}</Alert>}
 
-  <RHFTextField name="email" label="Email" type="email" inputProps={{ onInput: validateEmailInput, inputMode: 'email', autoComplete: 'email' }} />
-  <RHFTextField name="password" label="Password" type="password" />
-  <RHFTextField name="confirmPassword" label="Confirm Password" type="password" />
-  <RHFTextField name="firstName" label="Name" />
-  <RHFTextField name="lastName" label="Surname" />
-  <RHFTextField name="phoneNumber" label="Phone Number" type="tel" inputProps={{ onInput: validatePhoneInput, inputMode: 'tel', autoComplete: 'tel' }} />
-  <RHFTextField name="dateOfBirth" label="Date of Birth" type="date" InputLabelProps={{ shrink: true }} />
-  <RHFTextField name="address" label="Address" />
-  <RHFTextField name="idnp" label="IDNP" />
+      <RHFTextField sx={{height: '40px'}} name="email" label="Email" type="email" inputProps={{ onInput: validateEmailInput, inputMode: 'email', autoComplete: 'email' }} />
+      <RHFTextField sx={{height: '40px'}} name="password" label="Password" type="password" />
+      <RHFTextField sx={{height: '40px'}} name="confirmPassword" label="Confirm Password" type="password" />
+      <RHFTextField sx={{height: '40px'}} name="firstName" label="Name" />
+      <RHFTextField sx={{height: '40px'}} name="lastName" label="Surname" />
+      <RHFTextField sx={{height: '40px'}} name="phoneNumber" label="Phone Number" type="tel" inputProps={{ onInput: validatePhoneInput, inputMode: 'tel', autoComplete: 'tel' }} />
+      <RHFDatePicker name="dateOfBirth" label="Date of Birth" />
+      <RHFTextField sx={{height: '40px'}} name="address" label="Address" />
+      <RHFTextField sx={{height: '40px'}} name="idnp" label="IDNP" />
 
 
     {/* Gender Selection Buttons */}
