@@ -95,7 +95,7 @@ const PatientsDashboardView = () => {
               const lastVisit = dashboardData.visits[0];
               return (
                 <Box>
-                  <Typography variant="subtitle1">Date: {lastVisit.visitDate}</Typography>
+                  <Typography variant="subtitle1">{new Date(lastVisit.visitDate).toLocaleDateString()}</Typography>
                   <Typography variant="body2">Doctor: {lastVisit.doctorName}</Typography>
                   <Typography variant="body2">Diagnosis: {lastVisit.diagnosis || "N/A"}</Typography>
                   <Typography variant="body2">Notes: {lastVisit.notes || "N/A"}</Typography>
@@ -117,9 +117,9 @@ const PatientsDashboardView = () => {
           {dashboardData.profile.recentVaccinations && dashboardData.profile.recentVaccinations.length > 0 ? (
             dashboardData.profile.recentVaccinations.slice(0, 2).map((vaccine: any, index: number) => (
               <Box key={index} sx={{ mb: 1 }}>
-                <Typography variant="subtitle1">{vaccine.VaccineName}</Typography>
+                <Typography variant="subtitle1">{vaccine.vaccineName}</Typography>
                 <Typography variant="body2">
-                  Date: {new Date(vaccine.DateAdministered).toLocaleDateString()}
+                  Date: {new Date(vaccine.dateAdministered).toLocaleDateString()}
                 </Typography>
                 {vaccine.BatchNumber && (
                   <Typography variant="body2">Batch: {vaccine.BatchNumber}</Typography>
@@ -154,7 +154,7 @@ const PatientsDashboardView = () => {
                     fontWeight: 500,
                   }}
                 >
-                  {allergy.AllergenName}
+                  {allergy.allergenName}
                 </Typography>
               ))}
             </Box>
@@ -239,8 +239,8 @@ const PatientsDashboardView = () => {
                           fontWeight: 500,
                         }}
                       >
-                        {allergy.AllergenName}
-                      </Typography>
+                  {allergy.allergenName}
+                  </Typography>
                       ))}
                     </Box>
                   ) : (
@@ -264,7 +264,7 @@ const PatientsDashboardView = () => {
                   <ul>
                     {dashboardData.profile.recentVaccinations.map((vaccine: any, index: number) => (
                       <li key={index}>
-                        {vaccine.VaccineName} - {new Date(vaccine.DateAdministered).toLocaleDateString()}
+                        {vaccine.vaccineName} - {new Date(vaccine.dateAdministered).toLocaleDateString()}
                       </li>
                     ))}
                   </ul>
@@ -285,16 +285,16 @@ const PatientsDashboardView = () => {
                 Your complete medical visit history
                 </Typography>
                 {dashboardData.visits && dashboardData.visits.length > 0 ? (
-                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2}}>
                        {dashboardData.visits.map((visit: any, index: number) => (
                         
-                        <Card>
+                        <Card sx={{ p:2}}>
                           <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
                           <Typography variant="body1">
-                            {new Date(visit.VisitDate).toLocaleDateString()}
+                            {new Date(visit.visitDate).toLocaleDateString()}
                           </Typography>
                           <Typography variant="body2" sx={{ fontWeight: 500 }}>
-                            {visit.DoctorName}
+                            {visit.doctorName}
                           </Typography>
                           </Box>
 
@@ -303,23 +303,23 @@ const PatientsDashboardView = () => {
                           <Grid item xs={12} md={6}>
                             <Box sx={{ mb: 1 }}>
                               <Typography variant="caption" color="text.secondary">Symptoms:</Typography>
-                              <Typography variant="body2">{visit.Symptoms || "N/A"}</Typography>
+                              <Typography variant="body2">{visit.symptoms || "N/A"}</Typography>
                             </Box>
                             <Box>
                               <Typography variant="caption" color="text.secondary">Diagnosis:</Typography>
-                              <Typography variant="body2" fontWeight={600}>{visit.Diagnosis || "N/A"}</Typography>
+                              <Typography variant="body2" fontWeight={600}>{visit.diagnosis || "N/A"}</Typography>
                             </Box>
                           </Grid>
 
                           {/* Right Column */}
                           <Grid item xs={12} md={6}>
                             <Box sx={{ mb: 1 }}>
-                              <Typography variant="caption" color="text.secondary">Prescription:</Typography>
-                              <Typography variant="body2">{visit.Prescription || "N/A"}</Typography>
+                              <Typography variant="caption" color="text.secondary">Treatment:</Typography>
+                              <Typography variant="body2">{visit.treatment || "N/A"}</Typography>
                             </Box>
                             <Box>
                               <Typography variant="caption" color="text.secondary">Doctor's Notes:</Typography>
-                              <Typography variant="body2">{visit.Notes || "N/A"}</Typography>
+                              <Typography variant="body2">{visit.notes || "N/A"}</Typography>
                             </Box>
                           </Grid>
                         </Grid>
