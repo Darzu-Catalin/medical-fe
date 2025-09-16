@@ -187,13 +187,18 @@ export default function RegisterView() {
       <RHFTextField sx={{height: '40px'}} name="email" label="Email" type="email" inputProps={{ onInput: validateEmailInput, inputMode: 'email', autoComplete: 'email' }} />
       <RHFTextField sx={{height: '40px'}} name="password" label="Password" type="password" />
       <RHFTextField sx={{height: '40px'}} name="confirmPassword" label="Confirm Password" type="password" />
-      <RHFTextField sx={{height: '40px'}} name="firstName" label="Name" />
-      <RHFTextField sx={{height: '40px'}} name="lastName" label="Surname" />
-      <RHFTextField sx={{height: '40px'}} name="phoneNumber" label="Phone Number" type="tel" inputProps={{ onInput: validatePhoneInput, inputMode: 'tel', autoComplete: 'tel' }} />
-      <RHFDatePicker name="dateOfBirth" label="Date of Birth" />
-      <RHFTextField sx={{height: '40px'}} name="address" label="Address" />
-      <RHFTextField sx={{height: '40px'}} name="idnp" label="IDNP" />
-
+      <Box sx={{display: 'flex', gap: 1, flexDirection: 'row'}}>
+        <RHFTextField sx={{height: '40px'}} name="firstName" label="Name" />
+        <RHFTextField sx={{height: '40px'}} name="lastName" label="Surname" />
+      </Box>
+      <Box sx={{display: 'flex', gap: 1, flexDirection: 'row'}}>
+        <RHFTextField sx={{height: '40px'}} name="phoneNumber" label="Phone Number" type="tel" inputProps={{ onInput: validatePhoneInput, inputMode: 'tel', autoComplete: 'tel' }} />
+        <RHFDatePicker name="dateOfBirth" label="Date of Birth" />
+      </Box>
+      <Box sx={{display: 'flex', gap: 1, flexDirection: 'row'}}>
+        <RHFTextField sx={{height: '40px'}} name="address" label="Address" />
+        <RHFTextField sx={{height: '40px'}} name="idnp" label="IDNP" />
+      </Box>
 
     {/* Gender Selection Buttons */}
   <Typography

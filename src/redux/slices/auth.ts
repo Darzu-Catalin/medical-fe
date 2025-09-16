@@ -132,14 +132,29 @@ export const getNotificationsAsync = createAsyncThunk(
 )
 
 export const logoutAsync = createAsyncThunk('auth/logout', async (arg, thunkAPI) => {
-  const result = await logoutUserRequest()
-  setSession(null)
+  try {
+    const result = await logoutUserRequest()
+    // Clear session/headers and only remove our auth keys
+    setSession(null)
+    localStorage.removeItem('accessToken')
+    localStorage.removeItem('token')
 
-  // await persistor.purge()
-  localStorage.clear()
-  window.location.reload()
-  // Clear all store data from all reducers persist
-  return result
+    // Clear redux state for this slice
+    thunkAPI.dispatch(setUser(null))
+    thunkAPI.dispatch(setPermissions([]))
+    thunkAPI.dispatch(setToken(''))
+
+    return result
+  } catch (err) {
+    // Even if API call fails, clear local session/state so user is logged out
+    setSession(null)
+    localStorage.removeItem('orbit_accessToken')
+    localStorage.removeItem('token')
+    thunkAPI.dispatch(setUser(null))
+    thunkAPI.dispatch(setPermissions([]))
+    thunkAPI.dispatch(setToken(''))
+    return thunkAPI.rejectWithValue(err)
+  }
 })
 
 // loginAsync
@@ -165,9 +180,15 @@ export const loginAsync = createAsyncThunk(
     }
 
     // setUser
-    thunkAPI.dispatch(setUser(response.user))
-    thunkAPI.dispatch(setPermissions(response.permissions))
-    setSession(response.token)
+    thunkAPI.dispatch(setUser(response.data.user))
+    const perms = Array.isArray(response.data.permissions) && response.data.permissions.length > 0
+      ? response.data.permissions
+      : ['*']
+    thunkAPI.dispatch(setPermissions(perms))
+    setSession(response.data.token)
+    if (response.data.token) {
+      thunkAPI.dispatch(setToken(response.data.token))
+    }
 
     return thunkAPI.fulfillWithValue(response)
   }

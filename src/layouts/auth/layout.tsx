@@ -1,8 +1,7 @@
 
 import Stack from '@mui/material/Stack'
+import Box from '@mui/material/Box'
 import { alpha, useTheme } from '@mui/material/styles'
-
-import { useResponsive } from 'src/hooks/use-responsive'
 
 import { bgGradient } from 'src/theme/css'
 
@@ -19,7 +18,6 @@ type Props = {
 export default function AuthClassicLayout({ children, image, title }: Props) {
   const theme = useTheme()
 
-  const mdUp = useResponsive('up', 'md')
   const renderLogo = (
     <Logo
       sx={{
@@ -39,31 +37,36 @@ export default function AuthClassicLayout({ children, image, title }: Props) {
         px: { xs: 2, md: 8 },
         pt: 'auto',
         pb: { xs: 15, md: 0 },
-        display: 'flex',
-        minHeight: '100vh',
         justifyContent: 'center',
+        borderRadius: 3,
+        // iOS-like fluid glass effect
+        background:
+          'linear-gradient(135deg, rgba(255,255,255,0.12) 0%, rgba(255,255,255,0.04) 100%)',
+        backdropFilter: 'blur(18px) saturate(140%)',
+        WebkitBackdropFilter: 'blur(18px) saturate(140%)',
+        border: `1px solid ${alpha(theme.palette.common.white, theme.palette.mode === 'light' ? 0.18 : 0.12)}`,
+        boxShadow:
+          theme.palette.mode === 'light'
+            ? '0 10px 30px rgba(0,0,0,0.12)'
+            : '0 10px 30px rgba(0,0,0,0.32)',
+        // Subtle inner highlight at the top
+        position: 'relative',
+        '&:before': {
+          content: '""',
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          height: 1,
+          backgroundColor: alpha(theme.palette.common.white, 0.25),
+          borderTopLeftRadius: 12,
+          borderTopRightRadius: 12,
+          pointerEvents: 'none',
+        },
       }}
     >
       {children}
     </Stack>
-  )
-
-  const renderSection = (
-    <Stack
-      flexGrow={1}
-      spacing={10}
-      alignItems="center"
-      justifyContent="center"
-      sx={{
-        ...bgGradient({
-          color: alpha(
-            theme.palette.background.default,
-            theme.palette.mode === 'light' ? 0.0 : 0.0
-          ),
-          imgUrl: `/assets/background/medical_background.png`,
-        }),
-      }}
-    />
   )
 
   return (
@@ -72,13 +75,43 @@ export default function AuthClassicLayout({ children, image, title }: Props) {
       direction="row"
       sx={{
         minHeight: '100vh',
+        position: 'relative',
+        overflow: 'hidden',
       }}
     >
+      {/* Full-bleed background layer */}
+      <Box
+        sx={{
+          position: 'absolute',
+          inset: 0,
+          width: 1,
+          height: 1,
+          ...bgGradient({
+            color: alpha(
+              theme.palette.background.default,
+              theme.palette.mode === 'light' ? 0.0 : 0.0
+            ),
+            imgUrl: `/assets/background/medical_background.png`,
+          }),
+        }}
+      />
       {renderLogo}
 
-      {mdUp && renderSection}
-
-      {renderContent}
+      <Box
+        sx={{
+          flexGrow: 1,
+          minHeight: '100vh',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          backgroundColor: 'transparent',
+          position: 'relative',
+          zIndex: 2,
+          px: { xs: 2, md: 3 },
+        }}
+      >
+        {renderContent}
+      </Box>
     </Stack>
   )
 }

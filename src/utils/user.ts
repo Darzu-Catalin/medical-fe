@@ -5,16 +5,16 @@ export const getUserDisplayName = (user: UserType | null) => {
     return 'Anonim'
   }
 
-  if (user.first_name && user.last_name) {
-    return `${user.first_name} ${user.last_name}`
+  if (user.firstName && user.lastName) {
+    return `${user.firstName} ${user.lastName}`
   }
 
-  if (user.first_name) {
-    return user.first_name
+  if (user.firstName) {
+    return user.firstName
   }
 
-  if (user.last_name) {
-    return user.last_name
+  if (user.lastName) {
+    return user.lastName
   }
 
   return 'Anonim'
