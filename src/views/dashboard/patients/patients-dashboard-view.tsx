@@ -2,6 +2,10 @@
 
 import { Box, Typography, Card, Grid, Divider, CardContent, CardHeader,  Tabs, Tab, TextField, Button } from '@mui/material';
 import { useState, useEffect } from 'react';
+import { CalendarToday, SecurityOutlined, WarningAmberOutlined} from '@mui/icons-material';
+
+
+
 
 const PatientsDashboardView = () => {
   const [activeTab, setActiveTab] = useState(0);
@@ -88,17 +92,58 @@ const PatientsDashboardView = () => {
     {/* Last Visit Card */}
     <Grid item xs={12} md={4}>
       <Card>
-        <CardHeader title="Last Visit" />
+        <CardHeader title={
+                <Box display="flex" alignItems="center" gap={1}>
+                  <CalendarToday color="primary" />
+                  <Typography variant="h6" fontWeight={100} >Last Visit</Typography>
+                </Box>
+              }
+            />
         <CardContent>
           {dashboardData.visits && dashboardData.visits.length > 0 ? (
             (() => {
               const lastVisit = dashboardData.visits[0];
               return (
+                <Box  display="flex"  flexDirection="column" gap={2}>
+                  {/* Date */}
+                  <Box display="flex" justifyContent="space-between">
+                    <Typography variant="body2" fontSize="1.1rem" color="text.secondary">
+                      Date:
+                    </Typography>
+                    <Typography variant="body2" fontSize="1.1rem">
+                      {new Date(lastVisit.visitDate).toLocaleDateString()}
+                    </Typography>
+                  </Box>   
+
+                  <Box display="flex" justifyContent="space-between">
+                    <Typography variant="body2" fontSize="1.1rem" color="text.secondary">
+                      Doctor:
+                    </Typography>
+                    <Typography variant="body2" fontSize="1.1rem">
+                    {lastVisit.doctorName}
+                    </Typography>
+                  </Box>                 
+                  <Divider />
+
+                   {/* Diagnosis */}
                 <Box>
-                  <Typography variant="subtitle1">{new Date(lastVisit.visitDate).toLocaleDateString()}</Typography>
-                  <Typography variant="body2">Doctor: {lastVisit.doctorName}</Typography>
-                  <Typography variant="body2">Diagnosis: {lastVisit.diagnosis || "N/A"}</Typography>
-                  <Typography variant="body2">Notes: {lastVisit.notes || "N/A"}</Typography>
+                  <Typography variant="body2" color="text.secondary" >
+                    Diagnosis:
+                  </Typography>
+                  <Typography variant="body1" fontWeight={600} fontSize="1.1rem">
+                    {lastVisit.diagnosis || "N/A"}
+                  </Typography>
+                </Box>
+                  
+                {/* Notes */}
+                <Box>
+                  <Typography variant="body2" color="text.secondary" >
+                    Notes:
+                  </Typography>
+                  <Typography variant="body2" fontSize="1.1rem">
+                    {lastVisit.notes || "N/A"}
+                  </Typography>
+                </Box>                
                 </Box>
               );
             })()
@@ -112,18 +157,29 @@ const PatientsDashboardView = () => {
     {/* Vaccines Card */}
     <Grid item xs={12} md={4}>
       <Card>
-        <CardHeader title="Vaccines" />
+      <CardHeader title={
+                <Box display="flex" alignItems="center" gap={1}>
+                  <SecurityOutlined color="success" />
+                  <Typography variant="h6" fontWeight={100} > Vaccines</Typography>
+                </Box>
+              }
+            />
         <CardContent>
           {dashboardData.profile.recentVaccinations && dashboardData.profile.recentVaccinations.length > 0 ? (
             dashboardData.profile.recentVaccinations.slice(0, 2).map((vaccine: any, index: number) => (
-              <Box key={index} sx={{ mb: 1 }}>
-                <Typography variant="subtitle1">{vaccine.vaccineName}</Typography>
-                <Typography variant="body2">
+              
+              <Box key={index} sx={{mb: 1, border: "1px solid #ffea08", borderRadius: 2, p: 2, backgroundColor:"#fdffe7"
+              }}>
+                <Box display="flex" justifyContent="space-between" sx={{ mb: 1 }}>
+                  <Typography variant="body1" fontWeight={600} fontSize="1.1rem">
+                  {vaccine.vaccineName}</Typography>
+                  <Typography color="#cfa715" border="1px solid #ffea08" borderRadius={1} px={2}> {new Date(vaccine.dateAdministered) <= new Date() ? "Done" : "Not done"}</Typography>
+                </Box>
+                
+          
+                <Typography variant="body2" color="text.secondary" fontSize="0.9rem">
                   Date: {new Date(vaccine.dateAdministered).toLocaleDateString()}
                 </Typography>
-                {vaccine.BatchNumber && (
-                  <Typography variant="body2">Batch: {vaccine.BatchNumber}</Typography>
-                )}
               </Box>
             ))
           ) : (
@@ -136,27 +192,43 @@ const PatientsDashboardView = () => {
     {/* Health Alerts Card */}
     <Grid item xs={12} md={4}>
       <Card>
-        <CardHeader title="Health Alerts" />
+      <CardHeader title={
+                <Box display="flex" alignItems="center" gap={1}>
+                  <WarningAmberOutlined color="error" />
+                  <Typography variant="h6" fontWeight={100} > Health Alerts</Typography>
+                </Box>
+              }
+            />
         <CardContent>
           {dashboardData.profile.activeAllergies && dashboardData.profile.activeAllergies.length > 0 ? (
-            <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
-              {dashboardData.profile.activeAllergies.map((allergy: any, index: number) => (
-                <Typography
-                  key={index}
-                  variant="body2"
-                  sx={{
-                    display: 'inline-block',
-                    backgroundColor: '#d9534f',
-                    color: '#fff',
-                    padding: '4px 12px',
-                    borderRadius: '16px',
-                    fontSize: '0.875rem',
-                    fontWeight: 500,
-                  }}
-                >
-                  {allergy.allergenName}
-                </Typography>
-              ))}
+            <Box sx={{ display: 'flex', flexDirection:'column', gap: 1, mb: 1, border: "1px solid #ffa592", borderRadius: 2, p: 2, backgroundColor:"#fff0f2"}}>
+
+                <Box display="flex" sx={{ mb: 1 }}>
+                <WarningAmberOutlined color="error" sx={{mr:1}} />
+                  <Typography variant="body1" fontWeight={600} fontSize="1.1rem">
+                  Allergies</Typography>
+                </Box>
+
+                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+                  {dashboardData.profile.activeAllergies.map((allergy: any, index: number) => (
+                  <Typography
+                    key={index}
+                    variant="body2"
+                    sx={{
+                      display: 'inline-block',
+                      backgroundColor: '#d9534f',
+                      color: '#fff',
+                      padding: '4px 12px',
+                      borderRadius: '16px',
+                      fontSize: '0.875rem',
+                      fontWeight: 500,
+                    }}
+                  >
+                    {allergy.allergenName}
+                  </Typography>
+                  )
+                )}
+                </Box>
             </Box>
           ) : (
             <Typography variant="body2" color="text.secondary">No allergens.</Typography>
@@ -170,48 +242,48 @@ const PatientsDashboardView = () => {
 
           {activeTab === 1 && (
             <Card sx={{ mb: 3, p: 2 }}>
-              <CardContent>
-                <Typography variant="h6" gutterBottom>
+              <CardContent sx={{ fontSize: '1.1rem' }}>
+                <Typography variant="h6" gutterBottom >
                   Personal Information
                 </Typography>
-                <Typography variant="body2" color="text.secondary" gutterBottom>
+                <Typography variant="body2" color="text.secondary" gutterBottom  fontSize="1.1rem">
                   Your basic health profile information
                 </Typography>
 
-                <Grid container spacing={2} sx={{ mt: 1 }}>
+                <Grid container spacing={2} sx={{ mt: 1 }} >
                   <Grid item xs={12} md={6}>
                     <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-                      <Typography variant="body2" color="text.secondary">Full Name:</Typography>
-                      <Typography fontWeight={500}>
+                      <Typography variant="body2" color="text.secondary" fontSize= '1.1rem' >Full Name:</Typography>
+                      <Typography fontWeight={500} fontSize= '1.1rem'>
                         {dashboardData.profile?.firstName} {dashboardData.profile?.lastName}
                       </Typography>
                     </Box>
                     <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-                      <Typography variant="body2" color="text.secondary">IDNP:</Typography>
-                      <Typography fontWeight={500}>{dashboardData.profile?.idnp || 'N/A'}</Typography>
+                      <Typography variant="body2" color="text.secondary" fontSize= '1.1rem'>IDNP:</Typography>
+                      <Typography fontWeight={500} fontSize= '1.1rem'>{dashboardData.profile?.idnp || 'N/A'}</Typography>
                     </Box>
                     <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-                      <Typography variant="body2" color="text.secondary">Date of Birth:</Typography>
-                      <Typography fontWeight={500}>
+                      <Typography variant="body2" color="text.secondary" fontSize= '1.1rem'>Date of Birth:</Typography>
+                      <Typography fontWeight={500} fontSize= '1.1rem'>
                         {dashboardData.profile?.dateOfBirth
                           ? new Intl.DateTimeFormat('en-US', { year: 'numeric', month: 'long', day: 'numeric' }).format(new Date(dashboardData.profile.dateOfBirth))
                           : 'N/A'}
                       </Typography>
                     </Box>
                     <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-                      <Typography variant="body2" color="text.secondary">Blood Type:</Typography>
-                      <Typography color="primary" sx={{ px: 1 }}>{dashboardData.profile?.bloodType || 'N/A'}</Typography>
+                      <Typography variant="body2" color="text.secondary" fontSize= '1.1rem'>Blood Type:</Typography>
+                      <Typography color="primary" sx={{ px: 1 }} fontSize= '1.1rem'>{dashboardData.profile?.bloodType || 'N/A'}</Typography>
                     </Box>
                   </Grid>
 
                   <Grid item xs={12} md={6}>
                     <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-                      <Typography variant="body2" color="text.secondary">Phone:</Typography>
-                      <Typography fontWeight={500}>{dashboardData.profile?.phoneNumber || 'N/A'}</Typography>
+                      <Typography variant="body2" color="text.secondary" fontSize= '1.1rem'>Phone:</Typography>
+                      <Typography fontWeight={500} fontSize= '1.1rem'>{dashboardData.profile?.phoneNumber || 'N/A'}</Typography>
                     </Box>
                     <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-                      <Typography variant="body2" color="text.secondary">Address:</Typography>
-                      <Typography fontWeight={500}>{dashboardData.profile?.address || 'N/A'}</Typography>
+                      <Typography variant="body2" color="text.secondary" fontSize= '1.1rem'>Address:</Typography>
+                      <Typography fontWeight={500} fontSize= '1.1rem'>{dashboardData.profile?.address || 'N/A'}</Typography>
                     </Box>
                   </Grid>
                 </Grid>
@@ -219,81 +291,85 @@ const PatientsDashboardView = () => {
                 <Divider sx={{ my: 2 }} />
 
                 <Box>
-                  <Typography variant="subtitle1" gutterBottom>
-                    Known Allergies
-                  </Typography>
+                <Typography variant="h6" gutterBottom>
+                  Known Allergies
+                </Typography>
 
-                  {dashboardData.profile?.activeAllergies && dashboardData.profile.activeAllergies.length > 0 ? (
-                    <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
-                      {dashboardData.profile.activeAllergies.map((allergy: any, index: number) => (
-                        <Typography
-                        key={index}
-                        variant="body2"
-                        sx={{
-                          display: 'inline-block',
-                          backgroundColor: '#d9534f',
-                          color: '#fff',
-                          padding: '4px 12px',
-                          borderRadius: '16px',
-                          fontSize: '0.875rem',
-                          fontWeight: 500,
-                        }}
-                      >
-                  {allergy.allergenName}
-                  </Typography>
-                      ))}
-                    </Box>
-                  ) : (
-                    <Typography color="text.secondary">No known allergies.</Typography>
-                  )}
-                </Box>
+                {dashboardData.profile?.activeAllergies && dashboardData.profile.activeAllergies.length > 0 ? (
+                  <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+                    {dashboardData.profile.activeAllergies.map((allergy: any, index: number) => (
+                      <Box key={index} sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.5 , backgroundColor: '#d9534f', color: '#fff', padding: '4px 12px',
+                        borderRadius: '10px',
+                        fontSize: '0.875rem',
+                        fontWeight: 500,}}>
+                        <WarningAmberOutlined sx={{color: '#fff', fontSize: '1rem'}}/>
+                        <Typography>{allergy.allergenName}</Typography>
+                      </Box>
+                    ))}
+                  </Box>
+                ) : (
+                  <Typography color="text.secondary">No known allergies.</Typography>
+                )}
+              </Box>
+
               </CardContent>
             </Card>
           )}
 
           {activeTab === 2 && (
-            <Card sx={{ mb: 3 }}>
+            <Card sx={{ mb: 3, p: 2}}>
               <CardContent>
-                <Typography variant="h6" gutterBottom>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+                <SecurityOutlined sx={{ fontSize: 28, color: '#000' }} />
+                <Typography variant="h6" gutterBottom >
                   Vaccination History
                 </Typography>
-                <Typography variant="body2" color="text.secondary" gutterBottom>
+            </Box>
+                <Typography variant="body2" color="text.secondary"  fontSize="1.1rem" gutterBottom>
                   Your complete vaccination record
                 </Typography>
-                {dashboardData.profile?.recentVaccinations && dashboardData.profile.recentVaccinations.length > 0 ? (
-                  <ul>
-                    {dashboardData.profile.recentVaccinations.map((vaccine: any, index: number) => (
-                      <li key={index}>
-                        {vaccine.vaccineName} - {new Date(vaccine.dateAdministered).toLocaleDateString()}
-                      </li>
-                    ))}
-                  </ul>
-                ) : (
-                  <Typography color="text.secondary">No vaccinations recorded.</Typography>
-                )}
+                {dashboardData.profile.recentVaccinations && dashboardData.profile.recentVaccinations.length > 0 ? (
+                dashboardData.profile.recentVaccinations.slice(0, 2).map((vaccine: any, index: number) => (
+                  
+                  <Box key={index} sx={{mb: 1, border: "1px solid #b1b1b1", borderRadius: 2, p: 2}}>
+                    <Box display="flex" justifyContent="space-between" sx={{ mb: 1 }}>
+                      <Typography variant="body1" fontWeight={600} fontSize="1.1rem">
+                      {vaccine.vaccineName}</Typography>
+                      <Typography border="1px solid #b1b1b1" borderRadius={1} px={2}> {new Date(vaccine.dateAdministered) <= new Date() ? "Done" : "Not done"}</Typography>
+                    </Box>
+                    
+              
+                    <Typography variant="body2" color="text.secondary" fontSize="0.9rem">
+                    Administered: {new Date(vaccine.dateAdministered).toLocaleDateString()}
+                    </Typography>
+                  </Box>
+                ))
+              ) : (
+                <Typography variant="body2">No vaccinations yet</Typography>
+          )}
               </CardContent>
             </Card>
           )}
 
           {activeTab === 3 && (
-            <Card sx={{ mb: 3 }}>
+            <Card sx={{ mb: 3, p: 2 }}>
               <CardContent>
                 <Typography variant="h6" gutterBottom>
                   Visit History
                 </Typography>
-                <Typography variant="body2" color="text.secondary" gutterBottom>
+                <Typography variant="body2" color="text.secondary" gutterBottom  fontSize="1.1rem">
                 Your complete medical visit history
                 </Typography>
                 {dashboardData.visits && dashboardData.visits.length > 0 ? (
                   <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2}}>
                        {dashboardData.visits.map((visit: any, index: number) => (
                         
-                        <Card sx={{ p:2}}>
+                        <Card sx={{ p:2, border: "1px solid #b1b1b1", borderRadius: 2}}>
                           <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-                          <Typography variant="body1">
+                          <Typography variant="body1" fontWeight={600} fontSize="1.1rem">
                             {new Date(visit.visitDate).toLocaleDateString()}
                           </Typography>
-                          <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                          <Typography variant="body2" sx={{ fontWeight: 500 , fontSize: "1.1rem", border: "1px solid #b1b1b1", borderRadius: 1, px:2}}>
                             {visit.doctorName}
                           </Typography>
                           </Box>
@@ -302,24 +378,24 @@ const PatientsDashboardView = () => {
                           {/* Left Column */}
                           <Grid item xs={12} md={6}>
                             <Box sx={{ mb: 1 }}>
-                              <Typography variant="caption" color="text.secondary">Symptoms:</Typography>
-                              <Typography variant="body2">{visit.symptoms || "N/A"}</Typography>
+                              <Typography variant="caption" color="text.secondary" fontSize= "1.1rem">Symptoms:</Typography>
+                              <Typography variant="body2" fontSize= "1.1rem">{visit.symptoms || "N/A"}</Typography>
                             </Box>
                             <Box>
-                              <Typography variant="caption" color="text.secondary">Diagnosis:</Typography>
-                              <Typography variant="body2" fontWeight={600}>{visit.diagnosis || "N/A"}</Typography>
+                              <Typography variant="caption" color="text.secondary" fontSize= "1.1rem">Diagnosis:</Typography>
+                              <Typography variant="body2" fontWeight={600} fontSize= "1.1rem">{visit.diagnosis || "N/A"}</Typography>
                             </Box>
                           </Grid>
 
                           {/* Right Column */}
                           <Grid item xs={12} md={6}>
                             <Box sx={{ mb: 1 }}>
-                              <Typography variant="caption" color="text.secondary">Treatment:</Typography>
-                              <Typography variant="body2">{visit.treatment || "N/A"}</Typography>
+                              <Typography variant="caption" color="text.secondary" fontSize= "1.1rem">Treatment:</Typography>
+                              <Typography variant="body2" fontSize= "1.1rem">{visit.treatment || "N/A"}</Typography>
                             </Box>
                             <Box>
-                              <Typography variant="caption" color="text.secondary">Doctor's Notes:</Typography>
-                              <Typography variant="body2">{visit.notes || "N/A"}</Typography>
+                              <Typography variant="caption" color="text.secondary" fontSize= "1.1rem">Doctor's Notes:</Typography>
+                              <Typography variant="body2" fontSize= "1.1rem">{visit.notes || "N/A"}</Typography>
                             </Box>
                           </Grid>
                         </Grid>
