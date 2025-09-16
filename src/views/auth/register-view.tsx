@@ -12,6 +12,7 @@ import Alert from '@mui/material/Alert'
 import Stack from '@mui/material/Stack'
 import Typography from '@mui/material/Typography'
 import { Box, Link } from '@mui/material'
+import { alpha } from '@mui/material/styles'
 // @mui
 import LoadingButton from '@mui/lab/LoadingButton'
 
@@ -159,17 +160,18 @@ export default function RegisterView() {
         variant="h4"
         sx={{
           mb: -2,
-          mt: 4,
+          mt: 0,
+          color: "white",
         }}
       >
-        Înregistrează-te
+        Registration
       </Typography>
 
       <Stack direction="row" spacing={0.5}>
-        <Typography variant="body2">Ai deja un cont?</Typography>
+        <Typography variant="body2" color = "white">Already have an account?</Typography>
 
-        <Link component={RouterLink} href={paths.auth.login} variant="subtitle2">
-            Loghează-te
+        <Link component={RouterLink} href={paths.auth.login} variant="subtitle2" color="white" sx={{ "&:hover": { color: "#166bd4ff", textDecoration: 'none' } }}>
+            Login 
         </Link>
       </Stack>
     </Stack>
@@ -184,26 +186,355 @@ export default function RegisterView() {
     >
       {!!errorMsg && <Alert severity="error">{errorMsg}</Alert>}
 
-      <RHFTextField sx={{height: '40px'}} name="email" label="Email" type="email" inputProps={{ onInput: validateEmailInput, inputMode: 'email', autoComplete: 'email' }} />
-      <RHFTextField sx={{height: '40px'}} name="password" label="Password" type="password" />
-      <RHFTextField sx={{height: '40px'}} name="confirmPassword" label="Confirm Password" type="password" />
+  {/* Reusable glass input styling similar to login-view */}
+      <RHFTextField
+        name="email"
+        label="Email"
+        type="email"
+        inputProps={{ onInput: validateEmailInput, inputMode: 'email', autoComplete: 'email' }}
+        sx={(theme) => ({
+          height: '40px',
+          '& .MuiOutlinedInput-root': {
+            background: 'rgba(255,255,255,0.06)',
+            backdropFilter: 'blur(12px) saturate(140%)',
+            WebkitBackdropFilter: 'blur(12px) saturate(140%)',
+            borderRadius: 2,
+            '&.Mui-focused': {
+              background: 'rgba(255,255,255,0.06)',
+            },
+            '& .MuiOutlinedInput-notchedOutline': {
+              borderColor: 'rgba(255,255,255,0.24)',
+            },
+            '&:hover .MuiOutlinedInput-notchedOutline': {
+              borderColor: 'rgba(255,255,255,0.48)',
+            },
+            '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+              borderColor: theme.palette.primary.light,
+              boxShadow: `0 0 0 1px ${alpha(theme.palette.primary.light, 0.35)}`,
+            },
+          },
+          '& .MuiInputBase-input': {
+            color: theme.palette.common.white,
+          },
+          '& .MuiInputLabel-root': {
+            color: 'rgba(255,255,255,0.72)',
+            '&.Mui-focused': {
+              color: 'rgba(255,255,255,0.72)',
+            },
+          },
+          '& .MuiInputBase-input:-webkit-autofill, & .MuiInputBase-input:-webkit-autofill:hover, & .MuiInputBase-input:-webkit-autofill:focus': {
+            WebkitBoxShadow: '0 0 0 1000px rgba(255,255,255,0.06) inset',
+            WebkitTextFillColor: theme.palette.common.white,
+            caretColor: theme.palette.common.white,
+            transition: 'background-color 9999s ease-in-out 0s',
+          },
+        })}
+      />
+
+      <RHFTextField
+        name="password"
+        label="Password"
+        type="password"
+        sx={(theme) => ({
+          height: '40px',
+          '& .MuiOutlinedInput-root': {
+            background: 'rgba(255,255,255,0.06)',
+            backdropFilter: 'blur(12px) saturate(140%)',
+            WebkitBackdropFilter: 'blur(12px) saturate(140%)',
+            borderRadius: 2,
+            '&.Mui-focused': {
+              background: 'rgba(255,255,255,0.06)',
+            },
+            '& .MuiOutlinedInput-notchedOutline': {
+              borderColor: 'rgba(255,255,255,0.24)',
+            },
+            '&:hover .MuiOutlinedInput-notchedOutline': {
+              borderColor: 'rgba(255,255,255,0.48)',
+            },
+            '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+              borderColor: theme.palette.primary.light,
+              boxShadow: `0 0 0 1px ${alpha(theme.palette.primary.light, 0.35)}`,
+            },
+          },
+          '& .MuiInputBase-input': {
+            color: theme.palette.common.white,
+          },
+          '& .MuiInputLabel-root': {
+            color: 'rgba(255,255,255,0.72)',
+            '&.Mui-focused': {
+              color: 'rgba(255,255,255,0.72)',
+            },
+          },
+          '& .MuiInputBase-input:-webkit-autofill, & .MuiInputBase-input:-webkit-autofill:hover, & .MuiInputBase-input:-webkit-autofill:focus': {
+            WebkitBoxShadow: '0 0 0 1000px rgba(255,255,255,0.06) inset',
+            WebkitTextFillColor: theme.palette.common.white,
+            caretColor: theme.palette.common.white,
+            transition: 'background-color 9999s ease-in-out 0s',
+          },
+        })}
+      />
+
+      <RHFTextField
+        name="confirmPassword"
+        label="Confirm Password"
+        type="password"
+        sx={(theme) => ({
+          height: '40px',
+          '& .MuiOutlinedInput-root': {
+            background: 'rgba(255,255,255,0.06)',
+            backdropFilter: 'blur(12px) saturate(140%)',
+            WebkitBackdropFilter: 'blur(12px) saturate(140%)',
+            borderRadius: 2,
+            '&.Mui-focused': {
+              background: 'rgba(255,255,255,0.06)',
+            },
+            '& .MuiOutlinedInput-notchedOutline': {
+              borderColor: 'rgba(255,255,255,0.24)',
+            },
+            '&:hover .MuiOutlinedInput-notchedOutline': {
+              borderColor: 'rgba(255,255,255,0.48)',
+            },
+            '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+              borderColor: theme.palette.primary.light,
+              boxShadow: `0 0 0 1px ${alpha(theme.palette.primary.light, 0.35)}`,
+            },
+          },
+          '& .MuiInputBase-input': {
+            color: theme.palette.common.white,
+          },
+          '& .MuiInputLabel-root': {
+            color: 'rgba(255,255,255,0.72)',
+            '&.Mui-focused': {
+              color: 'rgba(255,255,255,0.72)',
+            },
+          },
+        })}
+      />
+
       <Box sx={{display: 'flex', gap: 1, flexDirection: 'row'}}>
-        <RHFTextField sx={{height: '40px'}} name="firstName" label="Name" />
-        <RHFTextField sx={{height: '40px'}} name="lastName" label="Surname" />
+        <RHFTextField
+          name="firstName"
+          label="Name"
+          sx={(theme) => ({
+            height: '40px',
+            '& .MuiOutlinedInput-root': {
+              background: 'rgba(255,255,255,0.06)',
+              backdropFilter: 'blur(12px) saturate(140%)',
+              WebkitBackdropFilter: 'blur(12px) saturate(140%)',
+              borderRadius: 2,
+              '&.Mui-focused': {
+                background: 'rgba(255,255,255,0.06)',
+              },
+              '& .MuiOutlinedInput-notchedOutline': {
+                borderColor: 'rgba(255,255,255,0.24)',
+              },
+              '&:hover .MuiOutlinedInput-notchedOutline': {
+                borderColor: 'rgba(255,255,255,0.48)',
+              },
+              '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                borderColor: theme.palette.primary.light,
+                boxShadow: `0 0 0 1px ${alpha(theme.palette.primary.light, 0.35)}`,
+              },
+            },
+            '& .MuiInputBase-input': {
+              color: theme.palette.common.white,
+            },
+            '& .MuiInputLabel-root': {
+              color: 'rgba(255,255,255,0.72)',
+              '&.Mui-focused': {
+                color: 'rgba(255,255,255,0.72)',
+              },
+            },
+          })}
+        />
+        <RHFTextField
+          name="lastName"
+          label="Surname"
+          sx={(theme) => ({
+            height: '40px',
+            '& .MuiOutlinedInput-root': {
+              background: 'rgba(255,255,255,0.06)',
+              backdropFilter: 'blur(12px) saturate(140%)',
+              WebkitBackdropFilter: 'blur(12px) saturate(140%)',
+              borderRadius: 2,
+              '&.Mui-focused': {
+                background: 'rgba(255,255,255,0.06)',
+              },
+              '& .MuiOutlinedInput-notchedOutline': {
+                borderColor: 'rgba(255,255,255,0.24)',
+              },
+              '&:hover .MuiOutlinedInput-notchedOutline': {
+                borderColor: 'rgba(255,255,255,0.48)',
+              },
+              '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                borderColor: theme.palette.primary.light,
+                boxShadow: `0 0 0 1px ${alpha(theme.palette.primary.light, 0.35)}`,
+              },
+            },
+            '& .MuiInputBase-input': {
+              color: theme.palette.common.white,
+            },
+            '& .MuiInputLabel-root': {
+              color: 'rgba(255,255,255,0.72)',
+              '&.Mui-focused': {
+                color: 'rgba(255,255,255,0.72)',
+              },
+            },
+          })}
+        />
       </Box>
       <Box sx={{display: 'flex', gap: 1, flexDirection: 'row'}}>
-        <RHFTextField sx={{height: '40px'}} name="phoneNumber" label="Phone Number" type="tel" inputProps={{ onInput: validatePhoneInput, inputMode: 'tel', autoComplete: 'tel' }} />
-        <RHFDatePicker name="dateOfBirth" label="Date of Birth" />
+        <RHFTextField
+          name="phoneNumber"
+          label="Phone Number"
+          type="tel"
+          inputProps={{ onInput: validatePhoneInput, inputMode: 'tel', autoComplete: 'tel' }}
+          sx={(theme) => ({
+            height: '40px',
+            '& .MuiOutlinedInput-root': {
+              background: 'rgba(255,255,255,0.06)',
+              backdropFilter: 'blur(12px) saturate(140%)',
+              WebkitBackdropFilter: 'blur(12px) saturate(140%)',
+              borderRadius: 2,
+              '&.Mui-focused': {
+                background: 'rgba(255,255,255,0.06)',
+              },
+              '& .MuiOutlinedInput-notchedOutline': {
+                borderColor: 'rgba(255,255,255,0.24)',
+              },
+              '&:hover .MuiOutlinedInput-notchedOutline': {
+                borderColor: 'rgba(255,255,255,0.48)',
+              },
+              '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                borderColor: theme.palette.primary.light,
+                boxShadow: `0 0 0 1px ${alpha(theme.palette.primary.light, 0.35)}`,
+              },
+            },
+            '& .MuiInputBase-input': {
+              color: theme.palette.common.white,
+            },
+            '& .MuiInputLabel-root': {
+              color: 'rgba(255,255,255,0.72)',
+              '&.Mui-focused': {
+                color: 'rgba(255,255,255,0.72)',
+              },
+            },
+          })}
+        />
+        <RHFDatePicker
+          name="dateOfBirth"
+          label="Date of Birth"
+          textFieldSx={(theme) => ({
+            height: '40px',
+            '& .MuiOutlinedInput-root': {
+              background: 'rgba(255,255,255,0.06)',
+              backdropFilter: 'blur(12px) saturate(140%)',
+              WebkitBackdropFilter: 'blur(12px) saturate(140%)',
+              borderRadius: 2,
+              '&.Mui-focused': {
+                background: 'rgba(255,255,255,0.06)',
+              },
+              '& .MuiOutlinedInput-notchedOutline': {
+                borderColor: 'rgba(255,255,255,0.24)',
+              },
+              '&:hover .MuiOutlinedInput-notchedOutline': {
+                borderColor: 'rgba(255,255,255,0.48)',
+              },
+              '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                borderColor: theme.palette.primary.light,
+                boxShadow: `0 0 0 1px ${alpha(theme.palette.primary.light, 0.35)}`,
+              },
+            },
+            '& .MuiInputBase-input': {
+              color: theme.palette.common.white,
+            },
+            '& .MuiInputLabel-root': {
+              color: 'rgba(255,255,255,0.72)',
+              '&.Mui-focused': {
+                color: 'rgba(255,255,255,0.72)',
+              },
+            },
+          })}
+        />
       </Box>
       <Box sx={{display: 'flex', gap: 1, flexDirection: 'row'}}>
-        <RHFTextField sx={{height: '40px'}} name="address" label="Address" />
-        <RHFTextField sx={{height: '40px'}} name="idnp" label="IDNP" />
+        <RHFTextField
+          name="address"
+          label="Address"
+          sx={(theme) => ({
+            height: '40px',
+            '& .MuiOutlinedInput-root': {
+              background: 'rgba(255,255,255,0.06)',
+              backdropFilter: 'blur(12px) saturate(140%)',
+              WebkitBackdropFilter: 'blur(12px) saturate(140%)',
+              borderRadius: 2,
+              '&.Mui-focused': {
+                background: 'rgba(255,255,255,0.06)',
+              },
+              '& .MuiOutlinedInput-notchedOutline': {
+                borderColor: 'rgba(255,255,255,0.24)',
+              },
+              '&:hover .MuiOutlinedInput-notchedOutline': {
+                borderColor: 'rgba(255,255,255,0.48)',
+              },
+              '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                borderColor: theme.palette.primary.light,
+                boxShadow: `0 0 0 1px ${alpha(theme.palette.primary.light, 0.35)}`,
+              },
+            },
+            '& .MuiInputBase-input': {
+              color: theme.palette.common.white,
+            },
+            '& .MuiInputLabel-root': {
+              color: 'rgba(255,255,255,0.72)',
+              '&.Mui-focused': {
+                color: 'rgba(255,255,255,0.72)',
+              },
+            },
+          })}
+        />
+        <RHFTextField
+          name="idnp"
+          label="IDNP"
+          sx={(theme) => ({
+            height: '40px',
+            '& .MuiOutlinedInput-root': {
+              background: 'rgba(255,255,255,0.06)',
+              backdropFilter: 'blur(12px) saturate(140%)',
+              WebkitBackdropFilter: 'blur(12px) saturate(140%)',
+              borderRadius: 2,
+              '&.Mui-focused': {
+                background: 'rgba(255,255,255,0.06)',
+              },
+              '& .MuiOutlinedInput-notchedOutline': {
+                borderColor: 'rgba(255,255,255,0.24)',
+              },
+              '&:hover .MuiOutlinedInput-notchedOutline': {
+                borderColor: 'rgba(255,255,255,0.48)',
+              },
+              '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                borderColor: theme.palette.primary.light,
+                boxShadow: `0 0 0 1px ${alpha(theme.palette.primary.light, 0.35)}`,
+              },
+            },
+            '& .MuiInputBase-input': {
+              color: theme.palette.common.white,
+            },
+            '& .MuiInputLabel-root': {
+              color: 'rgba(255,255,255,0.72)',
+              '&.Mui-focused': {
+                color: 'rgba(255,255,255,0.72)',
+              },
+            },
+          })}
+        />
       </Box>
 
     {/* Gender Selection Buttons */}
   <Typography
     variant="caption"
     component="div"
+    color={"white"}
     sx={{
       display: 'inline-flex',
       alignItems: 'center',
@@ -213,8 +544,8 @@ export default function RegisterView() {
   </Typography>
   <Box
     sx={{
-      mb: 0,
-      mt: -1,
+      mb: -1,
+      mt: -2,
       display: 'flex',
       gap: 1,
     }}
@@ -231,6 +562,23 @@ export default function RegisterView() {
         methods.setValue('gender', newValue)
         methods.trigger('gender')
       }}
+      sx={(theme) => ({
+        transition: 'background-color 160ms ease, border-color 160ms ease, box-shadow 160ms ease',
+        '&.MuiButton-outlined, &.MuiButton-outlinedInherit': {
+          color: 'rgba(255,255,255,0.92)',
+          borderColor: 'rgba(255,255,255,0.32)',
+          '&:hover': {
+            borderColor: 'rgba(255,255,255,0.6)',
+            backgroundColor: 'rgba(255,255,255,0.08)',
+          },
+        },
+        '&.MuiButton-containedPrimary': {
+          color: theme.palette.common.white,
+          '&:hover': {
+            backgroundColor: theme.palette.primary.light,
+          },
+        },
+      })}
     >
       Male
     </LoadingButton>
@@ -247,6 +595,23 @@ export default function RegisterView() {
         methods.setValue('gender', newValue)
         methods.trigger('gender')
       }}
+      sx={(theme) => ({
+        transition: 'background-color 160ms ease, border-color 160ms ease, box-shadow 160ms ease',
+        '&.MuiButton-outlined, &.MuiButton-outlinedInherit': {
+          color: 'rgba(255,255,255,0.92)',
+          borderColor: 'rgba(255,255,255,0.32)',
+          '&:hover': {
+            borderColor: 'rgba(255,255,255,0.6)',
+            backgroundColor: 'rgba(255,255,255,0.08)',
+          },
+        },
+        '&.MuiButton-containedPrimary': {
+          color: theme.palette.common.white,
+          '&:hover': {
+            backgroundColor: theme.palette.primary.light,
+          },
+        },
+      })}
     >
       Female
     </LoadingButton>
@@ -258,6 +623,7 @@ export default function RegisterView() {
           <Typography
             variant="caption"
             component="div"
+            color={"white"}
             sx={{
               display: 'inline-flex',
               alignItems: 'center',
@@ -267,8 +633,8 @@ export default function RegisterView() {
           </Typography>
           <Box
             sx={{
-              mb: 2,
-              mt: -1,
+              mb: 1,
+              mt: -2,
               display: 'flex',
               justifyContent: 'space-between',
               alignItems: 'center',
@@ -286,6 +652,23 @@ export default function RegisterView() {
                 methods.setValue('userRole', newValue)
                 methods.trigger('userRole')
               }}
+              sx={(theme) => ({
+                transition: 'background-color 160ms ease, border-color 160ms ease, box-shadow 160ms ease',
+                '&.MuiButton-outlined, &.MuiButton-outlinedInherit': {
+                  color: 'rgba(255,255,255,0.92)',
+                  borderColor: 'rgba(255,255,255,0.32)',
+                  '&:hover': {
+                    borderColor: 'rgba(255,255,255,0.6)',
+                    backgroundColor: 'rgba(255,255,255,0.08)',
+                  },
+                },
+                '&.MuiButton-containedPrimary': {
+                  color: theme.palette.common.white,
+                  '&:hover': {
+                    backgroundColor: theme.palette.primary.light,
+                  },
+                },
+              })}
             >
               User
             </LoadingButton>
@@ -295,9 +678,24 @@ export default function RegisterView() {
               color={methods.watch('userRole') === 2 ? 'primary' : 'inherit'}
               size="small"
               type="button"
-              sx={{
+              sx={(theme) => ({
                 mx: 1,
-              }}
+                transition: 'background-color 160ms ease, border-color 160ms ease, box-shadow 160ms ease',
+                '&.MuiButton-outlined, &.MuiButton-outlinedInherit': {
+                  color: 'rgba(255,255,255,0.92)',
+                  borderColor: 'rgba(255,255,255,0.32)',
+                  '&:hover': {
+                    borderColor: 'rgba(255,255,255,0.6)',
+                    backgroundColor: 'rgba(255,255,255,0.08)',
+                  },
+                },
+                '&.MuiButton-containedPrimary': {
+                  color: theme.palette.common.white,
+                  '&:hover': {
+                    backgroundColor: theme.palette.primary.light,
+                  },
+                },
+              })}
               variant={methods.watch('userRole') === 2 ? 'contained' : 'outlined'}
               onClick={() => {
                 const currentValue = methods.getValues('userRole')
@@ -321,6 +719,23 @@ export default function RegisterView() {
                 methods.setValue('userRole', newValue)
                 methods.trigger('userRole')
               }}
+              sx={(theme) => ({
+                transition: 'background-color 160ms ease, border-color 160ms ease, box-shadow 160ms ease',
+                '&.MuiButton-outlined, &.MuiButton-outlinedInherit': {
+                  color: 'rgba(255,255,255,0.92)',
+                  borderColor: 'rgba(255,255,255,0.32)',
+                  '&:hover': {
+                    borderColor: 'rgba(255,255,255,0.6)',
+                    backgroundColor: 'rgba(255,255,255,0.08)',
+                  },
+                },
+                '&.MuiButton-containedPrimary': {
+                  color: theme.palette.common.white,
+                  '&:hover': {
+                    backgroundColor: theme.palette.primary.light,
+                  },
+                },
+              })}
             >
               Administrator
             </LoadingButton>

@@ -33,12 +33,11 @@ export default function AuthClassicLayout({ children, image, title }: Props) {
       sx={{
         width: 1,
         mx: 'auto',
-        maxWidth: 480,
-        px: { xs: 2, md: 8 },
-        pt: 'auto',
-        pb: { xs: 15, md: 0 },
+        maxWidth: 400,
+        px: { xs: 4, md: 4 },
+        py: { xs: 4, md: 4 },
         justifyContent: 'center',
-        borderRadius: 3,
+        borderRadius: 4,
         // iOS-like fluid glass effect
         background:
           'linear-gradient(135deg, rgba(255,255,255,0.12) 0%, rgba(255,255,255,0.04) 100%)',
@@ -58,9 +57,8 @@ export default function AuthClassicLayout({ children, image, title }: Props) {
           left: 0,
           right: 0,
           height: 1,
-          backgroundColor: alpha(theme.palette.common.white, 0.25),
-          borderTopLeftRadius: 12,
-          borderTopRightRadius: 12,
+          backgroundColor: alpha(theme.palette.common.black, 0.2),
+          borderRadius: 4,
           pointerEvents: 'none',
         },
       }}
