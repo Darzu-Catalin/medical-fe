@@ -222,6 +222,7 @@ export default function LoginView() {
         type="submit"
         variant="contained"
         loading={isSubmitting}
+        sx={{ borderRadius: 2 }}
       >
         Login
       </LoadingButton>

@@ -308,6 +308,12 @@ export default function RegisterView() {
               color: 'rgba(255,255,255,0.72)',
             },
           },
+          '& .MuiInputBase-input:-webkit-autofill, & .MuiInputBase-input:-webkit-autofill:hover, & .MuiInputBase-input:-webkit-autofill:focus': {
+            WebkitBoxShadow: '0 0 0 1000px rgba(255,255,255,0.06) inset',
+            WebkitTextFillColor: theme.palette.common.white,
+            caretColor: theme.palette.common.white,
+            transition: 'background-color 9999s ease-in-out 0s',
+          },
         })}
       />
 
@@ -345,6 +351,12 @@ export default function RegisterView() {
                 color: 'rgba(255,255,255,0.72)',
               },
             },
+            '& .MuiInputBase-input:-webkit-autofill, & .MuiInputBase-input:-webkit-autofill:hover, & .MuiInputBase-input:-webkit-autofill:focus': {
+              WebkitBoxShadow: '0 0 0 1000px rgba(255,255,255,0.06) inset',
+              WebkitTextFillColor: theme.palette.common.white,
+              caretColor: theme.palette.common.white,
+              transition: 'background-color 9999s ease-in-out 0s',
+            },
           })}
         />
         <RHFTextField
@@ -379,6 +391,12 @@ export default function RegisterView() {
               '&.Mui-focused': {
                 color: 'rgba(255,255,255,0.72)',
               },
+            },
+            '& .MuiInputBase-input:-webkit-autofill, & .MuiInputBase-input:-webkit-autofill:hover, & .MuiInputBase-input:-webkit-autofill:focus': {
+              WebkitBoxShadow: '0 0 0 1000px rgba(255,255,255,0.06) inset',
+              WebkitTextFillColor: theme.palette.common.white,
+              caretColor: theme.palette.common.white,
+              transition: 'background-color 9999s ease-in-out 0s',
             },
           })}
         />
@@ -419,6 +437,12 @@ export default function RegisterView() {
                 color: 'rgba(255,255,255,0.72)',
               },
             },
+            '& .MuiInputBase-input:-webkit-autofill, & .MuiInputBase-input:-webkit-autofill:hover, & .MuiInputBase-input:-webkit-autofill:focus': {
+              WebkitBoxShadow: '0 0 0 1000px rgba(255,255,255,0.06) inset',
+              WebkitTextFillColor: theme.palette.common.white,
+              caretColor: theme.palette.common.white,
+              transition: 'background-color 9999s ease-in-out 0s',
+            },
           })}
         />
         <RHFDatePicker
@@ -453,6 +477,12 @@ export default function RegisterView() {
               '&.Mui-focused': {
                 color: 'rgba(255,255,255,0.72)',
               },
+            },
+            '& .MuiInputBase-input:-webkit-autofill, & .MuiInputBase-input:-webkit-autofill:hover, & .MuiInputBase-input:-webkit-autofill:focus': {
+              WebkitBoxShadow: '0 0 0 1000px rgba(255,255,255,0.06) inset',
+              WebkitTextFillColor: theme.palette.common.white,
+              caretColor: theme.palette.common.white,
+              transition: 'background-color 9999s ease-in-out 0s',
             },
           })}
         />
@@ -491,6 +521,12 @@ export default function RegisterView() {
                 color: 'rgba(255,255,255,0.72)',
               },
             },
+            '& .MuiInputBase-input:-webkit-autofill, & .MuiInputBase-input:-webkit-autofill:hover, & .MuiInputBase-input:-webkit-autofill:focus': {
+              WebkitBoxShadow: '0 0 0 1000px rgba(255,255,255,0.06) inset',
+              WebkitTextFillColor: theme.palette.common.white,
+              caretColor: theme.palette.common.white,
+              transition: 'background-color 9999s ease-in-out 0s',
+            },
           })}
         />
         <RHFTextField
@@ -525,6 +561,12 @@ export default function RegisterView() {
               '&.Mui-focused': {
                 color: 'rgba(255,255,255,0.72)',
               },
+            },
+            '& .MuiInputBase-input:-webkit-autofill, & .MuiInputBase-input:-webkit-autofill:hover, & .MuiInputBase-input:-webkit-autofill:focus': {
+              WebkitBoxShadow: '0 0 0 1000px rgba(255,255,255,0.06) inset',
+              WebkitTextFillColor: theme.palette.common.white,
+              caretColor: theme.palette.common.white,
+              transition: 'background-color 9999s ease-in-out 0s',
             },
           })}
         />
@@ -750,8 +792,9 @@ export default function RegisterView() {
         type="submit"
         variant="contained"
         loading={isSubmitting}
+        sx={{ borderRadius: 2 }}
       >
-  Înregistrează-te
+  Register
       </LoadingButton>
     </Stack>
   )
