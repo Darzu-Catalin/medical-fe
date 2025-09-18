@@ -148,7 +148,7 @@ export const logoutAsync = createAsyncThunk('auth/logout', async (arg, thunkAPI)
   } catch (err) {
     // Even if API call fails, clear local session/state so user is logged out
     setSession(null)
-    localStorage.removeItem('orbit_accessToken')
+    localStorage.removeItem('accessToken')
     localStorage.removeItem('token')
     thunkAPI.dispatch(setUser(null))
     thunkAPI.dispatch(setPermissions([]))

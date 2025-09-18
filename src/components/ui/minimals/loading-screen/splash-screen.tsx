@@ -31,7 +31,7 @@ export default function SplashScreen({ sx, ...other }: BoxProps) {
         position: 'absolute',
         alignItems: 'center',
         justifyContent: 'center',
-        bgcolor: 'background.default',
+        bgcolor: 'transparent',
         ...sx,
       }}
       {...other}

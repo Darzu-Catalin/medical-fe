@@ -35,15 +35,28 @@ export function AppFirstLogic({ children }: Props) {
         setLoading(false)
         return
       }
-  const accessToken = getSession()
+      const accessToken = getSession()
 
       if (accessToken) {
         setSession(accessToken)
-
         const response = await getCurrentUserRequest()
         if ((response as any)?.error) {
-          throw new Error((response as any)?.message)
+          const message = (response as any)?.message || ''
+          const unauthorized = /401|unauthor/i.test(message)
+          if (unauthorized) {
+            // Explicitly unauthorized: clear auth and force re-login via guards
+            setSession(null)
+            dispatch(setUser(null))
+            dispatch(setPermissions([]))
+            dispatch(setToken(''))
+          } else {
+            // Transient or server error: keep existing persisted user/permissions
+            // Do not modify auth slice; allow app to function with cached state
+          }
+          setLoading(false)
+          return
         }
+
         const data = (response as any)?.data ?? response
         const user = (data as any)?.user ?? data
         const perms = Array.isArray((data as any)?.permissions) && (data as any)?.permissions.length > 0
@@ -55,15 +68,21 @@ export function AppFirstLogic({ children }: Props) {
         dispatch(setToken(accessToken))
         setLoading(false)
       } else {
-  dispatch(setUser(null))
-  dispatch(setPermissions([]))
-  dispatch(setToken(''))
+        dispatch(setUser(null))
+        dispatch(setPermissions([]))
+        dispatch(setToken(''))
         setLoading(false)
       }
     } catch (error) {
-  dispatch(setUser(null))
-  dispatch(setPermissions([]))
-  dispatch(setToken(''))
+      // Only clear state on explicit unauthorized errors; otherwise keep persisted auth
+      const message = (error as any)?.message || ''
+      const unauthorized = /401|403|unauthor/i.test(message)
+      if (unauthorized) {
+        setSession(null)
+        dispatch(setUser(null))
+        dispatch(setPermissions([]))
+        dispatch(setToken(''))
+      }
       setLoading(false)
     }
 

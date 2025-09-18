@@ -85,7 +85,7 @@ export default function RootLayout({ children, params: { locale } }: Props) {
             <AppFirstLogic>
               <SettingsProvider
                 defaultSettings={{
-                  themeMode: 'light',
+                  themeMode: 'dark',
                   themeLayout: 'vertical',
                   themeStretch: true,
                 }}

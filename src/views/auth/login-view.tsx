@@ -4,7 +4,7 @@
 
 import * as Yup from 'yup'
 import { useForm } from 'react-hook-form'
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useRef, useEffect } from 'react'
 import { yupResolver } from '@hookform/resolvers/yup'
 import { setInitialEmail } from '@/redux/slices/app-settings'
 import { useAppDispatch } from 'src/redux/store'
@@ -45,6 +45,7 @@ type FormValuesProps = {
 
 export default function LoginView() {
   const [errorMsg, setErrorMsg] = useState('')
+  const splashTimerRef = useRef<number | null>(null)
   const router = useRouter()
   const searchParams = useSearchParams()
   const dispatch = useAppDispatch()
@@ -81,8 +82,7 @@ export default function LoginView() {
           enqueueSnackbar(payload?.message || 'Eroare la autentificare', { variant: 'error' })
           return
         }
-        router.push(paths.dashboard.root)
-      
+        
       } catch (error) {
         console.error(error)
         // reset();
@@ -225,6 +225,23 @@ export default function LoginView() {
         sx={{ borderRadius: 2 }}
       >
         Login
+      </LoadingButton>
+      <LoadingButton
+        // Enable this button regardless of validation; it's a helper to prefill credentials
+        disabled={false}
+        fullWidth
+        color="secondary"
+        size="large"
+        type="button"
+        variant="contained"
+        loading={false}
+        onClick={() => {
+          methods.setValue('email', 'vanea@gmail.com', { shouldDirty: true, shouldValidate: true })
+          methods.setValue('password', 'Qwerty1.', { shouldDirty: true, shouldValidate: true })
+        }}
+        sx={{ borderRadius: 2 }}
+      >
+        Vanea login
       </LoadingButton>
     </Stack>
   )
