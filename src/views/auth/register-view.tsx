@@ -684,13 +684,13 @@ export default function RegisterView() {
           >
             <LoadingButton
               fullWidth
-              color={methods.watch('userRole') === 1 ? 'primary' : 'inherit'}
+              color={methods.watch('userRole') === 0 ? 'primary' : 'inherit'}
               size="small"
               type="button"
-              variant={methods.watch('userRole') === 1 ? 'contained' : 'outlined'}
+              variant={methods.watch('userRole') === 0 ? 'contained' : 'outlined'}
               onClick={() => {
                 const currentValue = methods.getValues('userRole')
-                const newValue = currentValue === 1 ? undefined : 1
+                const newValue = currentValue === 0 ? undefined : 0
                 methods.setValue('userRole', newValue)
                 methods.trigger('userRole')
               }}
@@ -717,7 +717,7 @@ export default function RegisterView() {
 
             <LoadingButton
               fullWidth
-              color={methods.watch('userRole') === 2 ? 'primary' : 'inherit'}
+              color={methods.watch('userRole') === 1 ? 'primary' : 'inherit'}
               size="small"
               type="button"
               sx={(theme) => ({
@@ -738,10 +738,10 @@ export default function RegisterView() {
                   },
                 },
               })}
-              variant={methods.watch('userRole') === 2 ? 'contained' : 'outlined'}
+              variant={methods.watch('userRole') === 1 ? 'contained' : 'outlined'}
               onClick={() => {
                 const currentValue = methods.getValues('userRole')
-                const newValue = currentValue === 2 ? undefined : 2
+                const newValue = currentValue === 1 ? undefined : 1
                 methods.setValue('userRole', newValue)
                 methods.trigger('userRole')
               }}
@@ -751,13 +751,13 @@ export default function RegisterView() {
 
             <LoadingButton
               fullWidth
-              color={methods.watch('userRole') === 3 ? 'primary' : 'inherit'}
+              color={methods.watch('userRole') === 2 ? 'primary' : 'inherit'}
               size="small"
               type="button"
-              variant={methods.watch('userRole') === 3 ? 'contained' : 'outlined'}
+              variant={methods.watch('userRole') === 2 ? 'contained' : 'outlined'}
               onClick={() => {
                 const currentValue = methods.getValues('userRole')
-                const newValue = currentValue === 3 ? undefined : 3
+                const newValue = currentValue === 2 ? undefined : 2
                 methods.setValue('userRole', newValue)
                 methods.trigger('userRole')
               }}

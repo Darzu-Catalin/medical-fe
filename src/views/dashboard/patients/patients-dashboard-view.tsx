@@ -1,61 +1,89 @@
 'use client';
 
-import { Box, Typography, Card, Grid, Divider, CardContent, CardHeader,  Tabs, Tab, TextField, Button } from '@mui/material';
+import { Box, Typography, Card, Grid, Divider, CardContent, CardHeader,  Tabs, Tab } from '@mui/material';
 import { useState, useEffect } from 'react';
 import { CalendarToday, SecurityOutlined, WarningAmberOutlined} from '@mui/icons-material';
+import axiosInstance from '@/utils/axios'
+import { getSession } from '@/auth/context/utils'
+import type { AxiosError } from 'axios'
+
+// Minimal types for the data we render
+interface Visit {
+  visitDate: string
+  doctorName: string
+  diagnosis?: string
+  notes?: string
+  symptoms?: string
+  treatment?: string
+}
+
+interface Vaccine {
+  vaccineName: string
+  dateAdministered: string
+}
+
+interface Allergy {
+  allergenName: string
+}
+
+interface Profile {
+  firstName?: string
+  lastName?: string
+  idnp?: string
+  dateOfBirth?: string
+  bloodType?: string
+  phoneNumber?: string
+  address?: string
+  recentVaccinations?: Vaccine[]
+  activeAllergies?: Allergy[]
+}
+
+interface DashboardData {
+  profile: Profile
+  visits: Visit[]
+}
 
 
 
 
 const PatientsDashboardView = () => {
   const [activeTab, setActiveTab] = useState(0);
-  const [dashboardData, setDashboardData] = useState<any | null>(null);
+  const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(false);
 
   const fetchDashboardData = async () => {
     setLoading(true);
     try {
-      const token = localStorage.getItem('token');
-      console.log('Token from localStorage:', token); // Log the token for debugging
-
-    
-
-      const apiBaseUrl = process.env.NEXT_PUBLIC_HOST_API;
-      if (!apiBaseUrl) {
-        throw new Error('API base URL is not defined in the environment variables.');
+      // Retrieve token via centralized session util; falls back to legacy keys if needed
+      const sessionToken = getSession() || localStorage.getItem('accessToken') || localStorage.getItem('token')
+      if (!sessionToken) {
+        throw new Error('Unauthorized. No session token found.')
       }
 
-      const res = await fetch(`${apiBaseUrl}/api/patient/dashboard`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      // Prefer axios instance (baseURL already set to `${HOST_API}/api` and Authorization header managed by setSession/getSession)
+      const res = await axiosInstance.get('/patient/dashboard', {
+        headers: { Authorization: `Bearer ${sessionToken}` },
+      })
 
-      if (!res.ok) {
-        if (res.status === 401) {
-          throw new Error('Unauthorized. Please check your credentials.');
-        }
-        throw new Error('Failed to fetch dashboard data');
-      }
+      const payload = res.data
 
-      const data = await res.json();
-      console.log('Dashboard API Response:', data); // Log the entire API response
-
-      if (data && data.data) {
-        console.log('Dashboard Data:', data.data); // Log the dashboard data
-        setDashboardData(data.data); // Set the dashboard data
+      if (payload && payload.data) {
+        setDashboardData(payload.data)
       } else {
-        console.warn('No dashboard data found in the response.');
-        setDashboardData(null);
+        setDashboardData(null)
       }
     } catch (err) {
-      console.error('Error fetching dashboard data:', err);
-      setDashboardData(null);
-      if (err.message.includes('Unauthorized')) {
-        alert('Your session has expired. Please log in again.');
+      // Graceful fallback + user notice on auth issues
+      setDashboardData(null)
+      const axiosErr = err as AxiosError<any>
+      const status = axiosErr?.response?.status
+      if (status === 401) {
+        alert('Your session has expired. Please log in again.')
+      } else if (status === 403) {
+        alert('You do not have permission to view this dashboard.')
       }
+      // eslint-disable-next-line no-console
+      console.error('Error fetching dashboard data:', axiosErr)
     } finally {
       setLoading(false);
     }
