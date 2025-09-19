@@ -43,8 +43,13 @@ export default function AccountPopover() {
 
   const handleLogout = async () => {
     try {
-      dispatch(logoutAsync())
+      const action = await dispatch(logoutAsync())
       popover.onClose()
+      if (logoutAsync.rejected.match(action)) {
+        // Even on API failure, we cleared local auth – navigate to login
+        router.replace(paths.auth.login)
+        return
+      }
       router.replace('/')
     } catch (error) {
       enqueueSnackbar('Unable to logout!', { variant: 'error' })

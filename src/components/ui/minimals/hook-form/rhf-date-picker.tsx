@@ -1,15 +1,17 @@
 import React from 'react';
 import { useFormContext } from 'react-hook-form';
-import { Typography } from '@mui/material';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
+import type { SxProps, Theme } from '@mui/material/styles';
 
 interface RHFDatePickerProps {
   name: string;
   label?: string;
   readOnly?: boolean;
+  // Optional sx to style the internal TextField used by DatePicker
+  textFieldSx?: SxProps<Theme>;
 }
 
-const RHFDatePicker: React.FC<RHFDatePickerProps> = ({ name, label, readOnly }) => {
+const RHFDatePicker: React.FC<RHFDatePickerProps> = ({ name, label, readOnly, textFieldSx }) => {
   const { setValue, watch } = useFormContext();
   // Watch the current field value; if it's null or undefined, default to new Date()
   const value = watch(name) || new Date();
@@ -35,9 +37,13 @@ const RHFDatePicker: React.FC<RHFDatePickerProps> = ({ name, label, readOnly }) 
       slotProps={{
         textField: {
           fullWidth: true,
-          sx: {
-            '& .MuiInputBase-root': { height: '40px' },
-          },
+          sx: (theme) => ({
+            '& .MuiInputBase-root': { height: '55px' },
+            // Merge in optional override styles (object or function)
+            ...(typeof textFieldSx === 'function'
+              ? (textFieldSx as (theme: Theme) => any)(theme)
+              : (textFieldSx as any)),
+          }),
           inputProps: { readOnly: !!readOnly },
         },
       }}

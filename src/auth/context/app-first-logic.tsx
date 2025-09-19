@@ -5,7 +5,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { getCurrentUserRequest } from '@/requests/auth/auth.requests'
 
 import { useAppDispatch } from 'src/redux/store'
-import { setUser, setPermissions } from 'src/redux/slices/auth'
+import { setUser, setPermissions, setToken } from 'src/redux/slices/auth'
 
 // components
 import { SplashScreen } from 'src/components/ui/minimals/loading-screen'
@@ -39,24 +39,50 @@ export function AppFirstLogic({ children }: Props) {
 
       if (accessToken) {
         setSession(accessToken)
-
         const response = await getCurrentUserRequest()
-
-        if (response.error) {
-          throw new Error(response.message)
+        if ((response as any)?.error) {
+          const message = (response as any)?.message || ''
+          const unauthorized = /401|unauthor/i.test(message)
+          if (unauthorized) {
+            // Explicitly unauthorized: clear auth and force re-login via guards
+            setSession(null)
+            dispatch(setUser(null))
+            dispatch(setPermissions([]))
+            dispatch(setToken(''))
+          } else {
+            // Transient or server error: keep existing persisted user/permissions
+            // Do not modify auth slice; allow app to function with cached state
+          }
+          setLoading(false)
+          return
         }
 
-        dispatch(setUser(response.user))
-        dispatch(setPermissions(response.permissions))
+        const data = (response as any)?.data ?? response
+        const user = (data as any)?.user ?? data
+        const perms = Array.isArray((data as any)?.permissions) && (data as any)?.permissions.length > 0
+          ? (data as any)?.permissions
+          : ['*']
+
+        dispatch(setUser(user))
+        dispatch(setPermissions(perms))
+        dispatch(setToken(accessToken))
         setLoading(false)
       } else {
         dispatch(setUser(null))
         dispatch(setPermissions([]))
+        dispatch(setToken(''))
         setLoading(false)
       }
     } catch (error) {
-      dispatch(setUser(null))
-      dispatch(setPermissions([]))
+      // Only clear state on explicit unauthorized errors; otherwise keep persisted auth
+      const message = (error as any)?.message || ''
+      const unauthorized = /401|403|unauthor/i.test(message)
+      if (unauthorized) {
+        setSession(null)
+        dispatch(setUser(null))
+        dispatch(setPermissions([]))
+        dispatch(setToken(''))
+      }
       setLoading(false)
     }
 
