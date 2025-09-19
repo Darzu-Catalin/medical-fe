@@ -1,0 +1,1 @@
+export { default as DoctorDashboardView  } from './doctor-dashboard-view';

@@ -2,7 +2,7 @@
 
 const ROOTS = {
   AUTH: '/auth',
-  DASHBOARD: '/dashboard',
+  DASHBOARD: '/dashboard/doctor',
   APP: '/',
 }
 
@@ -53,6 +53,8 @@ export const paths = {
     },
     auditLog: {
       root: `${ROOTS.DASHBOARD}/audit-log`,
+    },
+    doctor: { root: `${ROOTS.DASHBOARD}/doctor`
     },
   },
 }
