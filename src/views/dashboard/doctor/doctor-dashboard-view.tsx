@@ -25,7 +25,7 @@ const DoctorDashboardView = () => {
         throw new Error('API base URL is not defined in the environment variables.');
       }
 
-      const res = await fetch(`${apiBaseUrl}/api/doctor/dashboard`, {
+      const res = await fetch(`${apiBaseUrl}/api/doctor`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -277,6 +277,7 @@ const DoctorDashboardView = () => {
                     Doctor’s Appointments
                     </Typography>
                 </Box>
+                console.log('Appointments Tab - dashboardData:', dashboardData);
                 <Typography variant="body2" color="text.secondary" fontSize="1.1rem" gutterBottom>
                     Overview of your scheduled appointments
                 </Typography>
