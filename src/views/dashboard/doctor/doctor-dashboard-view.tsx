@@ -1,6 +1,7 @@
 'use client';
 
-import { Box, Typography, Card, Grid, Divider, CardContent, CardHeader,  Tabs, Tab, TextField, Button } from '@mui/material';
+import { Box, Typography, Card, Grid, Divider, CardContent, CardHeader,  Tabs, Tab, TextField, Button, InputAdornment, Paper } from '@mui/material';
+import SearchIcon from '@mui/icons-material/Search';
 import { useState, useEffect } from 'react';
 import { CalendarToday, SecurityOutlined, WarningAmberOutlined} from '@mui/icons-material';
 
@@ -75,305 +76,94 @@ const DoctorDashboardView = () => {
         Doctor Dashboard
       </Typography>
 
-      {/* Tabs */}
-      <Tabs value={activeTab} onChange={(_, value) => setActiveTab(value)} sx={{ mb: 3 }}>
-        <Tab label="Home" />
-        <Tab label="Profile" />
-        <Tab label="Appointments" />
-        <Tab label="Visits" />
-        <Tab label="Audit Log" />
-      </Tabs>
 
-      {/* Tab content */}
-      {dashboardData ? (
-        <>
-          {activeTab === 0 && (
-  <Grid container spacing={2}>
-    {/* Last Visit Card */}
-    <Grid item xs={12} md={4}>
-      <Card>
-        <CardHeader title={
-                <Box display="flex" alignItems="center" gap={1}>
-                  <CalendarToday color="primary" />
-                  <Typography variant="h6" fontWeight={100} >Last Visit</Typography>
-                </Box>
-              }
-            />
-        <CardContent>
-          {dashboardData.visits && dashboardData.visits.length > 0 ? (
-            (() => {
-              const lastVisit = dashboardData.visits[0];
-              return (
-                <Box  display="flex"  flexDirection="column" gap={2}>
-                  {/* Date */}
-                  <Box display="flex" justifyContent="space-between">
-                    <Typography variant="body2" fontSize="1.1rem" color="text.secondary">
-                      Date:
-                    </Typography>
-                    <Typography variant="body2" fontSize="1.1rem">
-                      {new Date(lastVisit.visitDate).toLocaleDateString()}
-                    </Typography>
-                  </Box>   
+      {/* Add Visit Button */}
+      <Button
+        variant="contained"
+        color="primary"
+        sx={{ mb: 2 }}
+        onClick={() => {
+          // TODO: Replace with modal or navigation to add visit form
+          alert('Add Visit functionality coming soon!');
+        }}
+      >
+        Add Visit
+      </Button>
 
-                  <Box display="flex" justifyContent="space-between">
-                    <Typography variant="body2" fontSize="1.1rem" color="text.secondary">
-                      Doctor:
-                    </Typography>
-                    <Typography variant="body2" fontSize="1.1rem">
-                    {lastVisit.doctorName}
-                    </Typography>
-                  </Box>                 
-                  <Divider />
+      {/* Search Patient Container */}
+      <Box
+        sx={{
+          mb: 3,
+          border: '2px solid #152331ff',
+          borderRadius: 2,
+          backgroundColor: '#223043e0',
+          p: 2
+        }}
+      >
+        <Box display="flex" alignItems="center" gap={1} mb={2}>
+          <SearchIcon color="action" />
+          <Typography variant="subtitle1" fontWeight={500}>Search Patient</Typography>
+        </Box>
+        <Box>
+          <TextField
+            sx={{ width: '90%' }}
+            placeholder="Enter patient name or ID..."
+            variant="outlined"
+            size="small"
+          />
+          <Button
+            sx={{ width: '8%', ml: "1%" }}
+            variant="contained"
+            color="primary"
+            onClick={() => {
+              alert('Search patient functionality coming soon!');
+            }}
+          >
+            Search
+          </Button>
+        </Box>
+      </Box>
 
-                   {/* Diagnosis */}
-                <Box>
-                  <Typography variant="body2" color="text.secondary" >
-                    Diagnosis:
+      {/* Upcoming Appointments Container */}
+      <Box
+        sx={{
+          mb: 3,
+          border: '2px solid #152331ff',
+          borderRadius: 2,
+          backgroundColor: '#223043e0',
+          p: 2
+        }}
+      >
+        <Box display="flex" alignItems="center" gap={1} mb={2}>
+          <Typography variant="subtitle1" fontWeight={500}>Upcoming Appointments</Typography>
+        </Box>
+        {/* Future Appointments List */}
+        {dashboardData && dashboardData.appointments && dashboardData.appointments.length > 0 ? (
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+            {dashboardData.appointments
+              .filter((appt: any) => new Date(appt.date) > new Date())
+              .map((appt: any, idx: number) => (
+                <Box key={idx} sx={{ border: '1px solid #1976d2', borderRadius: 1, p: 2, backgroundColor: '#fff' }}>
+                  <Typography variant="body1" fontWeight={600} color="primary.main">
+                    Patient: {appt.patientName}
                   </Typography>
-                  <Typography variant="body1" fontWeight={600} fontSize="1.1rem">
-                    {lastVisit.diagnosis || "N/A"}
+                  <Typography variant="body2">
+                    Date: {new Date(appt.date).toLocaleDateString()} at {appt.time}
+                  </Typography>
+                  <Typography variant="body2">
+                    Reason: {appt.reason || 'N/A'}
+                  </Typography>
+                  <Typography variant="body2">
+                    Status: {appt.status || 'Scheduled'}
                   </Typography>
                 </Box>
-                  
-                {/* Notes */}
-                <Box>
-                  <Typography variant="body2" color="text.secondary" >
-                    Notes:
-                  </Typography>
-                  <Typography variant="body2" fontSize="1.1rem">
-                    {lastVisit.notes || "N/A"}
-                  </Typography>
-                </Box>                
-                </Box>
-              );
-            })()
-          ) : (
-            <Typography variant="body2">No visits yet</Typography>
-          )}
-        </CardContent>
-      </Card>
-    </Grid>
-
-    {/* Patients Card */}
-    <Grid item xs={12} md={4}>
-      <Card>
-      <CardHeader title={
-                <Box display="flex" alignItems="center" gap={1}>
-                  <SecurityOutlined color="success" />
-                  <Typography variant="h6" fontWeight={100} > Patients</Typography>
-                </Box>
-              }
-            />
-        <CardContent>
-          {dashboardData.profile.recentVaccinations && dashboardData.profile.recentVaccinations.length > 0 ? (
-            dashboardData.profile.recentVaccinations.slice(0, 2).map((vaccine: any, index: number) => (
-              
-              <Box key={index} sx={{mb: 1, border: "1px solid #ffea08", borderRadius: 2, p: 2, backgroundColor:"#fdffe7"
-              }}>
-                <Box display="flex" justifyContent="space-between" sx={{ mb: 1 }}>
-                  <Typography variant="body1" fontWeight={600} fontSize="1.1rem">
-                  {vaccine.vaccineName}</Typography>
-                  <Typography color="#cfa715" border="1px solid #ffea08" borderRadius={1} px={2}> {new Date(vaccine.dateAdministered) <= new Date() ? "Done" : "Not done"}</Typography>
-                </Box>
-                
-          
-                <Typography variant="body2" color="text.secondary" fontSize="0.9rem">
-                  Date: {new Date(vaccine.dateAdministered).toLocaleDateString()}
-                </Typography>
-              </Box>
-            ))
-          ) : (
-            <Typography variant="body2">No vaccinations yet</Typography>
-          )}
-        </CardContent>
-      </Card>
-    </Grid>
-  </Grid>
-)}
-
-
-          {activeTab === 1 && (
-            <Card sx={{ mb: 3, p: 2 }}>
-              <CardContent sx={{ fontSize: '1.1rem' }}>
-                <Typography variant="h6" gutterBottom >
-                  Personal Information
-                </Typography>
-                <Typography variant="body2" color="text.secondary" gutterBottom  fontSize="1.1rem">
-                  Your basic health profile information
-                </Typography>
-
-                <Grid container spacing={2} sx={{ mt: 1 }} >
-                  <Grid item xs={12} md={6}>
-                    <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-                      <Typography variant="body2" color="text.secondary" fontSize= '1.1rem' >Full Name:</Typography>
-                      <Typography fontWeight={500} fontSize= '1.1rem'>
-                        {dashboardData.profile?.firstName} {dashboardData.profile?.lastName}
-                      </Typography>
-                    </Box>
-                    <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-                      <Typography variant="body2" color="text.secondary" fontSize= '1.1rem'>IDNP:</Typography>
-                      <Typography fontWeight={500} fontSize= '1.1rem'>{dashboardData.profile?.idnp || 'N/A'}</Typography>
-                    </Box>
-                    <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-                      <Typography variant="body2" color="text.secondary" fontSize= '1.1rem'>Date of Birth:</Typography>
-                      <Typography fontWeight={500} fontSize= '1.1rem'>
-                        {dashboardData.profile?.dateOfBirth
-                          ? new Intl.DateTimeFormat('en-US', { year: 'numeric', month: 'long', day: 'numeric' }).format(new Date(dashboardData.profile.dateOfBirth))
-                          : 'N/A'}
-                      </Typography>
-                    </Box>
-                    <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-                      <Typography variant="body2" color="text.secondary" fontSize= '1.1rem'>Blood Type:</Typography>
-                      <Typography color="primary" sx={{ px: 1 }} fontSize= '1.1rem'>{dashboardData.profile?.bloodType || 'N/A'}</Typography>
-                    </Box>
-                  </Grid>
-
-                  <Grid item xs={12} md={6}>
-                    <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-                      <Typography variant="body2" color="text.secondary" fontSize= '1.1rem'>Phone:</Typography>
-                      <Typography fontWeight={500} fontSize= '1.1rem'>{dashboardData.profile?.phoneNumber || 'N/A'}</Typography>
-                    </Box>
-                    <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-                      <Typography variant="body2" color="text.secondary" fontSize= '1.1rem'>Address:</Typography>
-                      <Typography fontWeight={500} fontSize= '1.1rem'>{dashboardData.profile?.address || 'N/A'}</Typography>
-                    </Box>
-                  </Grid>
-                </Grid>
-
-                <Divider sx={{ my: 2 }} />
-
-                <Box>
-                <Typography variant="h6" gutterBottom>
-                  Known Allergies
-                </Typography>
-
-                {dashboardData.profile?.activeAllergies && dashboardData.profile.activeAllergies.length > 0 ? (
-                  <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
-                    {dashboardData.profile.activeAllergies.map((allergy: any, index: number) => (
-                      <Box key={index} sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.5 , backgroundColor: '#d9534f', color: '#fff', padding: '4px 12px',
-                        borderRadius: '10px',
-                        fontSize: '0.875rem',
-                        fontWeight: 500,}}>
-                        <WarningAmberOutlined sx={{color: '#fff', fontSize: '1rem'}}/>
-                        <Typography>{allergy.allergenName}</Typography>
-                      </Box>
-                    ))}
-                  </Box>
-                ) : (
-                  <Typography color="text.secondary">No known allergies.</Typography>
-                )}
-              </Box>
-
-              </CardContent>
-            </Card>
-          )}
-
-          {activeTab === 2 && (   // index of new tab
-            <Card sx={{ mb: 3, p: 2 }}>
-                <CardContent>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
-                    <CalendarToday sx={{ fontSize: 28, color: 'primary.main' }} />
-                    <Typography variant="h6" gutterBottom>
-                    Doctor’s Appointments
-                    </Typography>
-                </Box>
-                console.log('Appointments Tab - dashboardData:', dashboardData);
-                <Typography variant="body2" color="text.secondary" fontSize="1.1rem" gutterBottom>
-                    Overview of your scheduled appointments
-                </Typography>
-
-                {dashboardData.appointments && dashboardData.appointments.length > 0 ? (
-                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                    {dashboardData.appointments.map((appt: any, index: number) => (
-                        <Card key={index} sx={{ p: 2, border: "1px solid #b1b1b1", borderRadius: 2 }}>
-                        <Box display="flex" justifyContent="space-between" mb={1}>
-                            <Typography variant="body1" fontWeight={600} fontSize="1.1rem">
-                            {new Date(appt.date).toLocaleDateString()} at {appt.time}
-                            </Typography>
-                            <Typography variant="body2" fontWeight={500} fontSize="1.1rem" color="primary">
-                            Patient: {appt.patientName}
-                            </Typography>
-                        </Box>
-                        <Typography variant="body2" fontSize="1rem" color="text.secondary">
-                            Reason: {appt.reason || "N/A"}
-                        </Typography>
-                        <Typography variant="body2" fontSize="1rem" color="text.secondary">
-                            Status: {appt.status || "Scheduled"}
-                        </Typography>
-                        </Card>
-                    ))}
-                    </Box>
-                ) : (
-                    <Typography color="text.secondary">No appointments scheduled.</Typography>
-                )}
-                </CardContent>
-            </Card>
-            )}
-
-
-          {activeTab === 3 && (
-            <Card sx={{ mb: 3, p: 2 }}>
-              <CardContent>
-                <Typography variant="h6" gutterBottom>
-                  Visit History
-                </Typography>
-                <Typography variant="body2" color="text.secondary" gutterBottom  fontSize="1.1rem">
-                Your complete medical visit history
-                </Typography>
-                {dashboardData.visits && dashboardData.visits.length > 0 ? (
-                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2}}>
-                       {dashboardData.visits.map((visit: any, index: number) => (
-                        
-                        <Card sx={{ p:2, border: "1px solid #b1b1b1", borderRadius: 2}}>
-                          <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-                          <Typography variant="body1" fontWeight={600} fontSize="1.1rem">
-                            {new Date(visit.visitDate).toLocaleDateString()}
-                          </Typography>
-                          <Typography variant="body2" sx={{ fontWeight: 500 , fontSize: "1.1rem", border: "1px solid #b1b1b1", borderRadius: 1, px:2}}>
-                            {visit.doctorName}
-                          </Typography>
-                          </Box>
-
-                          <Grid container spacing={2}>
-                          {/* Left Column */}
-                          <Grid item xs={12} md={6}>
-                            <Box sx={{ mb: 1 }}>
-                              <Typography variant="caption" color="text.secondary" fontSize= "1.1rem">Symptoms:</Typography>
-                              <Typography variant="body2" fontSize= "1.1rem">{visit.symptoms || "N/A"}</Typography>
-                            </Box>
-                            <Box>
-                              <Typography variant="caption" color="text.secondary" fontSize= "1.1rem">Diagnosis:</Typography>
-                              <Typography variant="body2" fontWeight={600} fontSize= "1.1rem">{visit.diagnosis || "N/A"}</Typography>
-                            </Box>
-                          </Grid>
-
-                          {/* Right Column */}
-                          <Grid item xs={12} md={6}>
-                            <Box sx={{ mb: 1 }}>
-                              <Typography variant="caption" color="text.secondary" fontSize= "1.1rem">Treatment:</Typography>
-                              <Typography variant="body2" fontSize= "1.1rem">{visit.treatment || "N/A"}</Typography>
-                            </Box>
-                            <Box>
-                              <Typography variant="caption" color="text.secondary" fontSize= "1.1rem">Doctor's Notes:</Typography>
-                              <Typography variant="body2" fontSize= "1.1rem">{visit.notes || "N/A"}</Typography>
-                            </Box>
-                          </Grid>
-                        </Grid>
-                        </Card>
-                      ))}
-                  </Box>
-                ) : (
-                  <Typography color="text.secondary">No visits yet.</Typography>
-                )}
-              </CardContent>
-            </Card>
-          )}
-        </>
-      ) : (
-        <Typography variant="body1" color="text.secondary">
-          No dashboard data found. Please try again later.
-        </Typography>
-      )}
+              ))}
+          </Box>
+        ) : (
+          <Typography color="text.secondary">No upcoming appointments.</Typography>
+        )}
+      </Box>
+      
     </Box>
   );
 };
