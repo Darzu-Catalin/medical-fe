@@ -1,8 +1,11 @@
 // ----------------------------------------------------------------------
 
+import AuditLogPage from "@/app/[locale]/dashboard/audit-log/page"
+import { Vaccines } from "@mui/icons-material"
+
 const ROOTS = {
   AUTH: '/auth',
-  DASHBOARD: '/dashboard/doctor',
+  DASHBOARD: '/dashboard',
   APP: '/',
 }
 
@@ -53,8 +56,6 @@ export const paths = {
     },
     auditLog: {
       root: `${ROOTS.DASHBOARD}/audit-log`,
-    },
-    doctor: { root: `${ROOTS.DASHBOARD}/doctor`
     },
   },
 }

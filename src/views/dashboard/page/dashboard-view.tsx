@@ -9,10 +9,10 @@ const DashboardView = () => {
   const [role, setRole] = useState<string | null>(null);
 
   // Function to decode the token and extract the role
-  const decodeToken = (token: string) => {
+  const decodeToken = (accessToken: string) => {
     try {
-      console.log('Decoding token:', token); // Log the token being decoded
-      const base64Url = token.split('.')[1];
+      console.log('Decoding token:', accessToken); // Log the token being decoded
+      const base64Url = accessToken.split('.')[1];
       const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
       const jsonPayload = decodeURIComponent(
         atob(base64)
@@ -30,10 +30,10 @@ const DashboardView = () => {
   };
 
   useEffect(() => {
-    const token = localStorage.getItem('token');
-    console.log('Token from localStorage:', token); // Log the token retrieved from localStorage
-    if (token) {
-      const decodedToken = decodeToken(token);
+    const accessToken = localStorage.getItem('token');
+    console.log('Token from localStorage:', accessToken); // Log the token retrieved from localStorage
+    if (accessToken) {
+      const decodedToken = decodeToken(accessToken);
       const role = decodedToken?.['http://schemas.microsoft.com/ws/2008/06/identity/claims/role'];
       console.log('Role from decoded token:', role); // Log the role extracted from the token
       setRole(role || null);
