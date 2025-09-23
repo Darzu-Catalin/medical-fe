@@ -2,6 +2,7 @@ import { useMemo } from 'react'
 import { paths } from '@/routes/paths'
 import { useAppSelector } from '@/redux/store'
 import Iconify from '@/components/ui/minimals/iconify'
+import { recordTraceEvents } from 'next/dist/trace'
 
 // ----------------------------------------------------------------------
 
@@ -19,8 +20,9 @@ const ICONS = {
   reports: icon('mdi:chart-line'),
   settings: icon('mdi:cog'),
   profile: icon('mdi:account-circle'),
-  records: icon('mdi:folder-medical'),
+  records: icon('mdi:folder'),
   appointments: icon('mdi:calendar-clock'),
+  
 }
 
 // ----------------------------------------------------------------------
