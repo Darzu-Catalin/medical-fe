@@ -225,7 +225,7 @@ const BookAppointments = () => {
           sx={{
             color: selectedSpecialty ? 'inherit' : 'text.secondary',
             '&.Mui-focused': {
-              color: 'inherit',
+              color: 'inherit', // Prevent color change on focus
             },
           }}
         >
@@ -239,6 +239,15 @@ const BookAppointments = () => {
           displayEmpty
           sx={{
             backgroundColor: '#f5f5f5',
+            '& .MuiOutlinedInput-notchedOutline': {
+              border: 'none', // Remove border
+            },
+            '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+              border: 'none', // Prevent border emphasis on focus
+            },
+            '&:hover .MuiOutlinedInput-notchedOutline': {
+              border: 'none', // Prevent border emphasis on hover
+            },
           }}
           MenuProps={{
             PaperProps: {
@@ -450,7 +459,7 @@ const BookAppointments = () => {
             </Typography>
           </Box>
           <Typography variant="body2" color="text.secondary" gutterBottom fontSize="1.1rem">
-            Your scheduled and past appointments
+            My scheduled and past appointments
           </Typography>
         </Box>
         {appointments.length > 0 ? (
@@ -472,7 +481,7 @@ const BookAppointments = () => {
                           Dr. {appointment.doctorName}
                         </Typography>
                         <Typography variant="body2" color="text.secondary">
-                          {appointment.doctorSpecialty || 'General Consultation'}
+                          {appointment.specialty || "N/A"}
                         </Typography>
                         <Box display="flex" alignItems="center" gap={2} sx={{ mt: 1 }}>
                           <Box display="flex" alignItems="center" gap={1}>
