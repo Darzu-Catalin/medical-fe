@@ -1,4 +1,5 @@
-import { UserType } from '@/types/types'
+import { UserType, UserRole } from '@/types/types'
+import { getUserRole, getRoleDisplayName } from './role.utils'
 
 export const getUserDisplayName = (user: UserType | null) => {
   if (!user) {
@@ -31,4 +32,9 @@ export const getUserAvatar = (user: UserType | null) => {
   }
 
   return 'https://i.pravatar.cc/300'
+}
+
+export const getUserRoleDisplayName = (user: UserType | null): string => {
+  const role = getUserRole(user)
+  return getRoleDisplayName(role)
 }
