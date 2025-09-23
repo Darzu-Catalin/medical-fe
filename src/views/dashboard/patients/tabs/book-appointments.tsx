@@ -107,8 +107,14 @@ const BookAppointments = () => {
 
       // Extract appointments from the correct key in the response
       const appointments = res.data?.data || []; // Adjust based on actual structure
-      setAppointments(appointments);
-      console.log('Appointments:', appointments); // Log the extracted appointments
+
+      // Sort appointments by date (earliest to farthest)
+      const sortedAppointments = appointments.sort(
+        (a: any, b: any) => new Date(a.appointmentDate).getTime() - new Date(b.appointmentDate).getTime()
+      );
+
+      setAppointments(sortedAppointments);
+      console.log('Sorted Appointments:', sortedAppointments); // Log the sorted appointments
     } catch (err) {
       console.error('Error fetching appointments:', err);
       setAppointments([]); // Set an empty array if an error occurs
@@ -145,6 +151,14 @@ const BookAppointments = () => {
     try {
       // Combine date and time into a single Date object
       const appointmentDate = new Date(`${formData.date}T${formData.time}`);
+
+      // Check if the selected date is in the past
+      const today = new Date();
+      today.setHours(0, 0, 0, 0); // Reset time to midnight for comparison
+      if (appointmentDate < today) {
+        alert('The selected date cannot be in the past. Please choose a valid date.');
+        return;
+      }
 
       // Decode the JWT token to extract the userId
       const token = getSession() || localStorage.getItem('token');
@@ -185,6 +199,11 @@ const BookAppointments = () => {
 
       console.log('Appointment booked successfully:', res.data);
       alert('Appointment booked successfully!');
+
+      // Reset the selected specialty and doctors list
+      setSelectedSpecialty(null);
+      setFilteredDoctors([]);
+
       handleCloseModal();
       fetchAppointments(); // Refresh appointments
     } catch (err) {
@@ -307,8 +326,12 @@ const BookAppointments = () => {
                   sx={{
                     border: '1px solid #e0e0e0',
                     borderRadius: 2,
-                    boxShadow: 'none',
+                    boxShadow: '0px 4px 10px rgba(0, 0, 0, 0.1)', // Add shadow to the card
                     p: 2,
+                    transition: 'box-shadow 0.3s ease-in-out', // Smooth transition for hover effect
+                    '&:hover': {
+                      boxShadow: '0px 6px 15px rgba(0, 0, 0, 0.2)', // Increase shadow on hover
+                    },
                   }}
                 >
                   <CardContent>
