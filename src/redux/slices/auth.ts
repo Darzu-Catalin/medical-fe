@@ -2,7 +2,7 @@
 
 import { PURGE } from 'redux-persist'
 import persistReducer from 'redux-persist/es/persistReducer'
-import { UserType, PermissionType, NotificationType } from '@/types/types'
+import { UserType, PermissionType, NotificationType, UserRole } from '@/types/types'
 import { createSlice, PayloadAction, createAsyncThunk } from '@reduxjs/toolkit'
 import { loginUserRequest, logoutUserRequest } from '@/requests/auth/auth.requests'
 
@@ -15,6 +15,7 @@ import { setSession } from 'src/auth/context/utils'
 
 type InitialState = {
   user: UserType | null
+  userRole: UserRole
   permissions: PermissionType[]
   token: string
   isLoading: boolean
@@ -24,6 +25,7 @@ type InitialState = {
 
 const initialState: InitialState = {
   user: null,
+  userRole: 'patient', // Default role
   permissions: [],
   token: '',
   isLoading: false,
@@ -41,6 +43,95 @@ const authSlice = createSlice({
         return
       }
       state.user = action.payload
+      
+      // Auto-detect and set user role when user is set
+      if (action.payload) {
+        // Check for role in multiple possible fields: role, userType, type, user_type, roles (array)
+        let role = action.payload.role || action.payload.userType || action.payload.type || action.payload.user_type
+        
+        // Check if roles is an array and get the first role
+        if (!role && action.payload.roles && Array.isArray(action.payload.roles) && action.payload.roles.length > 0) {
+          role = action.payload.roles[0]
+        }
+        
+        if (typeof role === 'string') {
+          const normalizedRole = role.toLowerCase()
+          
+          if (normalizedRole.includes('admin') || normalizedRole === 'administrator') {
+            state.userRole = 'admin'
+          } else if (normalizedRole.includes('doctor') || normalizedRole.includes('physician') || normalizedRole === 'medical') {
+            state.userRole = 'doctor'
+          } else if (normalizedRole.includes('patient') || normalizedRole.includes('client') || normalizedRole === 'user') {
+            state.userRole = 'patient'
+          } else {
+            state.userRole = 'patient'
+          }
+        } else if (typeof role === 'number') {
+          switch (role) {
+            case 1:
+              state.userRole = 'admin'
+              break
+            case 2:
+              state.userRole = 'doctor'
+              break
+            case 3:
+              state.userRole = 'patient'
+              break
+            default:
+              state.userRole = 'patient'
+          }
+        } else {
+          state.userRole = 'patient'
+        }
+      } else {
+        state.userRole = 'patient'
+      }
+    },
+    setUserRole(state, action: PayloadAction<UserRole>) {
+      state.userRole = action.payload
+    },
+    recalculateUserRole(state) {
+      // Recalculate role from current user data
+      if (state.user) {
+        let role = state.user.role || state.user.userType || state.user.type || state.user.user_type
+        
+        // Check if roles is an array and get the first role
+        if (!role && state.user.roles && Array.isArray(state.user.roles) && state.user.roles.length > 0) {
+          role = state.user.roles[0]
+        }
+        
+        if (typeof role === 'string') {
+          const normalizedRole = role.toLowerCase()
+          
+          if (normalizedRole.includes('admin') || normalizedRole === 'administrator') {
+            state.userRole = 'admin'
+          } else if (normalizedRole.includes('doctor') || normalizedRole.includes('physician') || normalizedRole === 'medical') {
+            state.userRole = 'doctor'
+          } else if (normalizedRole.includes('patient') || normalizedRole.includes('client') || normalizedRole === 'user') {
+            state.userRole = 'patient'
+          } else {
+            state.userRole = 'patient'
+          }
+        } else if (typeof role === 'number') {
+          switch (role) {
+            case 1:
+              state.userRole = 'admin'
+              break
+            case 2:
+              state.userRole = 'doctor'
+              break
+            case 3:
+              state.userRole = 'patient'
+              break
+            default:
+              state.userRole = 'patient'
+          }
+        } else {
+          state.userRole = 'patient'
+        }
+      } else {
+        state.userRole = 'patient'
+      }
     },
     setToken(state, action: PayloadAction<string>) {
       // if payload is same as current token, do nothing
@@ -101,7 +192,7 @@ const persistedAuthReducer = persistReducer(
   authSlice.reducer
 )
 
-export const { setUser, setToken, setNotifications, markNotificationAsOpened, setPermissions } =
+export const { setUser, setUserRole, recalculateUserRole, setToken, setNotifications, markNotificationAsOpened, setPermissions } =
   authSlice.actions
 export default persistedAuthReducer
 
@@ -141,6 +232,7 @@ export const logoutAsync = createAsyncThunk('auth/logout', async (arg, thunkAPI)
 
     // Clear redux state for this slice
     thunkAPI.dispatch(setUser(null))
+    thunkAPI.dispatch(setUserRole('patient'))
     thunkAPI.dispatch(setPermissions([]))
     thunkAPI.dispatch(setToken(''))
 
@@ -151,6 +243,7 @@ export const logoutAsync = createAsyncThunk('auth/logout', async (arg, thunkAPI)
     localStorage.removeItem('accessToken')
     localStorage.removeItem('token')
     thunkAPI.dispatch(setUser(null))
+    thunkAPI.dispatch(setUserRole('patient'))
     thunkAPI.dispatch(setPermissions([]))
     thunkAPI.dispatch(setToken(''))
     return thunkAPI.rejectWithValue(err)

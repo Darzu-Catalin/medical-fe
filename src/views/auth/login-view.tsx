@@ -45,6 +45,7 @@ type FormValuesProps = {
 
 export default function LoginView() {
   const [errorMsg, setErrorMsg] = useState('')
+  const [selectedRole, setSelectedRole] = useState<'patient' | 'doctor' | 'admin' | null>(null)
   const splashTimerRef = useRef<number | null>(null)
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -226,23 +227,113 @@ export default function LoginView() {
       >
         Login
       </LoadingButton>
-      <LoadingButton
-        // Enable this button regardless of validation; it's a helper to prefill credentials
-        disabled={false}
-        fullWidth
-        color="secondary"
-        size="large"
-        type="button"
-        variant="contained"
-        loading={false}
-        onClick={() => {
-          methods.setValue('email', 'vanea@gmail.com', { shouldDirty: true, shouldValidate: true })
-          methods.setValue('password', 'Qwerty1.', { shouldDirty: true, shouldValidate: true })
+      
+      <Box
+        sx={{
+          mb: 1,
+          mt: 1,
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
         }}
-        sx={{ borderRadius: 2 }}
       >
-        Vanea login
-      </LoadingButton>
+        <LoadingButton
+          fullWidth
+          color={selectedRole === 'patient' ? 'primary' : 'inherit'}
+          size="small"
+          type="button"
+          variant={selectedRole === 'patient' ? 'contained' : 'outlined'}
+          onClick={() => {
+            methods.setValue('email', 'patient@example.com', { shouldDirty: true, shouldValidate: true })
+            methods.setValue('password', 'Qwerty1.', { shouldDirty: true, shouldValidate: true })
+            setSelectedRole('patient')
+          }}
+          sx={(theme) => ({
+            transition: 'background-color 160ms ease, border-color 160ms ease, box-shadow 160ms ease',
+            '&.MuiButton-outlined, &.MuiButton-outlinedInherit': {
+              color: 'rgba(255,255,255,0.92)',
+              borderColor: 'rgba(255,255,255,0.32)',
+              '&:hover': {
+                borderColor: 'rgba(255,255,255,0.6)',
+                backgroundColor: 'rgba(255, 255, 255, 0.08)',
+              },
+            },
+            '&.MuiButton-containedPrimary': {
+              color: theme.palette.common.white,
+              '&:hover': {
+                backgroundColor: theme.palette.primary.light,
+              },
+            },
+          })}
+        >
+          Patient
+        </LoadingButton>
+
+        <LoadingButton
+          fullWidth
+          color={selectedRole === 'doctor' ? 'success' : 'inherit'}
+          size="small"
+          type="button"
+          variant={selectedRole === 'doctor' ? 'contained' : 'outlined'}
+          onClick={() => {
+            methods.setValue('email', 'vanea@gmail.com', { shouldDirty: true, shouldValidate: true })
+            methods.setValue('password', 'Qwerty1.', { shouldDirty: true, shouldValidate: true })
+            setSelectedRole('doctor')
+          }}
+          sx={(theme) => ({
+            mx: 1,
+            transition: 'background-color 160ms ease, border-color 160ms ease, box-shadow 160ms ease',
+            '&.MuiButton-outlined, &.MuiButton-outlinedInherit': {
+              color: 'rgba(255,255,255,0.92)',
+              borderColor: 'rgba(255,255,255,0.32)',
+              '&:hover': {
+                borderColor: 'rgba(255,255,255,0.6)',
+                backgroundColor: 'rgba(255,255,255,0.08)',
+              },
+            },
+            '&.MuiButton-containedPrimary': {
+              color: theme.palette.common.white,
+              '&:hover': {
+                backgroundColor: theme.palette.primary.light,
+              },
+            },
+          })}
+        >
+          Doctor
+        </LoadingButton>
+
+        <LoadingButton
+          fullWidth
+          color={selectedRole === 'admin' ? 'error' : 'inherit'}
+          size="small"
+          type="button"
+          variant={selectedRole === 'admin' ? 'contained' : 'outlined'}
+          onClick={() => {
+            methods.setValue('email', 'administrator@example.com', { shouldDirty: true, shouldValidate: true })
+            methods.setValue('password', 'Qwerty1.', { shouldDirty: true, shouldValidate: true })
+            setSelectedRole('admin')
+          }}
+          sx={(theme) => ({
+            transition: 'background-color 160ms ease, border-color 160ms ease, box-shadow 160ms ease',
+            '&.MuiButton-outlined, &.MuiButton-outlinedInherit': {
+              color: 'rgba(255,255,255,0.92)',
+              borderColor: 'rgba(255,255,255,0.32)',
+              '&:hover': {
+                borderColor: 'rgba(255,255,255,0.6)',
+                backgroundColor: 'rgba(255,255,255,0.08)',
+              },
+            },
+            '&.MuiButton-containedPrimary': {
+              color: theme.palette.common.white,
+              '&:hover': {
+                backgroundColor: theme.palette.primary.light,
+              },
+            },
+          })}
+        >
+          Administrator
+        </LoadingButton>
+      </Box>
     </Stack>
   )
 

@@ -124,7 +124,20 @@ export type EventType = {
   updated_at: string
 }
 
+export type UserRole = 'admin' | 'doctor' | 'patient'
+
 export interface UserType {
+  id?: number | string
+  email?: string
+  firstName?: string
+  lastName?: string
+  role?: UserRole | string
+  userType?: string
+  type?: string
+  roles?: string[]
+  avatar?: {
+    absolute_path: string
+  }
   [key: string]: any
 }
 
