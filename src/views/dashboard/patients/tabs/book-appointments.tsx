@@ -5,6 +5,10 @@ import { useState, useEffect } from 'react';
 import axiosInstance from '@/utils/axios';
 import { getSession } from '@/auth/context/utils';
 import type { AxiosError } from 'axios';
+import EditCalendarIcon from '@mui/icons-material/EditCalendar';
+import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
+import QueryBuilderIcon from '@mui/icons-material/QueryBuilder';
+import PersonIcon from '@mui/icons-material/Person';
 
 const decodeToken = (token: string) => {
   try {
@@ -21,6 +25,16 @@ const decodeToken = (token: string) => {
     console.error('Error decoding token:', err);
     return null;
   }
+};
+
+// Mapping for AppointmentStatus enum
+const appointmentStatusMap: { [key: number]: string } = {
+  1: 'Scheduled',
+  2: 'Confirmed',
+  3: 'In Progress',
+  4: 'Completed',
+  5: 'Cancelled',
+  6: 'No Show',
 };
 
 const BookAppointments = () => {
@@ -186,47 +200,191 @@ const BookAppointments = () => {
   }, []);
 
   return (
-    <Box>
-      <Typography variant="h5" gutterBottom>
-        Book an Appointment
-      </Typography>
+     <Box >
+      <Card sx={{ p: 5, mb:4, boxShadow: 'none',  border: '1px solid #e0e0e0' }}>
 
+      <Box sx={{ mb: 3 }}>
+        <Box display="flex">
+          <EditCalendarIcon sx={{ color: '#1e40af' , mr:1}} />
+          <Typography  variant="h6" gutterBottom>
+            Book an Appointment
+          </Typography>
+        </Box>
+        <Typography variant="body2" color="text.secondary" gutterBottom fontSize="1.1rem">
+        Select a medical specialty and choose from available doctors
+        </Typography>
+      </Box>
+
+      <Typography variant="body2"  gutterBottom fontWeight="bold">
+      Select Medical Specialty      
+      </Typography>
       <FormControl fullWidth sx={{ mb: 3 }}>
-        <InputLabel>Specialty</InputLabel>
-        <Select value={selectedSpecialty || ''} onChange={handleSpecialtyChange}>
+        <InputLabel
+          id="specialty-label"
+          shrink={false}
+          sx={{
+            color: selectedSpecialty ? 'inherit' : 'text.secondary',
+            '&.Mui-focused': {
+              color: 'inherit',
+            },
+          }}
+        >
+          {selectedSpecialty || 'Choose a specialty...'}
+        </InputLabel>
+        <Select
+          labelId="specialty-label"
+          id="specialty-select"
+          value={selectedSpecialty || ''}
+          onChange={handleSpecialtyChange}
+          displayEmpty
+          sx={{
+            backgroundColor: '#f5f5f5',
+          }}
+          MenuProps={{
+            PaperProps: {
+              sx: {
+                boxShadow: '0px 4px 10px rgba(0, 0, 0, 0.1)',
+                borderRadius: 2,
+                padding: 1,
+                backdropFilter: 'none',
+                bgcolor: '#ffffff',
+                backgroundImage: 'none',
+              },
+            },
+            MenuListProps: {
+              sx: {
+                padding: 0,
+              },
+            },
+          }}
+        >
           {specialties.map((specialty, index) => (
-            <MenuItem key={index} value={specialty}>
+            <MenuItem
+              key={index}
+              value={specialty}
+              sx={{
+                backgroundColor: '#ffffff',
+                margin: '4px 0',
+                borderRadius: 1,
+                '&:hover': { backgroundColor: '#29A644', color: '#ffffff' },
+                '&.Mui-selected': { backgroundColor: '#29A644', color: '#ffffff' },
+                '&.Mui-selected:hover': { backgroundColor: '#29A644', color: '#ffffff' },
+              }}
+            >
               {specialty}
             </MenuItem>
           ))}
         </Select>
       </FormControl>
 
+      {!selectedSpecialty && (
+        <Box display="flex" flexDirection="column" alignItems="center">
+          <EditCalendarIcon sx={{ fontSize: 60, color: '#f5f5f5', mb: 2 }} />
+          <Typography variant="body2" color="text.secondary" fontSize="1.1rem">
+            Select a specialty to view available doctors
+          </Typography>
+        </Box>
+      )}
+
       {selectedSpecialty && (
-        <Grid container spacing={2} sx={{ mb: 3 }}>
-          {filteredDoctors.map((doctor, index) => (
-            <Grid item xs={12} md={6} key={index}>
-              <Card>
-                <CardContent>
-                  <Typography variant="h6">
-                    {doctor.firstName} {doctor.lastName}
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    Specialty: {doctor.specialty}
-                  </Typography>
-                  <Button
-                    variant="contained"
-                    color="primary"
-                    onClick={() => handleOpenModal(doctor)}
-                    sx={{ mt: 2 }}
-                  >
-                    Book Appointment
-                  </Button>
-                </CardContent>
-              </Card>
-            </Grid>
-          ))}
-        </Grid>
+        <Box>
+          <Typography variant="h6" sx={{ mb: 2 }}>
+            Available Doctors
+          </Typography>
+          <Grid container spacing={2}>
+            {filteredDoctors.map((doctor, index) => (
+              <Grid item xs={12} key={index}>
+                <Card
+                  sx={{
+                    border: '1px solid #e0e0e0',
+                    borderRadius: 2,
+                    boxShadow: 'none',
+                    p: 2,
+                  }}
+                >
+                  <CardContent>
+                    <Grid container spacing={2}>
+                      {/* Left Column: Doctor Info */}
+                      <Grid item xs={9}>
+                        <Box display="flex" alignItems="center" gap={2}>
+                          <Box
+                            sx={{
+                              width: 50,
+                              height: 50,
+                              borderRadius: '50%',
+                              backgroundColor: '#e0f7fa',
+                              display: 'flex',
+                              justifyContent: 'center',
+                              alignItems: 'center',
+                            }}
+                          >
+                          <PersonIcon sx={{ color: '#00796b', fontSize: 30 }} />
+                          </Box>
+                          <Box>
+                            <Typography variant="h6" fontWeight="bold">
+                              Dr. {doctor.firstName} {doctor.lastName}
+                            </Typography>
+                            <Box display="flex" alignItems="center" gap={1}>
+                              <Typography variant="body2" color="text.secondary">
+                                <span style={{ color: '#fbc02d' }}>★</span> {doctor.rating || 'No ratings yet.'}
+                              </Typography>
+                              <Typography variant="body2" color="text.secondary">
+                                {doctor.experience || 'N/A years'} experience
+                              </Typography>
+                            </Box>
+                          </Box>
+                        </Box>
+                        <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+                          <span style={{ color: '#757575' }}>📍</span> {doctor.address || 'N/A'}
+                        </Typography>
+                        <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+                          {doctor.description || 'No description available.'}
+                        </Typography>
+                        <Typography variant="body2" color="text.secondary" sx={{ mt: 2 }}>
+                          Next available: <strong>{doctor.nextAvailableDate || 'N/A'}</strong>
+                        </Typography>
+                        <Box display="flex" gap={1} sx={{ mt: 1 }}>
+                          {doctor.availableTimes?.map((time: string, idx: number) => (
+                            <Box
+                              key={idx}
+                              sx={{
+                                backgroundColor: '#e0f7fa',
+                                color: '#00796b',
+                                padding: '4px 12px',
+                                borderRadius: '16px',
+                                fontSize: '0.875rem',
+                                fontWeight: 500,
+                              }}
+                            >
+                              {time}
+                            </Box>
+                          ))}
+                        </Box>
+                      </Grid>
+
+                      {/* Right Column: Book Button */}
+                      <Grid item xs={3} display="flex" justifyContent="flex-end" alignItems="flex-start">
+                        <Button
+                          variant="contained"
+                          color="primary"
+                          onClick={() => handleOpenModal(doctor)}
+                          sx={{
+                            backgroundColor: '#0041D4',
+                            color: '#fff',
+                            textTransform: 'none',
+                            fontWeight: 'bold',
+                          }}
+                        >
+                          Book Appointment
+                        </Button>
+                      </Grid>
+                    </Grid>
+                  </CardContent>
+                </Card>
+              </Grid>
+            ))}
+          </Grid>
+        </Box>
       )}
 
       {/* Modal for Booking Appointment */}
@@ -281,39 +439,101 @@ const BookAppointments = () => {
           </Button>
         </DialogActions>
       </Dialog>
+      </Card>
 
-      <Typography variant="h6" gutterBottom>
-        Your Appointments
-      </Typography>
-      {appointments.length > 0 ? (
-        <Grid container spacing={2}>
-          {appointments.map((appointment, index) => (
-            <Grid item xs={12} md={6} key={index}>
-              <Card>
-                <CardContent>
-                  <Typography variant="body1">
-                    <strong>Date:</strong> {new Date(appointment.appointmentDate).toLocaleDateString()}
-                  </Typography>
-                  <Typography variant="body1">
-                    <strong>Doctor:</strong> {appointment.doctorName}
-                  </Typography>
-                  <Typography variant="body1">
-                    <strong>Status:</strong> {appointment.status}
-                  </Typography>
-                  <Typography variant="body1">
-                    <strong>Reason:</strong> {appointment.reason}
-                  </Typography>
-                  <Typography variant="body1">
-                    <strong>Notes:</strong> {appointment.notes || 'N/A'}
-                  </Typography>
-                </CardContent>
-              </Card>
-            </Grid>
-          ))}
-        </Grid>
-      ) : (
-        <Typography color="text.secondary">No appointments found.</Typography>
-      )}
+      <Card sx={{ p: 5, boxShadow: 'none', border: '1px solid #e0e0e0' }}>
+        <Box sx={{ mb: 3 }}>
+          <Box display="flex">
+            <CalendarTodayIcon sx={{ color: '#29A644', mr: 1 }} />
+            <Typography variant="h6" gutterBottom>
+              My Appointments
+            </Typography>
+          </Box>
+          <Typography variant="body2" color="text.secondary" gutterBottom fontSize="1.1rem">
+            Your scheduled and past appointments
+          </Typography>
+        </Box>
+        {appointments.length > 0 ? (
+          <Grid container spacing={2}>
+            {appointments.map((appointment, index) => (
+              <Grid item xs={12} key={index}>
+                <Card
+                  sx={{
+                    border: '1px solid #e0e0e0',
+                    borderRadius: 2,
+                    boxShadow: 'none', // Remove box shadow
+                  }}
+                >
+                  <CardContent>
+                    <Grid container alignItems="center">
+                      {/* Left Column: Appointment Details */}
+                      <Grid item xs={9}>
+                        <Typography variant="h6" fontWeight="bold">
+                          Dr. {appointment.doctorName}
+                        </Typography>
+                        <Typography variant="body2" color="text.secondary">
+                          {appointment.doctorSpecialty || 'General Consultation'}
+                        </Typography>
+                        <Box display="flex" alignItems="center" gap={2} sx={{ mt: 1 }}>
+                          <Box display="flex" alignItems="center" gap={1}>
+                            <CalendarTodayIcon sx={{ fontSize: 16, color: '#757575' }} />
+                            <Typography variant="body2" color="text.secondary">
+                              {new Date(appointment.appointmentDate).toLocaleDateString()}
+                            </Typography>
+                          </Box>
+                          <Box display="flex" alignItems="center" gap={1}>
+                            <QueryBuilderIcon sx={{ fontSize: 16, color: '#757575' }} />
+                            <Typography variant="body2" color="text.secondary">
+                              {new Date(appointment.appointmentDate).toLocaleTimeString([], {
+                                hour: '2-digit',
+                                minute: '2-digit',
+                                hour12: true, // Ensures the time is displayed in 12-hour format with AM/PM
+                              })}
+                            </Typography>
+                          </Box>
+                        </Box>
+                      </Grid>
+
+                      {/* Right Column: Appointment Status */}
+                      <Grid item xs={3} display="flex" justifyContent="flex-end" alignItems="center">
+                        <Box
+                          sx={{
+                            backgroundColor:
+                              appointment.status === 1
+                                ? '#e0f7fa'
+                                : appointment.status === 4
+                                ? '#e8f5e9'
+                                : appointment.status === 5
+                                ? '#ffebee'
+                                : '#e0e0e0',
+                            color:
+                              appointment.status === 1
+                                ? '#00796b'
+                                : appointment.status === 4
+                                ? '#388e3c'
+                                : appointment.status === 5
+                                ? '#d32f2f'
+                                : '#757575',
+                            padding: '4px 12px',
+                            borderRadius: '16px',
+                            fontSize: '0.875rem',
+                            fontWeight: 500,
+                            textAlign: 'center',
+                          }}
+                        >
+                          {appointmentStatusMap[appointment.status] || 'Unknown'}
+                        </Box>
+                      </Grid>
+                    </Grid>
+                  </CardContent>
+                </Card>
+              </Grid>
+            ))}
+          </Grid>
+        ) : (
+          <Typography color="text.secondary">No appointments found.</Typography>
+        )}
+      </Card>
     </Box>
   );
 };
