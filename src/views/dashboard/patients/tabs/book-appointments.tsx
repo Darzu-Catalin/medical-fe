@@ -9,6 +9,8 @@ import EditCalendarIcon from '@mui/icons-material/EditCalendar';
 import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
 import QueryBuilderIcon from '@mui/icons-material/QueryBuilder';
 import PersonIcon from '@mui/icons-material/Person';
+import ClearIcon from '@mui/icons-material/Clear';
+
 
 const decodeToken = (token: string) => {
   try {
@@ -42,6 +44,7 @@ const BookAppointments = () => {
   const [selectedSpecialty, setSelectedSpecialty] = useState<string | null>(null);
   const [allDoctors, setAllDoctors] = useState<any[]>([]); // Store all doctors
   const [filteredDoctors, setFilteredDoctors] = useState<any[]>([]); // Store filtered doctors
+  const [doctorRatings, setDoctorRatings] = useState<{ [key: string]: number }>({}); // doctorId -> average rating
   const [appointments, setAppointments] = useState<any[]>([]); // Store appointments
   const [openModal, setOpenModal] = useState(false); // Modal visibility state
   const [selectedDoctor, setSelectedDoctor] = useState<any | null>(null); // Selected doctor details
@@ -51,6 +54,10 @@ const BookAppointments = () => {
     reason: '',
     notes: '',
   });
+
+  const [openCancelModal, setOpenCancelModal] = useState(false); // Cancel modal visibility state]
+  const [selectedAppointment, setSelectedAppointment] = useState<any | null>(null);
+
 
   const fetchUserData = () => {
     try {
@@ -86,6 +93,17 @@ const BookAppointments = () => {
       const specialties = Array.from(new Set(data.map((doctor: any) => doctor.specialty).filter(Boolean))) as string[];
       setSpecialties(specialties);
       console.log('Extracted Specialties:', specialties);
+
+      // Fetch ratings for each doctor
+      const ratingsMap: { [key: string]: number } = {};
+      await Promise.all(data.map(async (doctor: any) => {
+        const ratingData = await fetchDoctorRating(doctor.id);
+        ratingsMap[doctor.id] = ratingData.AverageRating;
+      }));
+
+      setDoctorRatings(ratingsMap);
+      console.log('Doctor Ratings Map:', ratingsMap);
+
     } catch (err) {
       if ((err as AxiosError).response?.status === 404) {
         console.error('Endpoint not found:', err);
@@ -95,6 +113,19 @@ const BookAppointments = () => {
       }
     }
   };
+
+  const fetchDoctorRating = async (doctorId: number) => {
+    try {
+      const res = await axiosInstance.get(`/ratings/doctor/${doctorId}`, {
+        headers: { Authorization: `Bearer ${getSession() || localStorage.getItem('token')}` },
+      });
+      return res.data;
+    }
+    catch(err){
+      console.error('Error fetching doctor rating:', err);
+      return { AverageRating: 0, RatingsCount: 0 };
+
+    }};
 
   const fetchAppointments = async (page = 1, pageSize = 20) => {
     try {
@@ -210,6 +241,41 @@ const BookAppointments = () => {
       console.error('Error booking appointment:', err);
       alert('Failed to book appointment. Please try again.');
     }
+  };
+
+  const handleOpenCancelModal = (appointment: any) => {
+    setSelectedAppointment(appointment);
+    setOpenCancelModal(true);
+  };
+
+  const handleCloseCancelModal = () => {
+    setOpenCancelModal(false);
+    setSelectedAppointment(null);
+  };
+
+  const handleCancelAppointment = async (appointmentId: number) => {
+    if (!appointmentId) return;
+    try {
+      console.log('Cancelling appointment with id:', appointmentId);
+
+      const token = getSession() || localStorage.getItem('token');
+      if (!token) {
+        alert('User is not authenticated.');
+        return;
+      }
+
+      const decodedToken = decodeToken(token); // Decode the JWT token
+      console.log('Decoded Token:', decodedToken); // Debugging log
+
+      await axiosInstance.delete(`/appointment/${appointmentId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      await fetchAppointments();
+      handleCloseCancelModal();
+    } catch (err) {
+      console.error('Error cancelling appointment:', err);
+    }
+
   };
 
   useEffect(() => {
@@ -358,10 +424,10 @@ const BookAppointments = () => {
                             </Typography>
                             <Box display="flex" alignItems="center" gap={1}>
                               <Typography variant="body2" color="text.secondary">
-                                <span style={{ color: '#fbc02d' }}>★</span> {doctor.rating || 'No ratings yet.'}
+                                <span style={{ color: '#fbc02d' }}>★</span> {doctorRatings[doctor.id]?.toFixed(1) || 'No ratings yet'}
                               </Typography>
                               <Typography variant="body2" color="text.secondary">
-                                {doctor.experience || 'N/A years'} experience
+                                {doctor.experience || 'N/A'} years experience
                               </Typography>
                             </Box>
                           </Box>
@@ -485,6 +551,7 @@ const BookAppointments = () => {
             My scheduled and past appointments
           </Typography>
         </Box>
+
         {appointments.length > 0 ? (
           <Grid container spacing={2}>
             {appointments.map((appointment, index) => (
@@ -528,32 +595,56 @@ const BookAppointments = () => {
 
                       {/* Right Column: Appointment Status */}
                       <Grid item xs={3} display="flex" justifyContent="flex-end" alignItems="center">
-                        <Box
-                          sx={{
-                            backgroundColor:
-                              appointment.status === 1
-                                ? '#e0f7fa'
-                                : appointment.status === 4
-                                ? '#e8f5e9'
-                                : appointment.status === 5
-                                ? '#ffebee'
-                                : '#e0e0e0',
-                            color:
-                              appointment.status === 1
-                                ? '#00796b'
-                                : appointment.status === 4
-                                ? '#388e3c'
-                                : appointment.status === 5
-                                ? '#d32f2f'
-                                : '#757575',
-                            padding: '4px 12px',
-                            borderRadius: '16px',
-                            fontSize: '0.875rem',
-                            fontWeight: 500,
-                            textAlign: 'center',
-                          }}
-                        >
-                          {appointmentStatusMap[appointment.status] || 'Unknown'}
+                        <Box display={"flex"} alignItems="center" gap={1}>
+                          <Box
+                            sx={{
+                              backgroundColor:
+                                appointment.status === 1
+                                  ? '#e0f7fa'
+                                  : appointment.status === 4
+                                  ? '#e8f5e9'
+                                  : appointment.status === 5
+                                  ? '#ffebee'
+                                  : '#e0e0e0',
+                              color:
+                                appointment.status === 1
+                                  ? '#00796b'
+                                  : appointment.status === 4
+                                  ? '#388e3c'
+                                  : appointment.status === 5
+                                  ? '#d32f2f'
+                                  : '#757575',
+                              padding: '4px 12px',
+                              borderRadius: '16px',
+                              fontSize: '0.875rem',
+                              fontWeight: 500,
+                              textAlign: 'center',
+                            }}
+                          >
+                            {appointmentStatusMap[appointment.status] || 'Unknown'}
+                          </Box>
+
+                          {/* Cancel Button (only when status === 1) */}
+                          {appointment.status === 1 && (
+                            <Button
+                              size="small"
+                              color="error"
+                              onClick={() => handleOpenCancelModal(appointment)}
+                              sx={{
+                                fontSize: '1.3rem',
+                                width: '1.5rem',
+                                borderRadius: '16px',
+                               
+                                '&:hover': {
+                                  backgroundColor: 'rgba(211, 47, 47, 0.1)', // light red background on hover
+                                },
+                                '&:active': {
+                                  backgroundColor: 'rgba(211, 47, 47, 0.2)', // slightly darker on click
+                                },
+                              }}
+                            >
+                              <ClearIcon fontSize="inherit" />
+                            </Button>)}
                         </Box>
                       </Grid>
                     </Grid>
@@ -565,6 +656,36 @@ const BookAppointments = () => {
         ) : (
           <Typography color="text.secondary">No appointments found.</Typography>
         )}
+
+      {/* Modal for Cancelling Appointment */}
+      <Dialog  open={openCancelModal} onClose={handleCloseCancelModal} fullWidth maxWidth="sm">
+        <DialogTitle sx={{ textAlign: 'center', fontWeight: 'bold' }}>Cancel Appointment</DialogTitle>
+          <DialogContent>
+            <Typography align="center">
+              Are you sure you want to cancel your appointment with{' '}
+              {selectedAppointment?.doctorName} on{' '}
+              {selectedAppointment &&
+                new Date(selectedAppointment.appointmentDate).toLocaleDateString()}
+              ?
+              <br />
+              This action cannot be undone.
+            </Typography>
+          </DialogContent>
+          <DialogActions sx={{ justifyContent: 'center', gap: 2 }}>
+            <Button
+              onClick={() => handleCancelAppointment(selectedAppointment?.id)}
+              variant="contained"
+              color="error"
+              >
+              Yes, cancel
+            </Button>
+            <Button onClick={handleCloseCancelModal}>
+              Keep Appointment
+            </Button>
+            </DialogActions>
+           </Dialog>            
+
+
       </Card>
     </Box>
   );
