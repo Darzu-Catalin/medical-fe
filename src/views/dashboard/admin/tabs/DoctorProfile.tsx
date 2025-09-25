@@ -16,7 +16,8 @@ import {
     TableContainer,
     TableHead,
     TableRow,
-    Paper
+    Paper,
+    Divider
 } from '@mui/material';
 import StarIcon from '@mui/icons-material/Star';
 import LocalHospitalIcon from '@mui/icons-material/LocalHospital';
@@ -27,35 +28,19 @@ import GradeIcon from '@mui/icons-material/Grade';
 import CancelIcon from '@mui/icons-material/Cancel';
 import ScheduleIcon from '@mui/icons-material/Schedule';
 import HourglassEmptyIcon from '@mui/icons-material/HourglassEmpty';
-import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline';
 import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
 import AutorenewIcon from '@mui/icons-material/Autorenew';
+import CakeIcon from '@mui/icons-material/Cake';
+import EmailIcon from '@mui/icons-material/Email';
+import PhoneIcon from '@mui/icons-material/Phone';
+import BadgeIcon from '@mui/icons-material/Badge';
+import BloodtypeIcon from '@mui/icons-material/Bloodtype';
+import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline';
+import HomeIcon from '@mui/icons-material/Home';
+import { Appointment } from '../admin-dashboard-view';
+import { Doctor } from '../admin-dashboard-view';
 
-export interface Doctor {
-    id: string;
-  firstName: string;
-  lastName: string;
-  specialty: string;
-  clinic: string;
-  experience: number;
-  rating?: number;
-  ratingsCount?: number;
-  email: string;
-  phoneNumber: string;
-  status: 'Active' | 'Inactive';
-  totalPatients?: number;
-  completedAppointments?: number;
-  todaysAppointments?: number;
-  avatarUrl?: string;
-}
 
-export interface Appointment {
-  id: number;
-  patientName: string;
-  appointmentDate: string;
-  status: string;
-  reason?: string;
-}
 
 interface DoctorProfileCardProps {
   doctor: Doctor;
@@ -66,6 +51,45 @@ interface DoctorProfileCardProps {
 
 const DoctorProfileCard: React.FC<DoctorProfileCardProps> = ({ doctor, appointments, appointmentsLoading, appointmentsError }) => {
   const [tab, setTab] = useState(0);
+  const safeDate = (d?: string | null) => {
+    if (!d) return '-';
+    const dt = new Date(d);
+    if (isNaN(dt.getTime())) return '-';
+    // use the user's locale formatting like the rest of the component
+    return dt.toLocaleDateString();
+    };
+
+    const dob = new Date(doctor.dateOfBirth);
+const today = new Date();
+
+// Calculate age in years, months, days
+let years = today.getFullYear() - dob.getFullYear();
+let months = today.getMonth() - dob.getMonth();
+let days = today.getDate() - dob.getDate();
+
+if (days < 0) {
+    months--;
+    // get number of days in the previous month
+    const prevMonth = new Date(today.getFullYear(), today.getMonth(), 0);
+    days += prevMonth.getDate();
+}
+
+if (months < 0) {
+    years--;
+    months += 12;
+}
+
+// Convert gender number to string
+const genderMap: { [key: number]: string } = {
+    0: 'Male',
+    1: 'Female',
+    2: 'Other' // I noticed you said 3 for other, adjust accordingly
+};
+
+const genderText = genderMap[doctor.gender] || 'Unknown';
+
+// Combine into one display string
+const ageGenderText = `${years}y ${months}m ${days}d, ${genderText}`;
   const totalAppointments = appointments?.length ?? 0;
     const todaysAppointments = appointments?.filter(appt => {
     const today = new Date();
@@ -115,7 +139,7 @@ const DoctorProfileCard: React.FC<DoctorProfileCardProps> = ({ doctor, appointme
                 Dr. {doctor.firstName} {doctor.lastName}
               </Typography>
               <Typography color="text.secondary">
-                {doctor.specialty} • {doctor.clinic} • {doctor.experience} years experience
+                {doctor.specialty} • {doctor.clinicId} • {doctor.experience} years experience
               </Typography>
 
               <Box display="flex" alignItems="center" mt={1} gap={1}>
@@ -219,6 +243,7 @@ const DoctorProfileCard: React.FC<DoctorProfileCardProps> = ({ doctor, appointme
           },
         }}
       >
+        <Tab label="Overview" />
         <Tab label="Appointments" />
         <Tab label="Reviews" />
         <Tab label="Schedule" />
@@ -231,7 +256,133 @@ const DoctorProfileCard: React.FC<DoctorProfileCardProps> = ({ doctor, appointme
             mb: 2,
         }}
         >
-        {tab === 0 && (
+            {tab === 0 && (
+            <Card sx={{ borderRadius: 3, boxShadow: '0 12px 30px rgba(2,6,23,0.06)', mb: 2 }}>
+                <CardContent sx={{ px: 3, py: 2.5 }}>
+                {/* Header with Avatar icon */}
+                <Box display="flex" alignItems="center" gap={2} mb={1.5}>
+                    <Avatar sx={{ bgcolor: '#E8F3FF', width: 48, height: 48 }}>
+                    <PersonIcon sx={{ color: '#2563EB', fontSize: 26 }} />
+                    </Avatar>
+                    <Box>
+                    <Typography variant="h6" fontWeight={700} sx={{ lineHeight: 1 }}>
+                        Personal Information
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                        Basic demographic and contact information
+                    </Typography>
+                    </Box>
+                </Box>
+
+                <Divider sx={{ my: 1.5 }} />
+
+                <Grid container spacing={3} sx={{ mt: 0.5 }}>
+                    {/* Full Name */}
+                    <Grid item xs={12} sm={6} md={4}>
+                    <Typography variant="body2" color="text.secondary">Full Name</Typography>
+                    <Box display="flex" alignItems="center" mt={0.6}>
+                        <BadgeIcon sx={{ mr: 1, color: 'text.secondary', fontSize: 18 }} />
+                        <Typography fontWeight={700}>
+                        {doctor.firstName && doctor.lastName ? `${doctor.firstName} ${doctor.lastName}` : '-'}
+                        </Typography>
+                    </Box>
+                    </Grid>
+
+                    {/* IDNP */}
+                    <Grid item xs={12} sm={6} md={4}>
+                    <Typography variant="body2" color="text.secondary">IDNP (National ID)</Typography>
+                    <Box display="flex" alignItems="center" mt={0.6}>
+                        <BadgeIcon sx={{ mr: 1, color: 'text.secondary', fontSize: 18 }} />
+                        <Typography fontWeight={700}>{doctor.IDNP || '-'}</Typography>
+                    </Box>
+                    </Grid>
+
+                    {/* Blood Type */}
+                    <Grid item xs={12} sm={6} md={4}>
+                    <Typography variant="body2" color="text.secondary">Blood Type</Typography>
+                    <Box display="flex" alignItems="center" mt={0.6}>
+                        <BloodtypeIcon sx={{ mr: 1, color: 'text.secondary', fontSize: 18 }} />
+                        <Box
+                        component="span"
+                        sx={{
+                            px: 1.25,
+                            py: 0.3,
+                            borderRadius: '8px',
+                            border: '1px solid #FCA5A5',
+                            color: '#DC2626',
+                            fontWeight: 700,
+                            display: 'inline-block',
+                            minWidth: 36,
+                            textAlign: 'center',
+                            fontSize: '0.9rem'
+                        }}
+                        >
+                        {doctor.bloodType || '-'}
+                        </Box>
+                    </Box>
+                    </Grid>
+
+                    {/* Email */}
+                    <Grid item xs={12} sm={6} md={4}>
+                    <Typography variant="body2" color="text.secondary">Email Address</Typography>
+                    <Box display="flex" alignItems="center" mt={0.6}>
+                        <EmailIcon sx={{ mr: 1, color: 'text.secondary', fontSize: 18 }} />
+                        <Typography
+                        component={doctor.email ? 'a' : 'span'}
+                        href={doctor.email ? `mailto:${doctor.email}` : undefined}
+                        sx={{
+                            fontWeight: 700,
+                            color: doctor.email ? '#2563EB' : 'text.primary',
+                            textDecoration: doctor.email ? 'none' : 'inherit',
+                        }}
+                        >
+                        {doctor.email || '-'}
+                        </Typography>
+                    </Box>
+                    </Grid>
+
+                    {/* Date of Birth */}
+                    <Grid item xs={12} sm={6} md={4}>
+                    <Typography variant="body2" color="text.secondary">Date of Birth</Typography>
+                    <Box display="flex" alignItems="center" mt={0.6}>
+                        <CakeIcon sx={{ mr: 1, color: 'text.secondary', fontSize: 18 }} />
+                        <Typography fontWeight={700}>{safeDate(doctor.dateOfBirth)}</Typography>
+                    </Box>
+                    </Grid>
+
+                    {/* Address */}
+                    <Grid item xs={12} sm={6} md={4}>
+                    <Typography variant="body2" color="text.secondary">Address</Typography>
+                    <Box display="flex" alignItems="center" mt={0.6}>
+                        <HomeIcon sx={{ mr: 1, color: 'text.secondary', fontSize: 18 }} />
+                        <Typography fontWeight={700}>{doctor.address || 'N/A'}</Typography>
+                    </Box>
+                    </Grid>
+
+                    {/* Phone Number */}
+                    <Grid item xs={12} sm={6} md={4}>
+                    <Typography variant="body2" color="text.secondary">Phone Number</Typography>
+                    <Box display="flex" alignItems="center" mt={0.6}>
+                        <PhoneIcon sx={{ mr: 1, color: 'text.secondary', fontSize: 18 }} />
+                        <Typography fontWeight={700}>{doctor.phoneNumber || '-'}</Typography>
+                    </Box>
+                    </Grid>
+
+                    {/* Age & Gender */}
+                    <Grid item xs={12} sm={6} md={4}>
+                    <Typography variant="body2" color="text.secondary">Age & Gender</Typography>
+                    <Box display="flex" alignItems="center" mt={0.6}>
+                        <CalendarTodayIcon sx={{ mr: 1, color: 'text.secondary', fontSize: 18 }} />
+                        <Typography fontWeight={700}>{ageGenderText}</Typography>
+                    </Box>
+                    </Grid>
+
+                    
+                </Grid>
+                </CardContent>
+            </Card>
+            )}
+        {tab === 1 && (
     <Card sx={{ borderRadius: 3 }}>
         <CardContent>
             {appointmentsLoading && <Typography>Loading appointments...</Typography>}
@@ -335,14 +486,14 @@ const DoctorProfileCard: React.FC<DoctorProfileCardProps> = ({ doctor, appointme
 
 
 
-        {tab === 1 && (
+        {tab === 2 && (
             <Card sx={{ borderRadius: 3 }}>
             <CardContent>
                 <Typography>Appointments Content</Typography>
             </CardContent>
             </Card>
         )}
-        {tab === 2 && (
+        {tab === 3 && (
             <Card sx={{ borderRadius: 3 }}>
             <CardContent>
                 <Typography>Reviews Content</Typography>

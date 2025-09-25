@@ -23,7 +23,7 @@ import {
   DialogContent,
   DialogActions,
 } from '@mui/material';
-import { Edit } from '@mui/icons-material';
+import { Bloodtype, Edit } from '@mui/icons-material';
 import GroupOutlinedIcon from '@mui/icons-material/GroupOutlined';
 import PersonOutlineIcon from '@mui/icons-material/PersonOutline';
 import ShowChartIcon from '@mui/icons-material/ShowChart';
@@ -49,12 +49,31 @@ interface DoctorRatingsSummaryDto {
 }
 
 export interface Appointment {
-  id: number;
+  id: string;
+  patientId: string;
+  doctorId: string;
   patientName: string;
+  doctorName: string;
+  specialty: string;
   appointmentDate: string;
-  status: string;
+  duration: number;
+  status: number;
   reason?: string;
+  notes?: string;
+  createdAt: string;
 }
+
+export const bloodTypes = [
+  { value: 1, label: "A+" },
+  { value: 2, label: "A-" },
+  { value: 3, label: "B+" },
+  { value: 4, label: "B-" },
+  { value: 5, label: "AB+" },
+  { value: 6, label: "AB-" },
+  { value: 7, label: "O+" },
+  { value: 8, label: "O-" },
+];
+
 
 export const useDoctorAppointments = (doctorId: string) => {
   const [appointments, setAppointments] = useState<Appointment[]>([]);
@@ -89,6 +108,131 @@ export const useDoctorAppointments = (doctorId: string) => {
 
   return { appointments, loading, error };
 };
+
+export const usePatientVaccines = (patientId: string) => {
+  const [vaccines, setVaccines] = useState<Vaccine[]>([]);
+  const [vaccinesLoading, setVaccinesLoading] = useState(false);
+  const [vaccinesError, setVaccinesError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!patientId) return;
+
+    const fetchVaccines = async () => {
+      setVaccinesLoading(true);
+      setVaccinesError(null);
+
+      try {
+        const token =
+          getSession() ||
+          localStorage.getItem("accessToken") ||
+          localStorage.getItem("token");
+
+        if (!token) throw new Error("Unauthorized. No session token found.");
+
+        const res = await axios.get<{ data: Vaccine[] }>(
+          `http://localhost:5152/api/Patient/${patientId}/vaccinations`,
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+
+        setVaccines(res.data.data || []);
+      } catch (err: any) {
+        setVaccinesError(err.message || "Error fetching vaccines");
+      } finally {
+        setVaccinesLoading(false);
+      }
+    };
+
+    fetchVaccines();
+  }, [patientId]);
+
+  return { vaccines, vaccinesLoading, vaccinesError };
+};
+
+export const usePatientAllergies = (patientId: string) => {
+  const [allergies, setAllergies] = useState<Allergy[]>([]);
+  const [allergiesLoading, setAllergiesLoading] = useState(false);
+  const [allergiesError, setAllergiesError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!patientId) return;
+
+    const fetchAllergies = async () => {
+      setAllergiesLoading(true);
+      setAllergiesError(null);
+
+      try {
+        const token =
+          getSession() ||
+          localStorage.getItem("accessToken") ||
+          localStorage.getItem("token");
+
+        if (!token) throw new Error("Unauthorized. No session token found.");
+
+        const res = await axios.get<{ data: Allergy[] }>(
+          `http://localhost:5152/api/Patient/${patientId}/allergies`,
+          {
+            headers: { Authorization: `Bearer ${token}` }
+          }
+        );
+
+        setAllergies(res.data.data || []);
+      } catch (err: any) {
+        setAllergiesError(err.message || "Error fetching allergies");
+      } finally {
+        setAllergiesLoading(false);
+      }
+    };
+
+    fetchAllergies();
+  }, [patientId]);
+
+  return { allergies, allergiesLoading, allergiesError };
+};
+
+
+export const usePatientAppointments = (patientId: string) => {
+  const [patientAppointments, setPatientAppointments] = useState<Appointment[]>([]);
+  const [patientLoading, setPatientLoading] = useState(false);
+  const [patientError, setPatientError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!patientId) return;
+
+    const fetchAppointments = async () => {
+      setPatientLoading(true);
+      setPatientError(null);
+
+      try {
+        const token =
+          getSession() ||
+          localStorage.getItem("accessToken") ||
+          localStorage.getItem("token");
+
+        if (!token) throw new Error("Unauthorized. No session token found.");
+
+        const res = await axios.get<{ data: Appointment[] }>(
+          "http://localhost:5152/api/Appointment",
+          {
+            headers: { Authorization: `Bearer ${token}` },
+            params: { patientId },
+          }
+        );
+
+        setPatientAppointments(res.data.data || []);
+      } catch (err: any) {
+        setPatientError(err.message || "Error fetching appointments");
+      } finally {
+        setPatientLoading(false);
+      }
+    };
+
+    fetchAppointments();
+  }, [patientId]);
+
+  return { patientAppointments, patientLoading, patientError };
+};
+
+
 
 const useDoctorRatings = (doctorId: string) => {
   const [ratingsSummary, setRatingsSummary] = useState<DoctorRatingsSummaryDto | null>(null);
@@ -144,21 +288,28 @@ const getDoctorPatientCount = async (doctorId: string) => {
 };
 
 
-interface Doctor {
-  id: string;
+
+export interface Doctor {
+    id: string;
   firstName: string;
   lastName: string;
-  email: string;
-  clinicId: string;
   specialty: string;
-  status: 'Active' | 'Inactive';
-  created: string;
-  gender: number;
-  phoneNumber: string;
+  clinicId: string;
   experience: number;
-  address: string;
-  dateOfBirth: string;
+  rating?: number;
+  ratingsCount?: number;
+  email: string;
+  phoneNumber: string;
+  status: 'Active' | 'Inactive';
   totalPatients?: number;
+  completedAppointments?: number;
+  todaysAppointments?: number;
+  avatarUrl?: string;
+  address?: string;
+  dateOfBirth: string;
+  IDNP: string;
+  bloodType?: string;
+  gender: number;
 }
 
 
@@ -187,6 +338,7 @@ interface EditingPatient {
   dateOfBirth?: string;
   address?: string;
   IDNP?: string;
+  bloodType: string;
 
 }
 
@@ -196,15 +348,43 @@ interface DashboardData {
   activeDoctorsCount: number;
 }
 
-interface Patient {
+export interface Patient {
   id: string;
   firstName: string;
   lastName: string;
   email: string;
   phoneNumber: string;
   status: 'Active' | 'Inactive';
-  address?: string;
-  dateOfBirth?: string;
+  address: string;
+  dateOfBirth: string;
+  recentVaccinations?: Vaccine[];
+  activeAllergies?: Allergy[];
+  idnp: string;
+  gender: number;
+  bloodType: string;
+}
+
+export interface Vaccine {
+  id: string;
+  patientId: string;
+  vaccineName: string;
+  dateAdministered: string;
+  administeredById?: string;
+  doctorName?: string;
+  batchNumber?: string;
+  notes?: string;
+  createdAt: string;
+}
+
+export interface Allergy {
+  id: string;
+  patientId: string;
+  allergenName: string;
+  severity: string;
+  reaction?: string;
+  recordedById?: string;
+  notes?: string;
+  createdAt: string;
 }
 
 const AdminDashboardView = () => {
@@ -220,6 +400,7 @@ const AdminDashboardView = () => {
   const [patientPage, setPatientPage] = useState(1);
   const pageSize = 10; 
   const [searchTerm, setSearchTerm] = useState('');
+  const [searchTermp, setSearchTermp] = useState('');
   // viewing docs
   // for viewing doc info
   const [openDoctorProfile, setOpenDoctorProfile] = useState(false);
@@ -228,6 +409,10 @@ const AdminDashboardView = () => {
   const [openPatientProfile, setOpenPatientProfile] = useState(false);
   const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
   const { appointments, loading: appointmentsLoading, error: appointmentsError } = useDoctorAppointments(selectedDoctor?.id || '');
+  const { patientAppointments, patientLoading, patientError } = usePatientAppointments(selectedPatient?.id || '');
+  const { vaccines, vaccinesLoading, vaccinesError } = usePatientVaccines(selectedPatient?.id || '');
+  const { allergies, allergiesLoading, allergiesError } = usePatientAllergies(selectedPatient?.id || '');
+
 
   const handleViewProfile = (doctor: Doctor) => {
     setSelectedDoctor(doctor);
@@ -278,7 +463,8 @@ const AdminDashboardView = () => {
     address: '',
     IDNP: '',
     isActive: true,
-    roles: ['Patient']
+    roles: ['Patient'],
+    bloodType: ''
   });
 
   const specialties = [
@@ -322,10 +508,11 @@ const AdminDashboardView = () => {
 
   const handleInputChangePatient = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
+    // console.log(newPatient.bloodType)
 
     setNewPatient(prev => ({
       ...prev,
-      [name]: name === 'gender' ? Number(value) : value
+      [name]: name === 'gender' || name === 'bloodType' ? Number(value) : value
     }));
   };
 
@@ -364,7 +551,8 @@ const AdminDashboardView = () => {
 
       const payload = {
         ...newPatient,
-        dateOfBirth: new Date(newPatient.dateOfBirth).toISOString()
+        dateOfBirth: new Date(newPatient.dateOfBirth).toISOString(),
+        bloodType: Number(newPatient.bloodType)
       };
 
       console.log(payload);
@@ -373,6 +561,7 @@ const AdminDashboardView = () => {
       const res = await axiosInstance.post('/Admin/CreatePatient', payload, {
         headers: { Authorization: `Bearer ${token}` },
       });
+      console.log(payload);
 
       console.log('Patient added:', res.data);
       handleCloseAddPatient();
@@ -395,6 +584,7 @@ const AdminDashboardView = () => {
       lastName: patient.lastName,
       phoneNumber: patient.phoneNumber,
       address: patient.address,
+      bloodType: patient.bloodType
       // leave optional fields like address or dateOfBirth empty
     });
     setOpenEditPatient(true);
@@ -414,7 +604,7 @@ const AdminDashboardView = () => {
 
     setEditingPatient(prev => ({
       ...prev,
-      [name]: name === 'gender' ? Number(value) : value
+      [name]: name === 'gender' || name === 'bloodType' ? Number(value) : value
     }));
   };
 
@@ -460,6 +650,12 @@ const AdminDashboardView = () => {
         payload.email = editingPatient.email;
       } else {
         payload.email = originalPatient.email;
+      }
+      console.log(editingPatient.bloodType);
+      if (editingPatient.bloodType && editingPatient.bloodType !== originalPatient.bloodType) {
+        payload.bloodType = editingPatient.bloodType;
+      } else {
+        payload.bloodType = originalPatient.bloodType;
       }
 
       if (Object.keys(payload).length === 0) {
@@ -658,7 +854,12 @@ const AdminDashboardView = () => {
         specialty: item.user.specialty || 'N/A',
         status: item.user.isActive ? 'Active' : 'Inactive',
         experience: item.user.experience || 'N/A',
-        created: '',
+        idnp: item.user.idnp || 'N/A',
+        created: item.user.created || 'N/A',
+        address: item.user.address || 'N/A',
+        dateOfBirth: item.user.dateOfBirth || 'N/A',
+        phoneNumber: item.user.phoneNumber || 'N/A',
+        gender: item.user.gender || 'N/A',
       })));
     } catch (err) {
       console.error(err);
@@ -692,6 +893,13 @@ const AdminDashboardView = () => {
           email: item.user.email,
           phoneNumber: item.user.phoneNumber,
           status: item.user.isActive ? 'Active' : 'Inactive',
+          gender: item.user.gender || 'N/A',
+          address: item.user.address || 'N/A',
+          dateOfBirth: item.user.dateOfBirth || 'N/A',
+          idnp: item.user.idnp || 'N/A',
+          recentVaccinations: item.recentVaccinations || [],
+          activeAllergies: item.activeAllergies || [],
+          bloodType: item.user.bloodType,
         }));
 
         setPatients(mappedPatients);
@@ -732,9 +940,9 @@ const AdminDashboardView = () => {
     );
 
     const filteredPatients = patients.filter(pat =>
-      `${pat.firstName} ${pat.lastName}`.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      pat.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      pat.phoneNumber.toLowerCase().includes(searchTerm.toLowerCase())
+      `${pat.firstName} ${pat.lastName}`.toLowerCase().includes(searchTermp.toLowerCase()) ||
+      pat.email.toLowerCase().includes(searchTermp.toLowerCase()) ||
+      pat.phoneNumber.toLowerCase().includes(searchTermp.toLowerCase())
     );
 
 
@@ -1277,7 +1485,7 @@ const AdminDashboardView = () => {
                                   firstName: selectedDoctor.firstName,
                                   lastName: selectedDoctor.lastName,
                                   specialty: selectedDoctor.specialty,
-                                  clinic: selectedDoctor.clinicId || 'N/A',
+                                  clinicId: selectedDoctor.clinicId || 'N/A',
                                   experience: selectedDoctor.experience || 0,
                                   rating: ratingsSummary?.averageRating || 0,
                                   ratingsCount: ratingsSummary?.ratingsCount || 0,
@@ -1287,6 +1495,11 @@ const AdminDashboardView = () => {
                                   totalPatients: totalPatientCount || 0,
                                   completedAppointments: 2834,
                                   todaysAppointments: 0,
+                                  address: selectedDoctor.address || 'N/A',
+                                  dateOfBirth: selectedDoctor.dateOfBirth || 'N/A',
+                                  IDNP: selectedDoctor.IDNP || 'N/A',
+                                  bloodType: selectedDoctor.bloodType || 'N/A',
+                                  gender: selectedDoctor.gender,
                                 }}
                                 appointments={appointments}
                                 appointmentsLoading={appointmentsLoading}
@@ -1412,6 +1625,28 @@ const AdminDashboardView = () => {
                     </Grid>
                     <Grid item xs={12} sm={6}>
                       <TextField
+                        select
+                        label="Blood Type"
+                        name="bloodType"
+                        fullWidth
+                        margin="dense"
+                        value={Number(newPatient.bloodType)}
+                        onChange={handleInputChangePatient}
+                        SelectProps={{ native: true }}
+                      >
+                        <option value="">Select blood type</option>
+                        <option value="1">A+</option>
+                        <option value="2">A-</option>
+                        <option value="3">B+</option>
+                        <option value="4">B-</option>
+                        <option value="5">AB+</option>
+                        <option value="6">AB-</option>
+                        <option value="7">O+</option>
+                        <option value="8">O-</option>
+                      </TextField>
+                    </Grid>
+                    <Grid item xs={12} sm={6}>
+                      <TextField
                         label="Email"
                         name="email"
                         fullWidth
@@ -1490,7 +1725,7 @@ const AdminDashboardView = () => {
                 placeholder="Search patients by name, email, or clinic..."
                 fullWidth
                 size="small"
-                onChange={(e) => setSearchTerm(e.target.value)}
+                onChange={(e) => setSearchTermp(e.target.value)}
               />
             </Box>
 
@@ -1633,6 +1868,28 @@ const AdminDashboardView = () => {
                               </Grid>
                               <Grid item xs={12} sm={6}>
                                 <TextField
+                                  select
+                                  label="Blood Type"
+                                  name="bloodType"
+                                  fullWidth
+                                  margin="dense"
+                                  value={Number(editingPatient?.bloodType)}
+                                  onChange={handleEditInputChangePatient}
+                                  SelectProps={{ native: true }}
+                                >
+                                  <option value="">Select blood type</option>
+                                  <option value="1">A+</option>
+                                  <option value="2">A-</option>
+                                  <option value="3">B+</option>
+                                  <option value="4">B-</option>
+                                  <option value="5">AB+</option>
+                                  <option value="6">AB-</option>
+                                  <option value="7">O+</option>
+                                  <option value="8">O-</option>
+                                </TextField>
+                              </Grid>
+                              <Grid item xs={12} sm={6}>
+                                <TextField
                                   label="Phone Number"
                                   name="phoneNumber"
                                   fullWidth
@@ -1705,18 +1962,28 @@ const AdminDashboardView = () => {
                               <PatientProfileCard
                                 patient={{
                                   id: selectedPatient.id,
+                                  idnp: selectedPatient.idnp,
                                   firstName: selectedPatient.firstName,
                                   lastName: selectedPatient.lastName,
                                   email: selectedPatient.email,
                                   phoneNumber: selectedPatient.phoneNumber,
                                   status: selectedPatient.status,
                                   dateOfBirth: selectedPatient.dateOfBirth || 'N/A',
-                                  // completedAppointments: 2834,
-                                  // todaysAppointments: 0,
+                                  recentVaccinations: selectedPatient.recentVaccinations || [],
+                                  activeAllergies: selectedPatient.activeAllergies || [],
+                                  address: selectedPatient.address || 'N/A',
+                                  gender: selectedPatient.gender || 0,
+                                  bloodType: selectedPatient.bloodType || 'N/A',
                                 }}
-                                // appointments={appointments}
-                                // appointmentsLoading={appointmentsLoading}
-                                // appointmentsError={appointmentsError}
+                                patientAppointments={patientAppointments}
+                                patientAppointmentsLoading={patientLoading}
+                                patientAppointmentsError={patientError}
+                                vaccines={vaccines}
+                                vaccinesLoading={vaccinesLoading}
+                                vaccinesError={vaccinesError}
+                                allergies={allergies}
+                                allergiesLoading={allergiesLoading}
+                                allergiesError={allergiesError}
                               />
                             )}
                           </DialogContent>
