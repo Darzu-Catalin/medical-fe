@@ -83,7 +83,7 @@ export function useNavData() {
         {
           subheader: 'My Account',
           items: [
-            { title: 'Profile', path: '/dashboard/profile', icon: ICONS.profile },
+            { title: 'Profile', path: paths.dashboard.profile.root, icon: ICONS.profile },
           ],
         }
       )
@@ -107,7 +107,7 @@ export function useNavData() {
         {
           subheader: 'My Account',
           items: [
-            { title: 'Profile', path: '/dashboard/profile', icon: ICONS.profile },
+            { title: 'Profile', path: paths.dashboard.profile.root, icon: ICONS.profile },
           ],
         }
       )
