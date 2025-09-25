@@ -29,8 +29,120 @@ import PersonOutlineIcon from '@mui/icons-material/PersonOutline';
 import ShowChartIcon from '@mui/icons-material/ShowChart';
 import axiosInstance from '@/utils/axios';
 import { getSession } from '@/auth/context/utils';
-import PeopleAltOutlinedIcon from '@mui/icons-material/PeopleAltOutlined';
-import exp from 'constants';
+import DoctorProfileCard from '../admin/tabs/DoctorProfile';
+import PatientProfileCard from '../admin/tabs/PatientProfile';
+import axios from 'axios';
+interface Rating {
+  ratingId: number;
+  doctorId: string;
+  patientId: string;
+  ratingNr: number;
+  ratingCommentary: string;
+  createdAt: string;
+}
+
+interface DoctorRatingsSummaryDto {
+  doctorId: string;
+  averageRating: number;
+  ratingsCount: number;
+  ratings: Rating[];
+}
+
+export interface Appointment {
+  id: number;
+  patientName: string;
+  appointmentDate: string;
+  status: string;
+  reason?: string;
+}
+
+export const useDoctorAppointments = (doctorId: string) => {
+  const [appointments, setAppointments] = useState<Appointment[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  
+
+  useEffect(() => {
+    if (!doctorId) return;
+
+    const fetchAppointments = async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        const token = getSession() || localStorage.getItem('accessToken') || localStorage.getItem('token');
+        if (!token) throw new Error('Unauthorized. No session token found.');
+
+        const res = await axios.get<{ data: Appointment[] }>(`http://localhost:5152/api/Admin/${doctorId}/appointments`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        setAppointments(res.data.data); // must be an array
+
+      } catch (err: any) {
+        setError(err.message || 'Error fetching appointments');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchAppointments();
+  }, [doctorId]);
+
+  return { appointments, loading, error };
+};
+
+const useDoctorRatings = (doctorId: string) => {
+  const [ratingsSummary, setRatingsSummary] = useState<DoctorRatingsSummaryDto | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!doctorId) return;
+
+    const fetchRatings = async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        const token = getSession() || localStorage.getItem('accessToken') || localStorage.getItem('token');
+        if (!token) throw new Error('Unauthorized. No session token found.');
+
+        const res = await axios.get<DoctorRatingsSummaryDto>(
+          `http://localhost:5152/api/Rating/doctor/${doctorId}`,
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          }
+        );
+        setRatingsSummary(res.data);
+      } catch (err: any) {
+        setError(err.message || 'Error fetching ratings');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchRatings();
+  }, [doctorId]);
+
+  return { ratingsSummary, loading, error };
+};
+
+
+const getDoctorPatientCount = async (doctorId: string) => {
+  try {
+    const token = getSession() || localStorage.getItem('accessToken') || localStorage.getItem('token');
+    if (!token) throw new Error('Unauthorized. No session token found.');
+
+    const res = await axios.get(`http://localhost:5152/api/Admin/${doctorId}/patient-count`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    // The backend returns { success, doctorId, totalPatients }
+    console.log(res.data.totalPatients); // <-- this is the number of patients
+    return res.data.totalPatients;
+  } catch (err) {
+    console.error('Error fetching patient count', err);
+    return 0; // fallback
+  }
+};
+
 
 interface Doctor {
   id: string;
@@ -46,7 +158,9 @@ interface Doctor {
   experience: number;
   address: string;
   dateOfBirth: string;
+  totalPatients?: number;
 }
+
 
 interface EditingDoctor {
   id: string;          
@@ -63,6 +177,19 @@ interface EditingDoctor {
   experience?: number | string;
 }
 
+interface EditingPatient {
+  id: string;          
+  firstName?: string; 
+  lastName?: string;
+  gender?: number | string;
+  email?: string;
+  phoneNumber?: string;
+  dateOfBirth?: string;
+  address?: string;
+  IDNP?: string;
+
+}
+
 interface DashboardData {
   totalDoctors: number;
   totalPatients: number;
@@ -76,6 +203,8 @@ interface Patient {
   email: string;
   phoneNumber: string;
   status: 'Active' | 'Inactive';
+  address?: string;
+  dateOfBirth?: string;
 }
 
 const AdminDashboardView = () => {
@@ -91,6 +220,35 @@ const AdminDashboardView = () => {
   const [patientPage, setPatientPage] = useState(1);
   const pageSize = 10; 
   const [searchTerm, setSearchTerm] = useState('');
+  // viewing docs
+  // for viewing doc info
+  const [openDoctorProfile, setOpenDoctorProfile] = useState(false);
+  const [selectedDoctor, setSelectedDoctor] = useState<Doctor | null>(null);
+
+  const [openPatientProfile, setOpenPatientProfile] = useState(false);
+  const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
+  const { appointments, loading: appointmentsLoading, error: appointmentsError } = useDoctorAppointments(selectedDoctor?.id || '');
+
+  const handleViewProfile = (doctor: Doctor) => {
+    setSelectedDoctor(doctor);
+    setOpenDoctorProfile(true);
+  };
+
+  const handleViewProfilePatient = (patient: Patient) => {
+    setSelectedPatient(patient);
+    setOpenPatientProfile(true);
+  };
+  const { ratingsSummary, loading, error } = useDoctorRatings(selectedDoctor?.id || '');
+  const [totalPatientCount, setTotalPatientCount] = useState<number>(0);
+
+  useEffect(() => {
+    const fetchPatientCount = async () => {
+      const count = await getDoctorPatientCount(selectedDoctor?.id || '');
+      setTotalPatientCount(Number(count));
+    };
+
+    fetchPatientCount();
+  }, [selectedDoctor]);
 
   // adding new doctors
   const [openAddDoctor, setOpenAddDoctor] = useState(false);
@@ -106,6 +264,21 @@ const AdminDashboardView = () => {
     clinicId: '',
     specialty: '',
     experience: ''
+  });
+
+  // adding new patients
+  const [openAddPatient, setOpenAddPatient] = useState(false);
+  const [newPatient, setNewPatient] = useState({
+    email: '',
+    firstName: '',
+    lastName: '',
+    gender: '',
+    phoneNumber: '',
+    dateOfBirth: '',
+    address: '',
+    IDNP: '',
+    isActive: true,
+    roles: ['Patient']
   });
 
   const specialties = [
@@ -135,12 +308,24 @@ const AdminDashboardView = () => {
   const handleOpenAddDoctor = () => setOpenAddDoctor(true);
   const handleCloseAddDoctor = () => setOpenAddDoctor(false);
 
+  const handleOpenAddPatient = () => setOpenAddPatient(true);
+  const handleCloseAddPatient = () => setOpenAddPatient(false);
+
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
 
     setNewDoctor(prev => ({
       ...prev,
       [name]: name === 'gender' || name === 'specialty' ? Number(value) : value
+    }));
+  };
+
+  const handleInputChangePatient = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+
+    setNewPatient(prev => ({
+      ...prev,
+      [name]: name === 'gender' ? Number(value) : value
     }));
   };
 
@@ -172,7 +357,132 @@ const AdminDashboardView = () => {
     }
   };
 
+  const handleAddPatient = async () => {
+    try {
+      const token = getSession() || localStorage.getItem('token');
+      if (!token) throw new Error('Unauthorized');
+
+      const payload = {
+        ...newPatient,
+        dateOfBirth: new Date(newPatient.dateOfBirth).toISOString()
+      };
+
+      console.log(payload);
+
+
+      const res = await axiosInstance.post('/Admin/CreatePatient', payload, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      console.log('Patient added:', res.data);
+      handleCloseAddPatient();
+      fetchPatients(); // refresh list
+    } catch (err: any) {
+      console.error('Failed to add patient:', err.response?.data || err.message);
+      alert(err.response?.data?.title || 'Failed to add patient');
+    }
+  };
+
   // editing existing doctors
+  const [openEditPatient, setOpenEditPatient] = useState(false);
+  const [editingPatient, setEditingPatient] = useState<Partial<Patient & { dateOfBirth?: string }> | null>(null);
+
+
+  const handleOpenEditPatient = (patient: Patient) => {
+    setEditingPatient({
+      id: patient.id,
+      firstName: patient.firstName,
+      lastName: patient.lastName,
+      phoneNumber: patient.phoneNumber,
+      address: patient.address,
+      // leave optional fields like address or dateOfBirth empty
+    });
+    setOpenEditPatient(true);
+  };
+
+
+  const handleCloseEditPatient = () => {
+    setOpenEditPatient(false);
+    setEditingPatient(null);
+  };
+
+  const handleEditInputChangePatient = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
+    const { name, value } = e.target;
+    if (!editingPatient) return;
+
+    setEditingPatient(prev => ({
+      ...prev,
+      [name]: name === 'gender' ? Number(value) : value
+    }));
+  };
+
+  const handleUpdatePatient = async () => {
+    if (!editingPatient || !editingPatient.id) return;
+
+    try {
+      const token = getSession() || localStorage.getItem('token');
+      if (!token) throw new Error('Unauthorized');
+
+      // Find the original patient
+      const originalPatient = patients.find(p => p.id === editingPatient.id);
+      if (!originalPatient) throw new Error('Original patient not found');
+
+      if (originalPatient.email === editingPatient.email) throw new Error('The email is already in use.');
+
+      // Build payload only with changed fields
+      const payload: any = {};
+
+      if (editingPatient.firstName != '' && editingPatient.firstName !== originalPatient.firstName) {
+        payload.firstName = editingPatient.firstName;
+      } else {
+        payload.firstName = originalPatient.firstName;
+      }
+
+      if (editingPatient.lastName != '' && editingPatient.lastName !== originalPatient.lastName) {
+        payload.lastName = editingPatient.lastName;
+      } else {
+        payload.lastName = originalPatient.lastName;
+      }
+
+      if (editingPatient.phoneNumber != '' && editingPatient.phoneNumber !== originalPatient.phoneNumber) {
+        payload.phoneNumber = editingPatient.phoneNumber;
+      } else { 
+        payload.phoneNumber = originalPatient.phoneNumber;
+      }
+
+      if (editingPatient.address && editingPatient.address !== originalPatient.address) {
+        payload.address = editingPatient.address;
+      }
+
+      if (editingPatient.email && editingPatient.email !== originalPatient.email) {
+        payload.email = editingPatient.email;
+      } else {
+        payload.email = originalPatient.email;
+      }
+
+      if (Object.keys(payload).length === 0) {
+        alert('No changes to update.');
+        return;
+      }
+
+      console.log('Updating patient with payload:', payload);
+
+      await axiosInstance.put(`/Admin/updatePatient/${editingPatient.id}`, payload, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      alert('Patient updated successfully');
+      handleCloseEditPatient();
+      fetchPatients(); // refresh the list
+    } catch (err: any) {
+      console.error('Failed to update patient:', err.response?.data || err.message);
+      alert(err.response?.data?.title || 'Failed to update patient');
+    }
+  };
+
+  //editing patients
   const [openEditDoctor, setOpenEditDoctor] = useState(false);
   const [editingDoctor, setEditingDoctor] = useState<Partial<Doctor & { dateOfBirth?: string }> | null>(null);
 
@@ -752,27 +1062,63 @@ const AdminDashboardView = () => {
                       </TableCell>
                       
                       <TableCell>
-                        <Button
-                          sx={{
-                            textTransform: 'none',
-                            backgroundColor: doc.status === 'Active' ? '#FEE2E2' : '#DCFCE7',
-                            color: doc.status === 'Active' ? '#DC2626' : '#16A34A',
-                            fontWeight: 500,
-                            px: 2,
-                            py: 0.5,
-                            borderRadius: 1.5,
-                            '&:hover': {
-                              backgroundColor: doc.status === 'Active' ? '#FCA5A5' : '#86EFAC',
-                            },
-                          }}
-                          onClick={() => toggleUserStatus(doc.id, 'Doctor', doc.status === 'Active')}
+                        <TableCell>
+                          <Box display="flex" gap={1} flexWrap="wrap">
+                            {/* Status toggle button */}
+                            <Button
+                              sx={{
+                                textTransform: 'none',
+                                backgroundColor: doc.status === 'Active' ? '#FEE2E2' : '#DCFCE7',
+                                color: doc.status === 'Active' ? '#DC2626' : '#16A34A',
+                                fontWeight: 500,
+                                px: 2,
+                                py: 0.5,
+                                borderRadius: 1.5,
+                                '&:hover': {
+                                  backgroundColor: doc.status === 'Active' ? '#FCA5A5' : '#86EFAC',
+                                },
+                              }}
+                              onClick={() => toggleUserStatus(doc.id, 'Doctor', doc.status === 'Active')}
+                            >
+                              {doc.status === 'Active' ? 'Deactivate' : 'Activate'}
+                            </Button>
 
-                        >
-                          {doc.status === 'Active' ? 'Deactivate' : 'Activate'}
-                        </Button>
-                        <IconButton onClick={() => handleOpenEditDoctor(doc)}>
-                          <Edit />
-                        </IconButton>
+                            {/* View Profile */}
+                            <Button
+                              sx={{
+                                textTransform: 'none',
+                                backgroundColor: '#DBEAFE',
+                                color: '#1D4ED8',
+                                fontWeight: 500,
+                                px: 2,
+                                py: 0.5,
+                                borderRadius: 1.5,
+                                '&:hover': {
+                                  backgroundColor: '#BFDBFE',
+                                },
+                              }}
+                              onClick={() => handleViewProfile(doc)}
+                            >
+                              View Profile
+                            </Button>
+
+                            {/* Edit button as icon */}
+                            <IconButton
+                              sx={{
+                                backgroundColor: '#FEF3C7',
+                                color: '#B45309',
+                                '&:hover': { backgroundColor: '#FDE68A' },
+                                p: 0.5,
+                                width: 32,
+                                height: 32,
+                              }}
+                              onClick={() => handleOpenEditDoctor(doc)}
+                            >
+                              <Edit fontSize="small" />
+                            </IconButton>
+                          </Box>
+                        </TableCell>
+
                         <Dialog
                           open={openEditDoctor}
                           onClose={handleCloseEditDoctor}
@@ -917,6 +1263,39 @@ const AdminDashboardView = () => {
                             </DialogActions>
 
                         </Dialog>
+                        <Dialog
+                          open={openDoctorProfile}
+                          onClose={() => setOpenDoctorProfile(false)}
+                          maxWidth="lg"
+                          fullWidth
+                        >
+                          <DialogContent>
+                            {selectedDoctor && (
+                              <DoctorProfileCard
+                                doctor={{
+                                  id: selectedDoctor.id,
+                                  firstName: selectedDoctor.firstName,
+                                  lastName: selectedDoctor.lastName,
+                                  specialty: selectedDoctor.specialty,
+                                  clinic: selectedDoctor.clinicId || 'N/A',
+                                  experience: selectedDoctor.experience || 0,
+                                  rating: ratingsSummary?.averageRating || 0,
+                                  ratingsCount: ratingsSummary?.ratingsCount || 0,
+                                  email: selectedDoctor.email,
+                                  phoneNumber: selectedDoctor.phoneNumber,
+                                  status: selectedDoctor.status,
+                                  totalPatients: totalPatientCount || 0,
+                                  completedAppointments: 2834,
+                                  todaysAppointments: 0,
+                                }}
+                                appointments={appointments}
+                                appointmentsLoading={appointmentsLoading}
+                                appointmentsError={appointmentsError}
+                              />
+                            )}
+                          </DialogContent>
+                        </Dialog>
+
 
                       </TableCell>
                     </TableRow>
@@ -959,7 +1338,150 @@ const AdminDashboardView = () => {
                   Patient Management
                 </Typography>
               </Box>
-              <Button variant="contained">+ Add New Patient</Button>
+              <Button variant="contained"
+                onClick={handleOpenAddPatient}
+                sx={{
+                  backgroundColor: '#2563EB',
+                  '&:hover': { backgroundColor: '#1E40AF' },
+                }}
+              >
+                + Add New Patient</Button>
+                <Dialog
+                open={openAddPatient}
+                onClose={handleCloseAddPatient}
+                fullWidth
+                maxWidth="sm"
+                PaperProps={{
+                  sx: {
+                    borderRadius: 3,
+                    p: 2,
+                    backgroundColor: '#FAFAFA',
+                  },
+                }}
+              >
+                <DialogTitle sx={{ fontWeight: 700, fontSize: 22, color: '#111827' }}>
+                  Add New Patient
+                </DialogTitle>
+                <DialogContent>
+                  <Grid container spacing={2} mt={1}>
+                    <Grid item xs={12} sm={6}>
+                      <TextField
+                        label="First Name"
+                        name="firstName"
+                        fullWidth
+                        value={newPatient.firstName}
+                        onChange={handleInputChangePatient}
+                      />
+                    </Grid>
+                    <Grid item xs={12} sm={6}>
+                      <TextField
+                        label="Last Name"
+                        name="lastName"
+                        fullWidth
+                        value={newPatient.lastName}
+                        onChange={handleInputChangePatient}
+                      />
+                    </Grid>
+                    <Grid item xs={12} sm={6}>
+                      <TextField
+                        label="IDNP"
+                        name="IDNP"
+                        fullWidth
+                        value={newPatient.IDNP}
+                        onChange={handleInputChangePatient}
+                      />
+                    </Grid>
+                    <Grid item xs={12} sm={6}>
+                      <TextField
+                        select
+                        label="Gender"
+                        name="gender"
+                        fullWidth
+                        margin="dense"
+                        value={Number(newPatient.gender)}
+                        onChange={handleInputChangePatient}
+                        SelectProps={{ native: true }}
+                      >
+                        <option value="">Select gender</option>
+                        <option value="1">Male</option>
+                        <option value="2">Female</option>
+                        <option value="3">Other</option>
+                      </TextField>
+
+
+                    </Grid>
+                    <Grid item xs={12} sm={6}>
+                      <TextField
+                        label="Email"
+                        name="email"
+                        fullWidth
+                        value={newPatient.email}
+                        onChange={handleInputChangePatient}
+                      />
+                    </Grid>
+                    <Grid item xs={12} sm={6}>
+                      <TextField
+                        label="Phone Number"
+                        name="phoneNumber"
+                        fullWidth
+                        value={newPatient.phoneNumber}
+                        onChange={handleInputChangePatient}
+                      />
+                    </Grid>
+                    <Grid item xs={12} sm={6}>
+                      <TextField
+                        label="Date of Birth"
+                        name="dateOfBirth"
+                        type="date"
+                        fullWidth
+                        InputLabelProps={{ shrink: true }}
+                        value={newPatient.dateOfBirth}
+                        onChange={handleInputChangePatient}
+                      />
+                    </Grid>
+                    <Grid item xs={12}>
+                      <TextField
+                        label="Address"
+                        name="address"
+                        fullWidth
+                        value={newPatient.address}
+                        onChange={handleInputChangePatient}
+                      />
+                    </Grid>
+                    
+                  </Grid>
+                </DialogContent>
+                <DialogActions sx={{ justifyContent: 'space-between', px: 3, pb: 2 }}>
+                  <Button
+                    onClick={handleCloseAddPatient}
+                    sx={{
+                      borderRadius: 2,
+                      px: 3,
+                      py: 1,
+                      backgroundColor: '#E5E7EB',
+                      color: '#374151',
+                      fontWeight: 600,
+                      '&:hover': { backgroundColor: '#D1D5DB' },
+                    }}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    variant="contained"
+                    onClick={handleAddPatient}
+                    sx={{
+                      backgroundColor: '#2563EB',
+                      '&:hover': { backgroundColor: '#1E40AF' },
+                      borderRadius: 2,
+                      px: 3,
+                      py: 1,
+                      fontWeight: 600,
+                    }}
+                  >
+                    Add Patient
+                  </Button>
+                </DialogActions>
+              </Dialog>
             </Box>
 
             <Box mb={2}>
@@ -1025,25 +1547,180 @@ const AdminDashboardView = () => {
                         </Box>
                       </TableCell>
                       <TableCell>
-                        <Button
-                          sx={{
-                            textTransform: 'none',
-                            backgroundColor: pat.status === 'Active' ? '#FEE2E2' : '#DCFCE7',
-                            color: pat.status === 'Active' ? '#DC2626' : '#16A34A',
-                            fontWeight: 500,
-                            px: 2,
-                            py: 0.5,
-                            borderRadius: 1.5,
-                            '&:hover': {
-                              backgroundColor: pat.status === 'Active' ? '#FCA5A5' : '#86EFAC',
-                            },
-                          }}
-                          onClick={() => toggleUserStatus(pat.id, 'Patient', pat.status === 'Active')}
+                        <TableCell>
+                          <Box display="flex" gap={1} flexWrap="wrap">
+                            {/* Status toggle button */}
+                            <Button
+                              sx={{
+                                textTransform: 'none',
+                                backgroundColor: pat.status === 'Active' ? '#FEE2E2' : '#DCFCE7',
+                                color: pat.status === 'Active' ? '#DC2626' : '#16A34A',
+                                fontWeight: 500,
+                                px: 2,
+                                py: 0.5,
+                                borderRadius: 1.5,
+                                '&:hover': {
+                                  backgroundColor: pat.status === 'Active' ? '#FCA5A5' : '#86EFAC',
+                                },
+                              }}
+                              onClick={() => toggleUserStatus(pat.id, 'Patient', pat.status === 'Active')}
+                            >
+                              {pat.status === 'Active' ? 'Deactivate' : 'Activate'}
+                            </Button>
 
+                            {/* View Profile */}
+                            <Button
+                              sx={{
+                                textTransform: 'none',
+                                backgroundColor: '#DBEAFE',
+                                color: '#1D4ED8',
+                                fontWeight: 500,
+                                px: 2,
+                                py: 0.5,
+                                borderRadius: 1.5,
+                                '&:hover': {
+                                  backgroundColor: '#BFDBFE',
+                                },
+                              }}
+                              onClick={() => handleViewProfilePatient(pat)}
+                            >
+                              View Profile
+                            </Button>
+
+                            {/* Edit button as icon */}
+                            <IconButton
+                              sx={{
+                                backgroundColor: '#FEF3C7',
+                                color: '#B45309',
+                                '&:hover': { backgroundColor: '#FDE68A' },
+                                p: 0.5,
+                                width: 32,
+                                height: 32,
+                              }}
+                              onClick={() => handleOpenEditPatient(pat)}
+                            >
+                              <Edit fontSize="small" />
+                            </IconButton>
+                          </Box>
+                        </TableCell>
+                        <Dialog
+                          open={openEditPatient}
+                          onClose={handleCloseEditPatient}
+                          fullWidth
+                          maxWidth="sm"
+                          PaperProps={{ sx: { borderRadius: 3, p: 2, backgroundColor: '#FAFAFA' } }}
                         >
-                          {pat.status === 'Active' ? 'Deactivate' : 'Activate'}
-                        </Button>
-                        <IconButton><Edit /></IconButton>
+                          <DialogTitle sx={{ fontWeight: 700, fontSize: 22 }}>Edit Patient</DialogTitle>
+                          <DialogContent>
+                            <Grid container spacing={2} mt={1}>
+                              <Grid item xs={12} sm={6}>
+                                <TextField
+                                  label="First Name"
+                                  name="firstName"
+                                  fullWidth
+                                  value={editingPatient?.firstName}
+                                  onChange={handleEditInputChangePatient}
+                                />
+                              </Grid>
+                              <Grid item xs={12} sm={6}>
+                                <TextField
+                                  label="Last Name"
+                                  name="lastName"
+                                  fullWidth
+                                  value={editingPatient?.lastName}
+                                  onChange={handleEditInputChangePatient}
+                                />
+                              </Grid>
+                              <Grid item xs={12} sm={6}>
+                                <TextField
+                                  label="Phone Number"
+                                  name="phoneNumber"
+                                  fullWidth
+                                  value={editingPatient?.phoneNumber}
+                                  onChange={handleEditInputChangePatient}
+                                />
+                              </Grid>
+                              <Grid item xs={12} sm={6}>
+                                <TextField
+                                  label="Email"
+                                  name="email"
+                                  fullWidth
+                                  value={editingPatient?.email}
+                                  onChange={handleEditInputChangePatient}
+                                />
+                              </Grid>
+                              <Grid item xs={12}>
+                                <TextField
+                                  label="Address"
+                                  name="address"
+                                  fullWidth
+                                  value={editingPatient?.address}
+                                  onChange={handleEditInputChangePatient}
+                                />
+                              </Grid>
+                            </Grid>
+                          </DialogContent>
+                          <DialogActions sx={{ justifyContent: 'space-between', px: 3, pb: 2 }}>
+
+                              <Button
+                                onClick={handleCloseEditPatient}
+                                sx={{
+                                  borderRadius: 2,
+                                  px: 3,
+                                  py: 1,
+                                  backgroundColor: '#E5E7EB',
+                                  color: '#374151',
+                                  fontWeight: 600,
+                                  '&:hover': { backgroundColor: '#D1D5DB' },
+                                }}
+                              >
+                                Cancel
+                              </Button>
+
+                              <Button
+                                variant="contained"
+                                onClick={handleUpdatePatient}
+                                sx={{
+                                  backgroundColor: '#2563EB',
+                                  '&:hover': { backgroundColor: '#1E40AF' },
+                                  borderRadius: 2,
+                                  px: 3,
+                                  py: 1,
+                                  fontWeight: 600,
+                                }}
+                              >
+                                Update Patient
+                              </Button>
+                            </DialogActions>
+
+                        </Dialog>
+                        <Dialog
+                          open={openPatientProfile}
+                          onClose={() => setOpenPatientProfile(false)}
+                          maxWidth="lg"
+                          fullWidth
+                        >
+                          <DialogContent>
+                            {selectedPatient && (
+                              <PatientProfileCard
+                                patient={{
+                                  id: selectedPatient.id,
+                                  firstName: selectedPatient.firstName,
+                                  lastName: selectedPatient.lastName,
+                                  email: selectedPatient.email,
+                                  phoneNumber: selectedPatient.phoneNumber,
+                                  status: selectedPatient.status,
+                                  dateOfBirth: selectedPatient.dateOfBirth || 'N/A',
+                                  // completedAppointments: 2834,
+                                  // todaysAppointments: 0,
+                                }}
+                                // appointments={appointments}
+                                // appointmentsLoading={appointmentsLoading}
+                                // appointmentsError={appointmentsError}
+                              />
+                            )}
+                          </DialogContent>
+                        </Dialog>
                       </TableCell>
                     </TableRow>
                   ))}
