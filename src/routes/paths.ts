@@ -1,7 +1,7 @@
 // ----------------------------------------------------------------------
 
 import AuditLogPage from "@/app/[locale]/dashboard/audit-log/page"
-import { Vaccines } from "@mui/icons-material"
+import { PermCameraMicSharp, Vaccines } from "@mui/icons-material"
 
 const ROOTS = {
   AUTH: '/auth',
@@ -56,6 +56,9 @@ export const paths = {
     },
     auditLog: {
       root: `${ROOTS.DASHBOARD}/audit-log`,
+    },
+    profile: {
+      root: `${ROOTS.DASHBOARD}/profile`,
     },
   },
 }
