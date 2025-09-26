@@ -12,6 +12,9 @@ import PersonIcon from '@mui/icons-material/Person';
 import ClearIcon from '@mui/icons-material/Clear';
 import StarBorderIcon from '@mui/icons-material/StarBorder';
 import StarIcon from '@mui/icons-material/Star';
+import RHFDatePicker from '../../../../components/ui/minimals/hook-form/rhf-date-picker';
+import { DatePicker } from '@mui/x-date-pickers/DatePicker';
+
 
 
 const decodeToken = (token: string) => {
@@ -65,6 +68,8 @@ const BookAppointments = () => {
   const [openReviewModal, setOpenReviewModal] = useState(false); // Review modal visibility state]
   const [rating, setRating] = useState<number>(0);
   const [reviewText, setReviewText] = useState<string>('');
+  const [doctorPreviewSlots, setDoctorPreviewSlots] = useState<{ [key: number]: string[] }>({});
+  const [availableSlots, setAvailableSlots] = useState<string[]>([]);
 
 
 
@@ -118,6 +123,8 @@ const BookAppointments = () => {
       console.log('Doctor Ratings Map:', ratingsMap);
 
 
+
+
     } catch (err) {
       if ((err as AxiosError).response?.status === 404) {
         console.error('Endpoint not found:', err);
@@ -129,7 +136,6 @@ const BookAppointments = () => {
   };
 
   
-
 
   const fetchDoctorRating = async (doctorId: number) => {
     try {
@@ -178,7 +184,70 @@ const BookAppointments = () => {
     }
   };
 
-  const handleSpecialtyChange = (event: any) => {
+  const fetchDoctorAvailableSlots = async (doctorId: number, selectedDay: string ) => {
+    try {
+      const res = await axiosInstance.get(`/doctor/available-slots`, {
+        headers: { Authorization: `Bearer ${getSession() || localStorage.getItem('token')}` },
+        params: {
+          doctorId: doctorId, // pass the doctor ID here
+          day: selectedDay,    // pass the day here in ISO format or as required
+        },
+      });
+  
+      return res.data;
+    }
+    catch(err){
+      console.error('Error fetching doctor schedule:', err);
+      return null;
+    }};
+  
+const handleDateSelect = async (date: string) => {
+  setFormData((prev) => ({ ...prev, date, time: '' })); // reset time when new date selected
+  if (selectedDoctor) {
+    const slots = await fetchDoctorAvailableSlots(selectedDoctor.id, date);
+    setAvailableSlots(slots?.data || []);
+  }
+
+};
+
+// 2. Get the NEXT N slots (for dashboard preview)
+const getNextDoctorSlots = async (doctorId: number, daysToCheck = 2, maxSlots = 4) => {
+
+  let day = new Date();
+  const slots: string[] = [];
+  try{
+    for (let i = 0; i <= daysToCheck && slots.length < maxSlots; i++) {
+    const isoDay = day.toISOString().split('T')[0];
+    const daySlots = await fetchDoctorAvailableSlots(doctorId, isoDay);
+    if (daySlots.data.length > 0) {
+      slots.push(...daySlots.data.slice(0, maxSlots - slots.length)); // only take what's needed
+    }
+
+    day.setDate(day.getDate() + 1);
+  }
+  return slots;
+}
+catch(err){
+  console.error('Error getting next doctor slots:', err);
+  return slots;
+}
+};
+
+
+// 3. Map for ALL doctors (preview mode)
+const getDoctorsPreviewSlots = async (doctors: any[], maxSlots = 3) => {
+  const result: { [doctorId: number]: string[] } = {};
+
+  await Promise.all(
+    doctors.map(async (doctor) => {
+      result[doctor.id] = await getNextDoctorSlots(doctor.id, 2, maxSlots);
+    })
+  );
+  return result;
+};
+
+
+  const handleSpecialtyChange = (event:  any) => {
     const specialty = event.target.value;
     console.log('Selected Specialty:', specialty);
     setSelectedSpecialty(specialty);
@@ -186,6 +255,8 @@ const BookAppointments = () => {
     // Filter doctors by selected specialty from the full list of doctors
     const filtered = allDoctors.filter((doctor: any) => doctor.specialty === specialty);
     setFilteredDoctors(filtered);
+    getDoctorsPreviewSlots(filtered, 3).then(setDoctorPreviewSlots);
+    console.log("slots for doctor: ", doctorPreviewSlots);
   };
 
   const handleOpenModal = (doctor: any) => {
@@ -207,7 +278,7 @@ const BookAppointments = () => {
   const handleSubmitAppointment = async () => {
     try {
       // Combine date and time into a single Date object
-      const appointmentDate = new Date(`${formData.date}T${formData.time}`);
+      const appointmentDate = new Date(formData.time);
 
       // Check if the selected date is in the past
       const today = new Date();
@@ -530,25 +601,42 @@ if (!appointment || !rating) {
                           {doctor.description || 'No description available.'}
                         </Typography>
                         <Typography variant="body2" color="text.secondary" sx={{ mt: 2 }}>
-                          Next available: <strong>{doctor.nextAvailableDate || 'N/A'}</strong>
+                          Next available:{' '}
+                          <strong>
+                            {doctorPreviewSlots[doctor.id]?.length
+                              ? new Date(doctorPreviewSlots[doctor.id][0])
+                                  .toISOString()
+                                  .split('T')[0]
+                              : 'N/A'}
+                          </strong>
                         </Typography>
                         <Box display="flex" gap={1} sx={{ mt: 1 }}>
-                          {doctor.availableTimes?.map((time: string, idx: number) => (
-                            <Box
-                              key={idx}
-                              sx={{
-                                backgroundColor: '#e0f7fa',
-                                color: '#00796b',
-                                padding: '4px 12px',
-                                borderRadius: '16px',
-                                fontSize: '0.875rem',
-                                fontWeight: 500,
-                              }}
-                            >
-                              {time}
-                            </Box>
-                          ))}
+                          {doctorPreviewSlots[doctor.id]?.map((time: string, idx: number) => {
+                            const formattedTime = new Date(time).toLocaleTimeString([], {
+                              hour: '2-digit',
+                              minute: '2-digit',
+                              hour12: false, // set true if you want AM/PM
+                            });
+
+                            return (
+                              <Box
+                                key={idx}
+                                sx={{
+                                  backgroundColor: '#e0f2f1',
+                                  color: '#00796b',
+                                  px: 1.5,
+                                  py: 0.5,
+                                  borderRadius: '12px',
+                                  fontSize: '0.8rem',
+                                  fontWeight: 500,
+                                }}
+                              >
+                                {formattedTime}
+                              </Box>
+                            );
+                          })}
                         </Box>
+  
                       </Grid>
 
                       {/* Right Column: Book Button */}
@@ -580,26 +668,50 @@ if (!appointment || !rating) {
       <Dialog open={openModal} onClose={handleCloseModal} fullWidth maxWidth="sm">
         <DialogTitle>Book Appointment with {selectedDoctor?.firstName} {selectedDoctor?.lastName}</DialogTitle>
         <DialogContent>
-          <TextField
-            fullWidth
-            margin="normal"
+          {/* Date Picker */}
+          <DatePicker
             label="Date"
-            type="date"
-            name="date"
-            value={formData.date}
-            onChange={handleInputChange}
-            InputLabelProps={{ shrink: true }}
+            value={formData.date ? new Date(formData.date) : null}
+            onChange={(newDate) => {
+              if (newDate) {
+                const isoDay = newDate.toISOString().split('T')[0];
+                handleDateSelect(isoDay);
+              }
+            }}
+            slotProps={{ textField: { fullWidth: true, margin: "normal" } }}
           />
-          <TextField
-            fullWidth
-            margin="normal"
-            label="Time"
-            type="time"
-            name="time"
-            value={formData.time}
-            onChange={handleInputChange}
-            InputLabelProps={{ shrink: true }}
-          />
+
+          {/* Time Slots Dropdown */}
+            {availableSlots.length > 0 ? (
+              <FormControl fullWidth sx={{ mt: 2 }}>
+                <InputLabel id="time-slot-label">Available Times</InputLabel>
+                <Select
+                  labelId="time-slot-label"
+                  value={formData.time || ''}
+                  onChange={(e) =>
+                    setFormData((prev) => ({ ...prev, time: e.target.value }))
+                  }
+                >
+                  {availableSlots.map((slot, idx) => {
+                    const formattedTime = new Date(slot).toLocaleTimeString([], {
+                      hour: '2-digit',
+                      minute: '2-digit',
+                      hour12: false, // set true for AM/PM format
+                    });
+                    return (
+                      <MenuItem key={idx} value={slot}>
+                        {formattedTime}
+                      </MenuItem>
+                    );
+                  })}
+                </Select>
+              </FormControl>
+            ) : formData.date ? (
+              <Typography variant="body2" color="text.secondary" sx={{ mt: 2 }}>
+                No available slots for this date
+              </Typography>
+            ) : null}
+
           <TextField
             fullWidth
             margin="normal"
@@ -618,12 +730,31 @@ if (!appointment || !rating) {
             multiline
             rows={3}
           />
+
         </DialogContent>
         <DialogActions>
-          <Button onClick={handleCloseModal} color="secondary">
+          <Button onClick={handleCloseModal} 
+              sx={{
+                backgroundColor: '#f44336',
+                color: '#fff',
+                '&:hover': { backgroundColor: '#d32f2f' },
+              }}
+              variant="contained"
+            >
             Cancel
           </Button>
-          <Button onClick={handleSubmitAppointment} variant="contained" color="primary">
+          <Button onClick={handleSubmitAppointment} 
+          variant="contained" color="primary"
+            sx={{
+              '&:hover': {
+                backgroundColor: '#1976d2', // darker blue on hover
+              },
+              '&.Mui-disabled': {
+                backgroundColor: '#b0bec5', // greyed out
+                color: '#eceff1',           // lighter text
+              },
+            }}
+            disabled={!formData.date || !formData.time || !formData.reason}>
             Confirm Appointment
           </Button>
         </DialogActions>
