@@ -10,6 +10,8 @@ import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
 import QueryBuilderIcon from '@mui/icons-material/QueryBuilder';
 import PersonIcon from '@mui/icons-material/Person';
 import ClearIcon from '@mui/icons-material/Clear';
+import StarBorderIcon from '@mui/icons-material/StarBorder';
+import StarIcon from '@mui/icons-material/Star';
 
 
 const decodeToken = (token: string) => {
@@ -32,7 +34,7 @@ const decodeToken = (token: string) => {
 // Mapping for AppointmentStatus enum
 const appointmentStatusMap: { [key: number]: string } = {
   1: 'Scheduled',
-  2: 'Confirmed',
+  2: 'Confirmed',//will be used later when DOCTOR makes appointment for patient and PATIENT has to confirm
   3: 'In Progress',
   4: 'Completed',
   5: 'Cancelled',
@@ -44,8 +46,11 @@ const BookAppointments = () => {
   const [selectedSpecialty, setSelectedSpecialty] = useState<string | null>(null);
   const [allDoctors, setAllDoctors] = useState<any[]>([]); // Store all doctors
   const [filteredDoctors, setFilteredDoctors] = useState<any[]>([]); // Store filtered doctors
-  const [doctorRatings, setDoctorRatings] = useState<{ [key: string]: number }>({}); // doctorId -> average rating
-  const [appointments, setAppointments] = useState<any[]>([]); // Store appointments
+  const [doctorRatings, setDoctorRatings] = useState<{[key: string]: { averageRating: number; ratingsCount: number }}>({});
+  const [appointments, setAppointments] = useState<{ upcoming: any[]; past: any[] }>({
+    upcoming: [],
+    past: [],
+  });
   const [openModal, setOpenModal] = useState(false); // Modal visibility state
   const [selectedDoctor, setSelectedDoctor] = useState<any | null>(null); // Selected doctor details
   const [formData, setFormData] = useState({
@@ -57,6 +62,10 @@ const BookAppointments = () => {
 
   const [openCancelModal, setOpenCancelModal] = useState(false); // Cancel modal visibility state]
   const [selectedAppointment, setSelectedAppointment] = useState<any | null>(null);
+  const [openReviewModal, setOpenReviewModal] = useState(false); // Review modal visibility state]
+  const [rating, setRating] = useState<number>(0);
+  const [reviewText, setReviewText] = useState<string>('');
+
 
 
   const fetchUserData = () => {
@@ -95,14 +104,19 @@ const BookAppointments = () => {
       console.log('Extracted Specialties:', specialties);
 
       // Fetch ratings for each doctor
-      const ratingsMap: { [key: string]: number } = {};
+      const ratingsMap: { [key: string]: { averageRating: number; ratingsCount: number } } = {};
+
       await Promise.all(data.map(async (doctor: any) => {
         const ratingData = await fetchDoctorRating(doctor.id);
-        ratingsMap[doctor.id] = ratingData.AverageRating;
+        ratingsMap[doctor.id] = {
+          averageRating: ratingData.averageRating,
+          ratingsCount: ratingData.ratingsCount,
+        };
       }));
 
       setDoctorRatings(ratingsMap);
       console.log('Doctor Ratings Map:', ratingsMap);
+
 
     } catch (err) {
       if ((err as AxiosError).response?.status === 404) {
@@ -114,9 +128,12 @@ const BookAppointments = () => {
     }
   };
 
+  
+
+
   const fetchDoctorRating = async (doctorId: number) => {
     try {
-      const res = await axiosInstance.get(`/ratings/doctor/${doctorId}`, {
+      const res = await axiosInstance.get(`/rating/doctor/${doctorId}`, {
         headers: { Authorization: `Bearer ${getSession() || localStorage.getItem('token')}` },
       });
       return res.data;
@@ -134,21 +151,30 @@ const BookAppointments = () => {
         params: { page, pageSize },
       });
 
-      console.log('Fetched Appointments Response:', res.data); // Log the entire response
+      console.log('Fetched Appointments Response:', res.data);
 
-      // Extract appointments from the correct key in the response
-      const appointments = res.data?.data || []; // Adjust based on actual structure
+      const appointments = res.data?.data || [];
+      const now = new Date();
 
-      // Sort appointments by date (earliest to farthest)
-      const sortedAppointments = appointments.sort(
-        (a: any, b: any) => new Date(a.appointmentDate).getTime() - new Date(b.appointmentDate).getTime()
-      );
+      // Sort and split appointments
+      const upcomingAppointments = appointments
+        .filter((a: any) => new Date(a.appointmentDate) >= now)
+        .sort((a: any, b: any) => new Date(a.appointmentDate).getTime() - new Date(b.appointmentDate).getTime());
 
-      setAppointments(sortedAppointments);
-      console.log('Sorted Appointments:', sortedAppointments); // Log the sorted appointments
+      const pastAppointments = appointments
+        .filter((a: any) => new Date(a.appointmentDate) < now)
+        .sort((a: any, b: any) => new Date(b.appointmentDate).getTime() - new Date(a.appointmentDate).getTime());
+
+      setAppointments({
+        upcoming: upcomingAppointments,
+        past: pastAppointments,
+      });
+
+      console.log('Upcoming:', upcomingAppointments);
+      console.log('Past:', pastAppointments);
     } catch (err) {
       console.error('Error fetching appointments:', err);
-      setAppointments([]); // Set an empty array if an error occurs
+      setAppointments({ upcoming: [], past: [] });
     }
   };
 
@@ -277,6 +303,54 @@ const BookAppointments = () => {
     }
 
   };
+
+  const handleOpenReviewModal = (appointment: any) => {
+    setSelectedAppointment(appointment);
+    setOpenReviewModal(true);
+  };
+
+  const handleCloseReviewModal = () => {
+    setOpenReviewModal(false);
+    setSelectedAppointment(null);
+  };
+
+  const handleAddReview = async (appointment: any) => {
+    console.log(appointment, rating);
+if (!appointment || !rating) {
+      alert('Please provide a rating before submitting your review.');
+      return;
+    }
+  
+    try {
+      const payload = {
+        patientId: appointment.patientId,
+        doctorId: appointment.doctorId,
+        ratingNr: rating,
+        ratingCommentary: reviewText || '',
+      };
+
+      console.log('Submitting review:', payload);
+
+      const token = getSession() || localStorage.getItem('token');
+      if (!token) {
+        alert('User is not authenticated.');
+        return;
+      }
+  
+      const res = await axiosInstance.post('/rating', payload, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+  
+      console.log('Review submitted successfully:', res.data);
+      alert('Thank you for your feedback!');
+      handleCloseReviewModal();
+      fetchAppointments(); // Refresh appointments
+    } catch (err) {
+      console.error('Error submitting review:', err);
+      alert('Failed to submit review. Please try again.');
+    }
+  };
+
 
   useEffect(() => {
     fetchUserData(); // Fetch and log user data on component mount
@@ -416,17 +490,34 @@ const BookAppointments = () => {
                               alignItems: 'center',
                             }}
                           >
-                          <PersonIcon sx={{ color: '#00796b', fontSize: 30 }} />
+                            <PersonIcon sx={{ color: '#00796b', fontSize: 30 }} />
                           </Box>
+
                           <Box>
                             <Typography variant="h6" fontWeight="bold">
                               Dr. {doctor.firstName} {doctor.lastName}
                             </Typography>
-                            <Box display="flex" alignItems="center" gap={1}>
+
+                            <Box display="flex" alignItems="center" gap={1} mt={0.5}>
+                            {/* Stars */}
+                              <Box display="flex" alignItems="center">
+                                {Array.from({ length: 5 }).map((_, i) => (
+                                  <span key={i} style={{ color: i < Math.round(doctorRatings[doctor.id]?.averageRating || 0) ? '#fbc02d' : '#e0e0e0', fontSize: '1.1rem', }}>★</span>
+                                ))}
+                              </Box>
+
+                              {/* Average rating */}
                               <Typography variant="body2" color="text.secondary">
-                                <span style={{ color: '#fbc02d' }}>★</span> {doctorRatings[doctor.id]?.toFixed(1) || 'No ratings yet'}
+                                {doctorRatings[doctor.id]?.averageRating?.toFixed(1) || 'No ratings yet'}
                               </Typography>
+
+                              {/* Review count */}
                               <Typography variant="body2" color="text.secondary">
+                                ({doctorRatings[doctor.id]?.ratingsCount || 0} reviews)
+                              </Typography>
+
+                              {/* Experience */}
+                              <Typography variant="body2" color="text.secondary" ml="3rem">
                                 {doctor.experience || 'N/A'} years experience
                               </Typography>
                             </Box>
@@ -552,9 +643,14 @@ const BookAppointments = () => {
           </Typography>
         </Box>
 
-        {appointments.length > 0 ? (
-          <Grid container spacing={2}>
-            {appointments.map((appointment, index) => (
+
+        {/* Upcoming Appointments */}
+        <Typography variant="h6" gutterBottom>
+          Upcoming Appointments
+        </Typography>
+        {appointments.upcoming.length > 0 ? (
+        <Grid container spacing={2}>
+            {appointments.upcoming.map((appointment, index) => (
               <Grid item xs={12} key={index}>
                 <Card
                   sx={{
@@ -593,40 +689,39 @@ const BookAppointments = () => {
                         </Box>
                       </Grid>
 
-                      {/* Right Column: Appointment Status */}
-                      <Grid item xs={3} display="flex" justifyContent="flex-end" alignItems="center">
-                        <Box display={"flex"} alignItems="center" gap={1}>
-                          <Box
-                            sx={{
-                              backgroundColor:
-                                appointment.status === 1
-                                  ? '#e0f7fa'
-                                  : appointment.status === 4
-                                  ? '#e8f5e9'
-                                  : appointment.status === 5
-                                  ? '#ffebee'
-                                  : '#e0e0e0',
-                              color:
-                                appointment.status === 1
-                                  ? '#00796b'
-                                  : appointment.status === 4
-                                  ? '#388e3c'
-                                  : appointment.status === 5
-                                  ? '#d32f2f'
-                                  : '#757575',
-                              padding: '4px 12px',
-                              borderRadius: '16px',
-                              fontSize: '0.875rem',
-                              fontWeight: 500,
-                              textAlign: 'center',
-                            }}
-                          >
-                            {appointmentStatusMap[appointment.status] || 'Unknown'}
-                          </Box>
+                      {/* Right Column: Appointment Status and Cancel Button */}
+                      <Grid item xs={3} display="flex" flexDirection="column" alignItems="flex-end" gap={1}>
+                        <Box
+                          sx={{
+                            backgroundColor:
+                              appointment.status === 1
+                                ? '#e0f7fa'
+                                : appointment.status === 4
+                                ? '#e8f5e9'
+                                : appointment.status === 5
+                                ? '#ffebee'
+                                : '#e0e0e0',
+                            color:
+                              appointment.status === 1
+                                ? '#00796b'
+                                : appointment.status === 4
+                                ? '#388e3c'
+                                : appointment.status === 5
+                                ? '#d32f2f'
+                                : '#757575',
+                            padding: '4px 12px',
+                            borderRadius: '16px',
+                            fontSize: '0.875rem',
+                            fontWeight: 500,
+                            textAlign: 'center',
+                          }}
+                        >
+                          {appointmentStatusMap[appointment.status] || 'Unknown'}
+                        </Box>
 
-                          {/* Cancel Button (only when status === 1) */}
-                          {appointment.status === 1 && (
-                            <Button
+                        {/* Cancel Button (only when status === 1) */}
+                        {appointment.status === 1 && (
+                          <Button
                               size="small"
                               color="error"
                               onClick={() => handleOpenCancelModal(appointment)}
@@ -645,7 +740,6 @@ const BookAppointments = () => {
                             >
                               <ClearIcon fontSize="inherit" />
                             </Button>)}
-                        </Box>
                       </Grid>
                     </Grid>
                   </CardContent>
@@ -654,13 +748,126 @@ const BookAppointments = () => {
             ))}
           </Grid>
         ) : (
-          <Typography color="text.secondary">No appointments found.</Typography>
+          <Typography variant="body2" color="text.secondary">
+            No upcoming appointments
+          </Typography>
         )}
+
+        {/* Past Appointments */}
+        <Typography variant="h6" gutterBottom sx={{ mt: 4 }}>
+          Past Appointments
+        </Typography>
+        {appointments.past.length > 0 ? (
+          <Grid container spacing={2}>
+          {appointments.past.map((appointment, index) => (
+            <Grid item xs={12} key={index}>
+              <Card
+                sx={{
+                  border: '1px solid #e0e0e0',
+                  borderRadius: 2,
+                  boxShadow: 'none', // Remove box shadow
+                }}
+              >
+                <CardContent>
+                  <Grid container alignItems="center">
+                    {/* Left Column: Appointment Details */}
+                    <Grid item xs={9}>
+                      <Typography variant="h6" fontWeight="bold">
+                        Dr. {appointment.doctorName}
+                      </Typography>
+                      <Typography variant="body2" color="text.secondary">
+                        {appointment.specialty || "N/A"}
+                      </Typography>
+                      <Box display="flex" alignItems="center" gap={2} sx={{ mt: 1 }}>
+                        <Box display="flex" alignItems="center" gap={1}>
+                          <CalendarTodayIcon sx={{ fontSize: 16, color: '#757575' }} />
+                          <Typography variant="body2" color="text.secondary">
+                            {new Date(appointment.appointmentDate).toLocaleDateString()}
+                          </Typography>
+                        </Box>
+                        <Box display="flex" alignItems="center" gap={1}>
+                          <QueryBuilderIcon sx={{ fontSize: 16, color: '#757575' }} />
+                          <Typography variant="body2" color="text.secondary">
+                            {new Date(appointment.appointmentDate).toLocaleTimeString([], {
+                              hour: '2-digit',
+                              minute: '2-digit',
+                              hour12: true, // Ensures the time is displayed in 12-hour format with AM/PM
+                            })}
+                          </Typography>
+                        </Box>
+                      </Box>
+                    </Grid>
+
+                    {/* Right Column: Appointment Status */}
+                    <Grid item xs={3} display="flex" justifyContent="flex-end" alignItems="center">
+                      <Box display={"flex"} alignItems="center" gap={1}>
+                        <Box
+                          sx={{
+                            backgroundColor:
+                              appointment.status === 1
+                                ? '#e0f7fa'
+                                : appointment.status === 4
+                                ? '#e8f5e9'
+                                : appointment.status === 5
+                                ? '#ffebee'
+                                : '#e0e0e0',
+                            color:
+                              appointment.status === 1
+                                ? '#00796b'
+                                : appointment.status === 4
+                                ? '#388e3c'
+                                : appointment.status === 5
+                                ? '#d32f2f'
+                                : '#757575',
+                            padding: '4px 12px',
+                            borderRadius: '16px',
+                            fontSize: '0.875rem',
+                            fontWeight: 500,
+                            textAlign: 'center',
+                          }}
+                        >
+                          {appointmentStatusMap[appointment.status] || 'Unknown'}
+                        </Box>
+
+                          {/* Add Review */}                        
+                          <Button
+                              size="small"
+                              onClick={() => handleOpenReviewModal(appointment)}
+                              sx={{
+                                padding: '4px 12px',
+                                borderRadius: '16px',
+                                fontSize: '0.875rem',
+                                fontWeight: 500,
+                                border: '1px solid rgba(12, 59, 86, 0.1)',
+                                '&:hover': {
+                                  backgroundColor: 'rgba(51, 180, 255, 0.1)', // light red background on hover
+                                },
+                                '&:active': {
+                                  backgroundColor: 'rgba(51, 180, 255, 0.1)', // slightly darker on click
+                                },
+                              }}
+                            >
+                              Add Review
+                              <StarBorderIcon/>
+                            </Button>
+                      </Box>
+                    </Grid>
+                  </Grid>
+                </CardContent>
+              </Card>
+            </Grid>
+          ))}
+        </Grid> ): (
+          <Typography variant="body2" color="text.secondary">
+            No past appointments
+          </Typography>
+        )}
+
 
       {/* Modal for Cancelling Appointment */}
       <Dialog  open={openCancelModal} onClose={handleCloseCancelModal} fullWidth maxWidth="sm">
         <DialogTitle sx={{ textAlign: 'center', fontWeight: 'bold' }}>Cancel Appointment</DialogTitle>
-          <DialogContent>
+        <DialogContent>
             <Typography align="center">
               Are you sure you want to cancel your appointment with{' '}
               {selectedAppointment?.doctorName} on{' '}
@@ -682,6 +889,84 @@ const BookAppointments = () => {
             <Button onClick={handleCloseCancelModal}>
               Keep Appointment
             </Button>
+            </DialogActions>
+           </Dialog>  
+
+
+           {/* Modal for Adding Review*/}
+      <Dialog  open={openReviewModal} onClose={handleCloseReviewModal} fullWidth maxWidth="sm">
+        <DialogTitle sx={{ textAlign: 'center', fontWeight: 'bold' }}>Rate Your Experience</DialogTitle>
+          <DialogContent>
+            
+            <Box 
+            sx={{
+              bgcolor: '#f5f5f5',
+              borderRadius: 2,
+              padding: 2,
+              mb: 2,
+            }}>
+              <Typography variant="body2" gutterBottom fontWeight="bold" fontSize={'1.1rem'}>
+                Dr. {selectedAppointment?.doctorName}
+              </Typography>
+              <Typography variant="body2" gutterBottom>
+                {selectedAppointment?.specialty} - ADDRESS
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                {selectedAppointment &&
+                  new Date(selectedAppointment.appointmentDate).toLocaleDateString()}
+              </Typography>
+            </Box>
+
+            <Box>
+            <Typography variant="body2" gutterBottom fontWeight="bold">
+              How would you rate your experience?              
+            </Typography>
+            <Box sx={{ display: 'flex', gap: 1, mb: 2 }}>
+              {[1, 2, 3, 4, 5].map((star) => {
+                const isFilled = star <= rating;
+                return (
+                  <Box
+                    key={star}
+                    component="span"
+                    sx={{ cursor: 'pointer', fontSize: '1.8rem',
+                      color: '#fbc02d' }}
+                    onClick={() => setRating(star === rating ? 0 : star)} // toggle off if same star clicked
+                    
+                  >
+                    {isFilled ? <StarIcon /> : <StarBorderIcon />}
+                  </Box>
+                );
+              })}
+            </Box>
+            </Box>
+
+            <Box>
+            <Typography variant="body2" gutterBottom fontWeight="bold">
+              Share your experience (optional)              
+            </Typography>
+            {/* Text area */}
+              <TextField
+                fullWidth
+                multiline
+                rows={2}
+                sx={{bgcolor: '#f5f5f5', borderRadius: 2}}
+                placeholder="Tell us about your visit, the doctor's professionalism, wait time, treatment quality, etc..."
+                value={reviewText}
+                onChange={(e) => setReviewText(e.target.value)}
+              />
+            </Box>
+
+
+          </DialogContent>
+          <DialogActions sx={{ justifyContent: 'center', gap: 2 }}>
+          <Button 
+            onClick={() => handleAddReview(selectedAppointment)}
+            variant="contained" sx={{ backgroundColor: '#7b83f2', color: '#fff' }}>
+            Submit Review
+          </Button>
+          <Button onClick={handleCloseReviewModal} variant="outlined">
+            Cancel
+          </Button>
             </DialogActions>
            </Dialog>            
 
