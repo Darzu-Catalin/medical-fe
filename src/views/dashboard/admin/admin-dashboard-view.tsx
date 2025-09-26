@@ -32,16 +32,9 @@ import { getSession } from '@/auth/context/utils';
 import DoctorProfileCard from '../admin/tabs/DoctorProfile';
 import PatientProfileCard from '../admin/tabs/PatientProfile';
 import axios from 'axios';
-interface Rating {
-  ratingId: number;
-  doctorId: string;
-  patientId: string;
-  ratingNr: number;
-  ratingCommentary: string;
-  createdAt: string;
-}
 
-interface DoctorRatingsSummaryDto {
+
+export interface DoctorRatingsSummaryDto {
   doctorId: string;
   averageRating: number;
   ratingsCount: number;
@@ -246,8 +239,12 @@ const useDoctorRatings = (doctorId: string) => {
       setLoading(true);
       setError(null);
       try {
-        const token = getSession() || localStorage.getItem('accessToken') || localStorage.getItem('token');
-        if (!token) throw new Error('Unauthorized. No session token found.');
+        const token =
+          getSession() ||
+          localStorage.getItem("accessToken") ||
+          localStorage.getItem("token");
+
+        if (!token) throw new Error("Unauthorized. No session token found.");
 
         const res = await axios.get<DoctorRatingsSummaryDto>(
           `http://localhost:5152/api/Rating/doctor/${doctorId}`,
@@ -255,9 +252,10 @@ const useDoctorRatings = (doctorId: string) => {
             headers: { Authorization: `Bearer ${token}` },
           }
         );
+
         setRatingsSummary(res.data);
       } catch (err: any) {
-        setError(err.message || 'Error fetching ratings');
+        setError(err.message || "Error fetching ratings");
       } finally {
         setLoading(false);
       }
@@ -296,8 +294,6 @@ export interface Doctor {
   specialty: string;
   clinicId: string;
   experience: number;
-  rating?: number;
-  ratingsCount?: number;
   email: string;
   phoneNumber: string;
   status: 'Active' | 'Inactive';
@@ -311,6 +307,16 @@ export interface Doctor {
   bloodType?: string;
   gender: number;
 }
+
+export interface Rating {
+  ratingId: number;
+  doctorId: string;
+  patientId: string;
+  ratingNr: number;
+  ratingCommentary?: string; // optional because it's nullable in backend
+  createdAt: string; // backend sends DateTime as ISO string
+}
+
 
 
 interface EditingDoctor {
@@ -1487,8 +1493,6 @@ const AdminDashboardView = () => {
                                   specialty: selectedDoctor.specialty,
                                   clinicId: selectedDoctor.clinicId || 'N/A',
                                   experience: selectedDoctor.experience || 0,
-                                  rating: ratingsSummary?.averageRating || 0,
-                                  ratingsCount: ratingsSummary?.ratingsCount || 0,
                                   email: selectedDoctor.email,
                                   phoneNumber: selectedDoctor.phoneNumber,
                                   status: selectedDoctor.status,
@@ -1501,6 +1505,7 @@ const AdminDashboardView = () => {
                                   bloodType: selectedDoctor.bloodType || 'N/A',
                                   gender: selectedDoctor.gender,
                                 }}
+                                ratings={ratingsSummary}
                                 appointments={appointments}
                                 appointmentsLoading={appointmentsLoading}
                                 appointmentsError={appointmentsError}

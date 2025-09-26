@@ -55,6 +55,18 @@ interface PatientProfileCardProps {
   allergiesError?: string | null;
 }
 
+export const bloodTypeMap: Record<string, string> = {
+  "A_positive": "A+",
+  "A_negative": "A-",
+  "B_positive": "B+",
+  "B_negative": "B-",
+  "AB_positive": "AB+",
+  "AB_negative": "AB-",
+  "O_positive": "O+",
+  "O_negative": "O-",
+};
+
+
 const PatientProfileCard: React.FC<PatientProfileCardProps> = ({
   patient,
   patientAppointments,
@@ -307,7 +319,7 @@ const ageGenderText = `${years}y ${months}m ${days}d, ${genderText}`;
                             fontSize: '0.9rem'
                         }}
                         >
-                        {patient.bloodType || '-'}
+                        {patient.bloodType ? bloodTypeMap[patient.bloodType] || patient.bloodType : '-'}
                         </Box>
                     </Box>
                     </Grid>

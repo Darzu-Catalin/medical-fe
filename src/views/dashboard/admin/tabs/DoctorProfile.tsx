@@ -39,6 +39,9 @@ import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline';
 import HomeIcon from '@mui/icons-material/Home';
 import { Appointment } from '../admin-dashboard-view';
 import { Doctor } from '../admin-dashboard-view';
+import { Rating } from '../admin-dashboard-view';
+import { DoctorRatingsSummaryDto } from '../admin-dashboard-view';
+import { bloodTypeMap } from './PatientProfile';
 
 
 
@@ -47,9 +50,10 @@ interface DoctorProfileCardProps {
   appointments?: Appointment[];
   appointmentsLoading?: boolean;
   appointmentsError?: string | null;
+  ratings?: DoctorRatingsSummaryDto | null;
 }
 
-const DoctorProfileCard: React.FC<DoctorProfileCardProps> = ({ doctor, appointments, appointmentsLoading, appointmentsError }) => {
+const DoctorProfileCard: React.FC<DoctorProfileCardProps> = ({ doctor, ratings, appointments, appointmentsLoading, appointmentsError }) => {
   const [tab, setTab] = useState(0);
   const safeDate = (d?: string | null) => {
     if (!d) return '-';
@@ -118,6 +122,7 @@ const ageGenderText = `${years}y ${months}m ${days}d, ${genderText}`;
         '6': { label: 'NoShow', color: '#6B7280', icon: <VisibilityOffIcon sx={{ fontSize: 16, mr: 0.5 }} /> },
     };
 
+    console.log(appointments);
 
 
   return (
@@ -144,9 +149,9 @@ const ageGenderText = `${years}y ${months}m ${days}d, ${genderText}`;
 
               <Box display="flex" alignItems="center" mt={1} gap={1}>
                 <StarIcon sx={{ color: '#FACC15' }} />
-                <Typography fontWeight={600}>{doctor.rating || 0}</Typography>
+                <Typography fontWeight={600}>{ratings?.averageRating || 0}</Typography>
                 <Typography color="text.secondary">
-                  ({doctor.ratingsCount || 0} ratings)
+                  ({ratings?.ratingsCount || 0} ratings)
                 </Typography>
                 
                 <Box
@@ -217,9 +222,9 @@ const ageGenderText = `${years}y ${months}m ${days}d, ${genderText}`;
               <Box>
                 <Typography color="text.secondary">Average Rating</Typography>
                 <Typography variant="h6" fontWeight={700}>
-                  {doctor.rating || 4.8}{' '}
+                  {ratings?.averageRating || 4.8}{' '}
                   <Typography component="span" color="text.secondary" fontSize={14}>
-                    ({doctor.ratingsCount || 0} ratings)
+                    ({ratings?.ratingsCount || 0} ratings)
                   </Typography>
                 </Typography>
               </Box>
@@ -245,8 +250,7 @@ const ageGenderText = `${years}y ${months}m ${days}d, ${genderText}`;
       >
         <Tab label="Overview" />
         <Tab label="Appointments" />
-        <Tab label="Reviews" />
-        <Tab label="Schedule" />
+        <Tab label="Reviews & Ratings" />
       </Tabs>
 
       <Box
@@ -317,7 +321,8 @@ const ageGenderText = `${years}y ${months}m ${days}d, ${genderText}`;
                             fontSize: '0.9rem'
                         }}
                         >
-                        {doctor.bloodType || '-'}
+                        {doctor.bloodType ? bloodTypeMap[doctor.bloodType] || doctor.bloodType : '-'}
+
                         </Box>
                     </Box>
                     </Grid>
@@ -483,23 +488,90 @@ const ageGenderText = `${years}y ${months}m ${days}d, ${genderText}`;
         </CardContent>
     </Card>
 )}
-
-
-
         {tab === 2 && (
             <Card sx={{ borderRadius: 3 }}>
-            <CardContent>
-                <Typography>Appointments Content</Typography>
-            </CardContent>
+                <CardContent>
+                <Box display="flex" alignItems="center" gap={1} mb={2}>
+                    <GradeIcon sx={{ color: '#FACC15' }} />
+                    <Typography variant="h6" fontWeight={700}>
+                    Reviews & Ratings
+                    </Typography>
+                </Box>
+
+                {/* Summary */}
+                <Box display="flex" alignItems="center" gap={2} mb={2}>
+                    <Typography variant="h4" fontWeight={700}>
+                    {ratings?.averageRating?.toFixed(1) || "0.0"}
+                    </Typography>
+                    <Box display="flex" alignItems="center" gap={0.5}>
+                    {[...Array(5)].map((_, i) => (
+                        <StarIcon
+                        key={i}
+                        sx={{
+                            fontSize: 24,
+                            color: i < Math.round(ratings?.averageRating || 0) ? '#FACC15' : '#E5E7EB',
+                        }}
+                        />
+                    ))}
+                    </Box>
+                    <Typography color="text.secondary">
+                    ({ratings?.ratingsCount || 0} reviews)
+                    </Typography>
+                </Box>
+
+                <Divider sx={{ mb: 2 }} />
+
+                {/* Reviews List */}
+                {(!ratings || ratings.ratings.length === 0) && (
+                    <Typography color="text.secondary">No reviews yet.</Typography>
+                )}
+
+                <Grid container spacing={2}>
+                    {ratings?.ratings.map((review) => (
+                    <Grid item xs={12} key={review.ratingId}>
+                        <Card
+                        sx={{
+                            borderRadius: 3,
+                            boxShadow: '0 6px 18px rgba(0,0,0,0.05)',
+                        }}
+                        >
+                        <CardContent>
+                            <Box display="flex" justifyContent="space-between" alignItems="center" mb={1}>
+                            <Box display="flex" alignItems="center" gap={1}>
+                                <Avatar sx={{ bgcolor: '#E0ECFF', width: 40, height: 40 }}>
+                                <PersonIcon sx={{ color: '#2563EB' }} />
+                                </Avatar>
+                                <Box>
+                                <Typography fontWeight={600}>
+                                    Patient {review.patientId}...
+                                </Typography>
+                                <Typography variant="body2" color="text.secondary">
+                                    {new Date(review.createdAt).toLocaleDateString()}
+                                </Typography>
+                                </Box>
+                            </Box>
+                            <Chip
+                                icon={<StarIcon sx={{ fontSize: 16, color: '#ffffffff' }} />}
+                                label={review.ratingNr}
+                                sx={{
+                                bgcolor: '#1da33fff',
+                                color: '#ffffffff',
+                                fontWeight: 600,
+                                }}
+                            />
+                            </Box>
+
+                            <Typography variant="body2" color="text.primary">
+                            {review.ratingCommentary || "No comment provided"}
+                            </Typography>
+                        </CardContent>
+                        </Card>
+                    </Grid>
+                    ))}
+                </Grid>
+                </CardContent>
             </Card>
-        )}
-        {tab === 3 && (
-            <Card sx={{ borderRadius: 3 }}>
-            <CardContent>
-                <Typography>Reviews Content</Typography>
-            </CardContent>
-            </Card>
-        )}
+            )}
         
         </Box>
     </Box>
