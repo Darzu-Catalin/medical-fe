@@ -1,4 +1,5 @@
 import { paths } from 'src/routes/paths'
+import { UserRole } from '@/types/types'
 
 // API
 // ----------------------------------------------------------------------
@@ -13,8 +14,21 @@ export const MUI_KEY =
 export const DEFAULT_LOCALE = 'ro'
 export const LOCALES = ['en', 'ro']
 export const LOCAL_PREFIX = 'as-needed'
-// ROOT PATH AFTER LOGIN SUCCESSFUL
-export const PATH_AFTER_LOGIN = paths.dashboard.root // as '/dashboard'
+
+// ROOT PATH AFTER LOGIN SUCCESSFUL - Role-based redirects  
+export const PATH_AFTER_LOGIN = '/dashboard/patients' // Default fallback to patient dashboard
+
+// Role-specific dashboard paths
+export const ROLE_BASED_PATHS = {
+  admin: '/dashboard/admin',
+  doctor: '/dashboard/doctor',
+  patient: '/dashboard/patients'
+} as const
+
+/**
+ * Get the appropriate dashboard path based on user role
+ */
+export const getPathAfterLogin = (userRole: UserRole): string => ROLE_BASED_PATHS[userRole] || PATH_AFTER_LOGIN
 
 // TEMPORARY: Disable auth/guards globally. Set to false to re-enable.
 export const DISABLE_AUTH = false

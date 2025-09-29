@@ -1,6 +1,5 @@
-import { paths } from '@/routes/paths';
-import { redirect } from 'next/navigation';
+import HomePageView from '@/views/home-page/home-page.view';
 
 export default function HomePage() {
-  redirect(paths.dashboard.root)
+  return <HomePageView />;
 }

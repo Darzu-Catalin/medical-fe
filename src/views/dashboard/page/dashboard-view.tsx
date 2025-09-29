@@ -1,69 +1,34 @@
 'use client';
 
-import ComingSoonIllustration from "@/assets/illustrations/coming-soon-illustration";
-import { Box, Typography } from "@mui/material";
-import React, { useEffect, useState } from 'react';
-import PatientsDashboardView from '../patients/patients-dashboard-view';
+import { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { useAppSelector } from '@/redux/store';
+import { getPathAfterLogin } from '@/config-global';
+import { LoadingScreen } from '@/components/ui/minimals/loading-screen';
 
 const DashboardView = () => {
-  const [role, setRole] = useState<string | null>(null);
-
-  // Function to decode the token and extract the role
-  const decodeToken = (accessToken: string) => {
-    try {
-      console.log('Decoding token:', accessToken); // Log the token being decoded
-      const base64Url = accessToken.split('.')[1];
-      const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-      const jsonPayload = decodeURIComponent(
-        atob(base64)
-          .split('')
-          .map((c) => `%${('00' + c.charCodeAt(0).toString(16)).slice(-2)}`)
-          .join('')
-      );
-      const decoded = JSON.parse(jsonPayload);
-      console.log('Decoded Token:', decoded); // Log the decoded token
-      return decoded;
-    } catch (err) {
-      console.error('Error decoding token:', err);
-      return null;
-    }
-  };
+  const router = useRouter();
+  const userRole = useAppSelector((state) => state.auth.userRole);
+  const user = useAppSelector((state) => state.auth.user);
 
   useEffect(() => {
-    const accessToken = localStorage.getItem('token');
-    console.log('Token from localStorage:', accessToken); // Log the token retrieved from localStorage
-    if (accessToken) {
-      const decodedToken = decodeToken(accessToken);
-      const role = decodedToken?.['http://schemas.microsoft.com/ws/2008/06/identity/claims/role'];
-      console.log('Role from decoded token:', role); // Log the role extracted from the token
-      setRole(role || null);
-    } else {
-      console.warn('No token found in localStorage.');
+    // Only redirect if we have a user and they're on the generic dashboard
+    if (user && userRole) {
+      const currentPath = window.location.pathname;
+      const isGenericDashboard = currentPath === '/dashboard' || 
+                                currentPath === '/en/dashboard' || 
+                                currentPath === '/ro/dashboard';
+      
+      if (isGenericDashboard) {
+        const roleBasedPath = getPathAfterLogin(userRole);
+        console.log(`Redirecting ${userRole} from ${currentPath} to ${roleBasedPath}`);
+        router.replace(roleBasedPath);
+      }
     }
-  }, []);
+  }, [user, userRole, router]);
 
-  // Render based on role
-  if (role === 'Patient') {
-    console.log('Rendering PatientsDashboardView for role:', role); // Log the role being rendered
-    return <PatientsDashboardView />;
-  }
-
-  console.log('Rendering default "Coming Soon" view for role:', role); // Log the fallback rendering
-  return (
-    <Box
-      sx={{
-        maxWidth: 480,
-        margin: 'auto',
-        display: 'flex',
-        flexDirection: 'column',
-        justifyContent: 'center',
-        alignItems: 'center',
-      }}
-    >
-      <ComingSoonIllustration />
-      <Typography sx={{ mt: 2 }}>Coming soon...</Typography>
-    </Box>
-  );
+  // Show loading while redirecting
+  return <LoadingScreen />;
 };
 
 export default DashboardView;

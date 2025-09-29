@@ -105,7 +105,7 @@ export const contactPersonsColumns: GridColDef[] = [
             title="Șterge persoana de contact"
             content={`ștergi persoana de contact ${model.first_name} ${model.last_name}`}
             payload={{
-              id: model.id
+              id: model.id as number
             }}
             confirmTitle="Da, șterge"
             deleteRequest={deleteContactPersons as any}

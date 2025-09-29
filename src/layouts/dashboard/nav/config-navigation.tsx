@@ -2,7 +2,7 @@ import { useMemo } from 'react'
 import { paths } from '@/routes/paths'
 import { useAppSelector } from '@/redux/store'
 import Iconify from '@/components/ui/minimals/iconify'
-import { recordTraceEvents } from 'next/dist/trace'
+
 
 // ----------------------------------------------------------------------
 
@@ -39,7 +39,7 @@ export function useNavData() {
         {
           subheader: 'Administrative',
           items: [
-            { title: 'Dashboard', path: paths.dashboard.root, icon: ICONS.dashboard },
+            { title: 'Dashboard', path: paths.dashboard.admin, icon: ICONS.dashboard },
             { title: 'System Settings', path: '/dashboard/settings', icon: ICONS.settings },
             { title: 'Activity Log', path: paths.dashboard.auditLog.root, icon: ICONS.audit },
           ],
@@ -67,7 +67,7 @@ export function useNavData() {
         {
           subheader: 'Medical Practice',
           items: [
-            { title: 'Dashboard', path: paths.dashboard.root, icon: ICONS.dashboard },
+            { title: 'Dashboard', path: paths.dashboard.doctor, icon: ICONS.dashboard },
             { title: 'My Patients', path: paths.dashboard.client.list, icon: ICONS.patients },
             { title: 'Appointments', path: paths.dashboard.calendar.root, icon: ICONS.appointments },
             { title: 'Medical Records', path: '/dashboard/medical-records', icon: ICONS.records },
@@ -93,7 +93,7 @@ export function useNavData() {
         {
           subheader: 'My Health',
           items: [
-            { title: 'Dashboard', path: paths.dashboard.root, icon: ICONS.dashboard },
+            { title: 'Dashboard', path: paths.dashboard.patients, icon: ICONS.dashboard },
             { title: 'My Appointments', path: paths.dashboard.calendar.root, icon: ICONS.appointments },
             { title: 'My Vaccines', path: paths.dashboard.vaccines.root, icon: ICONS.vaccines },
           ],

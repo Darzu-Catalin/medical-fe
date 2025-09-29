@@ -7,8 +7,9 @@ import { useForm } from 'react-hook-form'
 import { useState, useCallback, useRef, useEffect } from 'react'
 import { yupResolver } from '@hookform/resolvers/yup'
 import { setInitialEmail } from '@/redux/slices/app-settings'
-import { useAppDispatch } from 'src/redux/store'
+import { useAppDispatch, useAppSelector, store } from 'src/redux/store'
 import { loginAsync } from '@/redux/slices/auth'
+import { getPathAfterLogin } from '@/config-global'
 
 import Alert from '@mui/material/Alert'
 import Stack from '@mui/material/Stack'
@@ -50,6 +51,7 @@ export default function LoginView() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const dispatch = useAppDispatch()
+  const userRole = useAppSelector((state) => state.auth.userRole)
   const returnTo = searchParams.get('returnTo')
 
 
@@ -84,6 +86,19 @@ export default function LoginView() {
           return
         }
         
+        // Wait a moment for the Redux state to update, then redirect
+        setTimeout(() => {
+          const state = store.getState()
+          const currentUserRole = state.auth.userRole
+          
+          console.log('Login successful, user role:', currentUserRole)
+          
+          // Redirect to role-specific dashboard or return URL
+          const redirectPath = returnTo || getPathAfterLogin(currentUserRole)
+          console.log('Redirecting to:', redirectPath)
+          router.replace(redirectPath)
+        }, 200)
+        
       } catch (error) {
         console.error(error)
         // reset();
@@ -92,7 +107,7 @@ export default function LoginView() {
       }
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [returnTo]
+    [returnTo, router, dispatch]
   )
 
   const renderHead = (

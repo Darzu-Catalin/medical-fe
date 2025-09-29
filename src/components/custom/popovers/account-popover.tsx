@@ -5,6 +5,7 @@ import { paths } from '@/routes/paths'
 import { useSnackbar } from 'notistack'
 import { useRouter } from '@/routes/hooks'
 import { logoutAsync, recalculateUserRole } from '@/redux/slices/auth'
+import { getPathAfterLogin } from '@/config-global'
 import { varHover } from '@/components/ui/minimals/animate'
 import { useAppDispatch, useAppSelector } from '@/redux/store'
 import { userCan, PERMISSIONS } from '@/utils/permissions.utils'
@@ -169,7 +170,7 @@ export default function AccountPopover() {
 
         <Stack sx={{ p: 1 }}>
           {userCan(PERMISSIONS.ALL_PERMISSIONS) ? (
-            <MenuItem onClick={() => handleClickItem(paths.dashboard.root)}>Dashboard</MenuItem>
+            <MenuItem onClick={() => handleClickItem(getPathAfterLogin(userRole))}>Dashboard</MenuItem>
           ) : null}
           {OPTIONS.map((option) => (
             <MenuItem key={option.label} onClick={() => handleClickItem(option.linkTo)}>

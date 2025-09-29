@@ -31,9 +31,9 @@ export const partnerColumns: GridColDef[] = [
           // @ts-ignore
           deleteRequest={deletePartnerRequest}
           payload={{
-            id: model.id,
+            id: model.id as number,
           }}
-          href={isClient ? paths.dashboard.client.edit(model.id) : paths.dashboard.provider.edit(model.id)}
+          href={isClient ? paths.dashboard.client.edit(model.id as number) : paths.dashboard.provider.edit(model.id as number)}
         />
       )
     },

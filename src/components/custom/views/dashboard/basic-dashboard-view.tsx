@@ -6,6 +6,8 @@ import { RouterLink } from '@/routes/components'
 import Iconify from '@/components/ui/minimals/iconify'
 import { useSettingsContext } from '@/components/ui/minimals/settings'
 import CustomBreadcrumbs from '@/components/ui/minimals/custom-breadcrumbs'
+import { useAppSelector } from '@/redux/store'
+import { getPathAfterLogin } from '@/config-global'
 
 import Button from '@mui/material/Button'
 import Container from '@mui/material/Container'
@@ -26,12 +28,13 @@ type Props = {
 
 export default function BasicDashboardView({ children, heading, links, button }: Props) {
   const settings = useSettingsContext()
+  const userRole = useAppSelector((state) => state.auth.userRole)
 
   return (
     <Container maxWidth={settings.themeStretch ? 'xl' : 'lg'}>
       <CustomBreadcrumbs
         heading={heading}
-        links={[{ name: 'Dashboard', href: paths.dashboard.root }, ...links]}
+        links={[{ name: 'Dashboard', href: getPathAfterLogin(userRole) }, ...links]}
         action={
           button && (
             <Button

@@ -1,16 +1,25 @@
 import { getTranslations } from 'next-intl/server'
 import createMiddleware from 'next-intl/middleware'
+import { NextRequest, NextResponse } from 'next/server'
 
-import { LOCALES, LOCAL_PREFIX, DEFAULT_LOCALE } from './config-global'
+import { LOCALES, LOCAL_PREFIX, DEFAULT_LOCALE, ROLE_BASED_PATHS } from './config-global'
 
-export default createMiddleware({
-  // A list of all locales that are supported
+// Create the internationalization middleware
+const intlMiddleware = createMiddleware({
   locales: LOCALES,
-  localeDetection:false,
-  // Used when no locale matches
+  localeDetection: false,
   defaultLocale: DEFAULT_LOCALE,
   localePrefix: LOCAL_PREFIX,
 })
+
+export default async function middleware(request: NextRequest) {
+  const { pathname } = request.nextUrl
+  
+  // Let client-side components handle dashboard redirects
+  
+  // Apply internationalization middleware for all other routes
+  return intlMiddleware(request)
+}
 
 export const config = {
   // Match only internationalized pathnames

@@ -1,7 +1,6 @@
 // ----------------------------------------------------------------------
 
-import AuditLogPage from "@/app/[locale]/dashboard/audit-log/page"
-import { PermCameraMicSharp, Vaccines } from "@mui/icons-material"
+
 
 const ROOTS = {
   AUTH: '/auth',
@@ -25,6 +24,10 @@ export const paths = {
   // DASHBOARD
   dashboard: {
     root: ROOTS.DASHBOARD,
+    // Role-specific dashboards
+    admin: `${ROOTS.DASHBOARD}/admin`,
+    doctor: `${ROOTS.DASHBOARD}/doctor`,
+    patients: `${ROOTS.DASHBOARD}/patients`,
     user: {
       list: `${ROOTS.DASHBOARD}/user/list`,
       new: `${ROOTS.DASHBOARD}/user/new`,

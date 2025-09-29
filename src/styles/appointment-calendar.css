@@ -1,0 +1,174 @@
+/* Custom styles for appointment events in calendar */
+.fc-event-appointment {
+  border-left: 4px solid currentColor !important;
+  font-weight: 500 !important;
+  border-radius: 6px !important;
+  padding: 4px 6px !important;
+  min-height: 60px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: flex-start !important;
+  line-height: 1.3 !important;
+  white-space: pre-line !important;
+  overflow: visible !important;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1) !important;
+}
+
+.fc-event-appointment .fc-event-main-frame {
+  flex-direction: column !important;
+  align-items: flex-start !important;
+  height: 100% !important;
+}
+
+.fc-event-appointment .fc-event-title-container {
+  padding: 0 !important;
+  margin: 0 !important;
+}
+
+.fc-event-appointment .fc-event-title {
+  font-size: 0.75rem !important;
+  font-weight: 500 !important;
+  line-height: 1.2 !important;
+  white-space: pre-line !important;
+  overflow: visible !important;
+  text-overflow: clip !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+.fc-event-appointment .fc-event-time {
+  font-weight: 600 !important;
+  opacity: 1 !important;
+  font-size: 0.7rem !important;
+  margin-bottom: 2px !important;
+}
+
+/* View-specific styles */
+.fc-dayGridMonth-view .fc-event-appointment {
+  min-height: 45px !important;
+  font-size: 0.7rem !important;
+}
+
+.fc-timeGridWeek-view .fc-event-appointment,
+.fc-timeGridDay-view .fc-event-appointment {
+  min-height: 80px !important;
+  font-size: 0.75rem !important;
+  padding: 6px 8px !important;
+}
+
+.fc-listWeek-view .fc-event-appointment {
+  min-height: 40px !important;
+  font-size: 0.8rem !important;
+}
+
+/* Hover effects for appointments */
+.fc-event-appointment:hover {
+  opacity: 0.95;
+  cursor: pointer;
+  transform: translateY(-1px);
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15) !important;
+}
+
+/* Status-specific colors enhancement */
+.fc-event-appointment.appointment-scheduled {
+  border-left-color: #00796b;
+}
+
+.fc-event-appointment.appointment-confirmed {
+  border-left-color: #1976d2;
+}
+
+.fc-event-appointment.appointment-in-progress {
+  border-left-color: #f57c00;
+}
+
+.fc-event-appointment.appointment-completed {
+  border-left-color: #388e3c;
+}
+
+.fc-event-appointment.appointment-cancelled {
+  border-left-color: #d32f2f;
+  opacity: 0.7;
+}
+
+.fc-event-appointment.appointment-no-show {
+  border-left-color: #757575;
+  opacity: 0.6;
+}
+
+/* Custom appointment event content styles */
+.appointment-event-content {
+  padding: 2px 0;
+  line-height: 1.2;
+  font-size: 0.75rem;
+  height: 100%;
+  overflow: hidden;
+}
+
+.appointment-doctor {
+  font-weight: 600;
+  margin-bottom: 2px;
+  font-size: 0.8rem;
+}
+
+.appointment-specialty,
+.appointment-time,
+.appointment-reason,
+.appointment-status {
+  font-size: 0.7rem;
+  margin-bottom: 1px;
+  opacity: 0.9;
+}
+
+.appointment-status {
+  font-weight: 500;
+  font-size: 0.65rem;
+}
+
+/* Compact version for month view */
+.appointment-compact {
+  text-align: center;
+}
+
+.appointment-compact .appointment-doctor {
+  font-weight: 600;
+  font-size: 0.75rem;
+  margin-bottom: 2px;
+}
+
+.appointment-compact .appointment-info {
+  font-size: 0.65rem;
+  opacity: 0.9;
+}
+
+/* View-specific adjustments for custom content */
+.fc-dayGridMonth-view .appointment-event-content {
+  font-size: 0.65rem;
+  text-align: center;
+}
+
+.fc-dayGridMonth-view .appointment-doctor {
+  font-size: 0.7rem;
+}
+
+.fc-timeGridWeek-view .appointment-event-content,
+.fc-timeGridDay-view .appointment-event-content {
+  font-size: 0.75rem;
+  padding: 4px 0;
+}
+
+.fc-timeGridWeek-view .appointment-doctor,
+.fc-timeGridDay-view .appointment-doctor {
+  font-size: 0.85rem;
+}
+
+.fc-listWeek-view .appointment-event-content {
+  font-size: 0.8rem;
+  display: inline;
+}
+
+.fc-listWeek-view .appointment-event-content > div {
+  display: inline;
+  margin-right: 10px;
+}

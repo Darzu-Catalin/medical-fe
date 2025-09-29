@@ -2,7 +2,7 @@
 
 import Calendar from '@fullcalendar/react'; // => request placed at the top
 import listPlugin from '@fullcalendar/list';
-import { useEffect, useCallback } from 'react';
+import { useEffect, useCallback, useState } from 'react';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGridPlugin from '@fullcalendar/timegrid';
 import timelinePlugin from '@fullcalendar/timeline';
@@ -12,7 +12,12 @@ import multiMonthPlugin from '@fullcalendar/multimonth'
 import interactionPlugin from '@fullcalendar/interaction';
 import { useSettingsContext } from '@/components/ui/minimals/settings';
 import { upsertEvent, useGetEvents } from '@/requests/admin/calendar.requests';
+import { useAppointmentsForCalendar, CalendarAppointmentEvent, appointmentStatusMap } from '@/requests/appointments.requests';
 import SmallModalInfoCard from '@/components/custom/small-modal-info-card/small-modal-info-card';
+import AppointmentDetailDialog from '@/components/custom/appointment-detail-dialog/appointment-detail-dialog';
+import AppointmentStats from '@/components/custom/appointment-stats/appointment-stats';
+import AppointmentLegend from '@/components/custom/appointment-legend/appointment-legend';
+import '@/styles/appointment-calendar.css';
 
 import Card from '@mui/material/Card';
 import Stack from '@mui/material/Stack';
@@ -58,6 +63,10 @@ export default function CalendarView({
 
   const openFilters = useBoolean();
 
+  // State for appointment detail dialog
+  const [selectedAppointment, setSelectedAppointment] = useState<CalendarAppointmentEvent | null>(null);
+  const [appointmentDialogOpen, setAppointmentDialogOpen] = useState(false);
+
 
 
 
@@ -98,9 +107,15 @@ export default function CalendarView({
 
   const dateError = isAfter(filters.startDate, filters.endDate);
 
-
-  // retriggers the request when the date changes
+  // Get regular calendar events
   const { events, eventsLoading } = useGetEvents(swrPayload);
+  
+  // Get appointments for calendar
+  const { 
+    calendarEvents: appointmentEvents, 
+    appointments, 
+    appointmentsLoading 
+  } = useAppointmentsForCalendar();
 
   const currentEvent = useEvent(events, selectEventId, selectedRange, openForm);
 
@@ -126,7 +141,11 @@ export default function CalendarView({
 
   const canReset = !!filters.colors.length || (!!filters.startDate && !!filters.endDate);
 
-  const dataFiltered = events
+  // Combine regular events with appointment events (safely)
+  const safeAppointmentEvents = Array.isArray(appointmentEvents) ? appointmentEvents : [];
+  const safeEvents = Array.isArray(events) ? events : [];
+  const combinedEvents = [...safeEvents, ...safeAppointmentEvents];
+  const dataFiltered = combinedEvents;
 
   const renderResults = (
     <CalendarFiltersResult
@@ -140,6 +159,91 @@ export default function CalendarView({
       sx={{ mb: { xs: 3, md: 5 } }}
     />
   );
+
+  // Handle appointment click
+  const handleAppointmentClick = useCallback((appointmentEvent: CalendarAppointmentEvent) => {
+    setSelectedAppointment(appointmentEvent);
+    setAppointmentDialogOpen(true);
+  }, []);
+
+  // Enhanced event click handler
+  const handleEventClick = useCallback((info: any) => {
+    // Check if clicked event is an appointment
+    const eventId = info.event.id;
+    if (eventId?.startsWith('appointment_')) {
+      // Find the appointment event
+      const appointmentEvent = appointmentEvents.find(evt => evt.id === eventId);
+      if (appointmentEvent) {
+        handleAppointmentClick(appointmentEvent);
+        return;
+      }
+    }
+    
+    // Handle regular events (existing functionality)
+    onClickEvent(info);
+  }, [appointmentEvents, handleAppointmentClick, onClickEvent]);
+
+  // Custom event content renderer for appointments
+  const renderEventContent = useCallback((eventInfo: any) => {
+    const event = eventInfo.event;
+    const isAppointment = event.id?.startsWith('appointment_');
+    
+    if (!isAppointment) {
+      // Return default rendering for regular events
+      return null;
+    }
+
+    const extendedProps = event.extendedProps;
+    if (!extendedProps) {
+      // Fallback to default rendering if no extended props
+      return null;
+    }
+
+    const startTime = event.start?.toLocaleTimeString('en-US', {
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: true
+    });
+
+    const statusInfo = appointmentStatusMap[extendedProps.status];
+    const currentView = eventInfo.view.type;
+
+    // Different content based on calendar view
+    if (currentView === 'dayGridMonth') {
+      // Compact version for month view
+      return (
+        <div className="appointment-event-content appointment-compact">
+          <div className="appointment-doctor">
+            🏥 Dr. {extendedProps.doctorName?.split(' ')[0] || 'Unknown'}
+          </div>
+          <div className="appointment-info">
+            {extendedProps.specialty} • {statusInfo?.label}
+          </div>
+        </div>
+      );
+    }
+
+    // Detailed version for week/day views
+    return (
+      <div className="appointment-event-content">
+        <div className="appointment-doctor">
+          🏥 Dr. {extendedProps.doctorName || 'Unknown'}
+        </div>
+        <div className="appointment-specialty">
+          📋 {extendedProps.specialty || 'General'}
+        </div>
+        <div className="appointment-time">
+          🕐 {startTime} ({extendedProps.duration || 30}min)
+        </div>
+        <div className="appointment-reason">
+          📍 {extendedProps.reason || 'Consultation'}
+        </div>
+        <div className="appointment-status">
+          📊 {statusInfo?.label || 'Scheduled'}
+        </div>
+      </div>
+    );
+  }, []);
 
   return (
     <>
@@ -187,12 +291,21 @@ export default function CalendarView({
 
         {canReset && renderResults}
 
+        {/* Appointment Statistics */}
+        <AppointmentStats 
+          appointments={appointments} 
+          loading={appointmentsLoading} 
+        />
+
+        {/* Appointment Legend */}
+        <AppointmentLegend />
+
         <Card>
           <StyledCalendar>
             <CalendarToolbar
               date={date}
               view={view}
-              loading={eventsLoading}
+              loading={eventsLoading || appointmentsLoading}
               onNextDate={onDateNext}
               onPrevDate={onDatePrev}
               onToday={onDateToday}
@@ -215,9 +328,10 @@ export default function CalendarView({
               dayMaxEventRows={3}
               eventDisplay="block"
               events={dataFiltered as any}
+              eventContent={renderEventContent}
               headerToolbar={false}
               select={onSelectRange}
-              eventClick={onClickEvent}
+              eventClick={handleEventClick}
               height={smUp ? 720 : 'auto'}
               eventDrop={(arg) => {
                 onDropEvent(arg, (eventData) => {
@@ -288,6 +402,16 @@ export default function CalendarView({
         colorOptions={CALENDAR_COLOR_OPTIONS}
         onClickEvent={onClickEventInFilters}
 
+      />
+
+      {/* Appointment Detail Dialog */}
+      <AppointmentDetailDialog
+        open={appointmentDialogOpen}
+        onClose={() => {
+          setAppointmentDialogOpen(false);
+          setSelectedAppointment(null);
+        }}
+        appointmentEvent={selectedAppointment}
       />
     </>
   );

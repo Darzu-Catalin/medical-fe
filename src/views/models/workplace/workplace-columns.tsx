@@ -41,10 +41,10 @@ export const workplaceColumns: GridColDef[] = [
           // @ts-ignore
           deleteRequest={deleteWorkplace}
           payload={{
-            id: model.id,
+            id: model.id as number,
             partner_id: selectedPartner?.id || undefined,
           }}
-          href={paths.dashboard.workplace.edit(model.id)}
+          href={paths.dashboard.workplace.edit(model.id as number)}
         />
       )
     },
