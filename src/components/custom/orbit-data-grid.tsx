@@ -555,7 +555,7 @@ export default function OrbitDataGrid({
             return;
           }
 
-          setSelected(newSelection)
+          setSelected([...newSelection])
           if (onSelectionChange) {
             onSelectionChange(newSelection)
           }

@@ -235,6 +235,7 @@ export default function RegisterView() {
         name="password"
         label="Password"
         type="password"
+        inputProps={{ autoComplete: 'new-password' }}
         sx={(theme) => ({
           height: '40px',
           '& .MuiOutlinedInput-root': {
@@ -278,6 +279,7 @@ export default function RegisterView() {
         name="confirmPassword"
         label="Confirm Password"
         type="password"
+        inputProps={{ autoComplete: 'off' }}
         sx={(theme) => ({
           height: '40px',
           '& .MuiOutlinedInput-root': {

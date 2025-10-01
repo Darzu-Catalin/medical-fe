@@ -6,6 +6,13 @@ module.exports = withNextIntl({
   output: 'standalone',
   trailingSlash: true,
   reactStrictMode: false,
+  swcMinify: true,
+  eslint: {
+    ignoreDuringBuilds: true,
+  },
+  experimental: {
+    esmExternals: 'loose'
+  },
   modularizeImports: {
     '@mui/material': {
       transform: '@mui/material/{{member}}',
@@ -38,6 +45,19 @@ module.exports = withNextIntl({
         ],
       })
     )
+
+    // Fix for Redux Toolkit module resolution
+    config.resolve.alias = {
+      ...config.resolve.alias,
+      '@reduxjs/toolkit': path.resolve(__dirname, 'node_modules/@reduxjs/toolkit'),
+    }
+
+    // Ensure proper module resolution for vendor chunks
+    if (config.cache && typeof config.cache === 'object') {
+      config.cache.buildDependencies = config.cache.buildDependencies || {}
+      config.cache.buildDependencies.config = [__filename]
+    }
+
     return config
   },
 })

@@ -1,3 +1,5 @@
+'use client'
+
 import { DISABLE_AUTH } from '@/config-global'
 import { useState, useEffect, useCallback } from 'react'
 import { useAppSelector } from '@/redux/store'

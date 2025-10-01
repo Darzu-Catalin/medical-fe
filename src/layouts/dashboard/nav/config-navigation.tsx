@@ -22,7 +22,10 @@ const ICONS = {
   profile: icon('mdi:account-circle'),
   records: icon('mdi:folder'),
   appointments: icon('mdi:calendar-clock'),
-  
+  documents: icon('mdi:file-document'),
+  notifications: icon('mdi:bell'),
+  ratings: icon('mdi:star'),
+  schedule: icon('mdi:calendar-multiselect'),
 }
 
 // ----------------------------------------------------------------------
@@ -68,6 +71,7 @@ export function useNavData() {
           subheader: 'Medical Practice',
           items: [
             { title: 'Dashboard', path: paths.dashboard.doctor, icon: ICONS.dashboard },
+            { title: 'My Schedule', path: '/dashboard/schedule', icon: ICONS.schedule },
             { title: 'My Patients', path: paths.dashboard.client.list, icon: ICONS.patients },
             { title: 'Appointments', path: paths.dashboard.calendar.root, icon: ICONS.appointments },
             { title: 'Medical Records', path: '/dashboard/medical-records', icon: ICONS.records },
@@ -76,8 +80,16 @@ export function useNavData() {
         {
           subheader: 'Clinical Tools',
           items: [
+            { title: 'Documents', path: '/dashboard/documents', icon: ICONS.documents },
+            { title: 'Patient Ratings', path: '/dashboard/ratings', icon: ICONS.ratings },
             { title: 'Vaccines', path: paths.dashboard.vaccines.root, icon: ICONS.vaccines },
             { title: 'Reports', path: '/dashboard/reports', icon: ICONS.reports },
+          ],
+        },
+        {
+          subheader: 'Communication',
+          items: [
+            { title: 'Notifications', path: '/dashboard/notifications', icon: ICONS.notifications },
           ],
         },
         {
@@ -101,7 +113,15 @@ export function useNavData() {
         {
           subheader: 'Health Records',
           items: [
-            { title: 'Medical Records', path: '/dashboard/my-records', icon: ICONS.records },
+            { title: 'Medical Records', path: '/dashboard/medical-records', icon: ICONS.records },
+            { title: 'My Documents', path: '/dashboard/documents', icon: ICONS.documents },
+          ],
+        },
+        {
+          subheader: 'Communication',
+          items: [
+            { title: 'Rate Doctors', path: '/dashboard/ratings', icon: ICONS.ratings },
+            { title: 'Notifications', path: '/dashboard/notifications', icon: ICONS.notifications },
           ],
         },
         {

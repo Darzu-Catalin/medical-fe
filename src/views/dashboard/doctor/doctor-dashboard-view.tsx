@@ -14,6 +14,13 @@ import {
 } from '@mui/icons-material';
 import axiosInstance from '@/utils/axios';
 import { getSession } from '@/auth/context/utils';
+import { 
+  getDoctorProfile, 
+  DoctorProfile, 
+  getBloodTypeDisplay, 
+  getGenderDisplay 
+} from '@/requests/doctor/doctor.requests';
+import EditProfileDialog from '@/components/custom/dialogs/EditProfileDialog';
 
 
 
@@ -49,6 +56,11 @@ const DoctorDashboardView = () => {
   const [totalPages, setTotalPages] = useState(1);
   const [searchQuery, setSearchQuery] = useState('');
   
+  // Doctor profile data
+  const [doctorProfile, setDoctorProfile] = useState<DoctorProfile | null>(null);
+  const [profileLoading, setProfileLoading] = useState(false);
+  const [editProfileOpen, setEditProfileOpen] = useState(false);
+  
   // Dashboard stats
   const [dashboardStats, setDashboardStats] = useState<DashboardStats>({
     totalPatients: 0,
@@ -56,6 +68,31 @@ const DoctorDashboardView = () => {
     pendingDocuments: 0,
     completedVisits: 0
   });
+
+  const fetchDoctorProfile = async () => {
+    setProfileLoading(true);
+    try {
+      const response = await getDoctorProfile();
+      
+      if (!response.error && response.data) {
+        setDoctorProfile(response.data);
+        
+        // Update dashboard stats with profile data
+        setDashboardStats(prev => ({
+          ...prev,
+          totalPatients: response.data.totalPatients || 0,
+        }));
+        
+        console.log('Doctor Profile:', response.data);
+      } else {
+        console.error('Error fetching profile:', response.message);
+      }
+    } catch (err: any) {
+      console.error('Error fetching doctor profile:', err);
+    } finally {
+      setProfileLoading(false);
+    }
+  };
 
   const fetchDashboardData = async () => {
     setLoading(true);
@@ -143,6 +180,7 @@ const DoctorDashboardView = () => {
   };
 
   useEffect(() => {
+    fetchDoctorProfile();
     fetchDashboardData();
     fetchPatients();
   }, []);
@@ -150,8 +188,22 @@ const DoctorDashboardView = () => {
   useEffect(() => {
     if (activeTab === 1) { // Patients tab
       fetchPatients(currentPage);
+    } else if (activeTab === 4) { // Profile tab
+      if (!doctorProfile) {
+        fetchDoctorProfile();
+      }
     }
   }, [activeTab, currentPage]);
+
+  const handleProfileUpdated = (updatedProfile: DoctorProfile) => {
+    setDoctorProfile(updatedProfile);
+    
+    // Update dashboard stats if needed
+    setDashboardStats(prev => ({
+      ...prev,
+      totalPatients: updatedProfile.totalPatients || prev.totalPatients,
+    }));
+  };
 
   const handlePageChange = (event: React.ChangeEvent<unknown>, value: number) => {
     setCurrentPage(value);
@@ -239,7 +291,7 @@ const DoctorDashboardView = () => {
               <Grid item xs={12} sm={6} md={3}>
                 <StatCard
                   title="Total Patients"
-                  value={dashboardStats.totalPatients}
+                  value={doctorProfile?.totalPatients || dashboardStats.totalPatients}
                   icon={<People />}
                   color="#1976d2"
                   subtitle="Active patients under care"
@@ -536,7 +588,6 @@ const DoctorDashboardView = () => {
                     Doctor’s Appointments
                     </Typography>
                 </Box>
-                console.log('Appointments Tab - dashboardData:', dashboardData);
                 <Typography variant="body2" color="text.secondary" fontSize="1.1rem" gutterBottom>
                     Overview of your scheduled appointments
                 </Typography>
@@ -567,54 +618,6 @@ const DoctorDashboardView = () => {
                 )}
                 </CardContent>
             </Card>
-        )}
-
-        {/* Appointments Tab */}
-        {activeTab === 2 && (
-          <Box>
-            <Alert severity="info" sx={{ mb: 3 }}>
-              Appointments are managed through the calendar system. Visit the Calendar page to view and manage your appointments.
-            </Alert>
-            
-            <Card>
-              <CardHeader 
-                title="Appointment Management"
-                titleTypographyProps={{ variant: 'h6', fontWeight: 'bold' }}
-              />
-              <CardContent>
-                <Grid container spacing={3}>
-                  <Grid item xs={12} md={6}>
-                    <Box textAlign="center" p={3}>
-                      <Schedule sx={{ fontSize: 64, color: 'primary.main', mb: 2 }} />
-                      <Typography variant="h6" gutterBottom>
-                        View Calendar
-                      </Typography>
-                      <Typography variant="body2" color="text.secondary" mb={3}>
-                        Access your complete appointment schedule
-                      </Typography>
-                      <Button variant="contained" startIcon={<CalendarToday />}>
-                        Go to Calendar
-                      </Button>
-                    </Box>
-                  </Grid>
-                  <Grid item xs={12} md={6}>
-                    <Box textAlign="center" p={3}>
-                      <Assignment sx={{ fontSize: 64, color: 'secondary.main', mb: 2 }} />
-                      <Typography variant="h6" gutterBottom>
-                        Schedule Appointment
-                      </Typography>
-                      <Typography variant="body2" color="text.secondary" mb={3}>
-                        Book new appointments with patients
-                      </Typography>
-                      <Button variant="outlined" startIcon={<Schedule />}>
-                        Schedule New
-                      </Button>
-                    </Box>
-                  </Grid>
-                </Grid>
-              </CardContent>
-            </Card>
-          </Box>
         )}
 
         {/* Documents Tab */}
@@ -677,80 +680,252 @@ const DoctorDashboardView = () => {
 
         {/* Profile Tab */}
         {activeTab === 4 && (
-          <Card>
-            <CardHeader 
-              title="Doctor Profile"
-              titleTypographyProps={{ variant: 'h6', fontWeight: 'bold' }}
-            />
-            <CardContent>
-              {dashboardData?.profile ? (
-                <Grid container spacing={3}>
-                  <Grid item xs={12} md={6}>
-                    <Box display="flex" flexDirection="column" gap={2}>
-                      <Typography variant="h6" gutterBottom>
-                        Personal Information
-                      </Typography>
-                      <Box display="flex" justifyContent="space-between">
-                        <Typography color="text.secondary">Full Name:</Typography>
-                        <Typography fontWeight="medium">
-                          {dashboardData.profile.firstName} {dashboardData.profile.lastName}
+          <Box>
+            <Card sx={{ mb: 3 }}>
+              <CardHeader 
+                title="Doctor Profile"
+                titleTypographyProps={{ variant: 'h6', fontWeight: 'bold' }}
+                action={
+                  <Button
+                    variant="contained"
+                    startIcon={<Edit />}
+                    onClick={() => setEditProfileOpen(true)}
+                    disabled={profileLoading || !doctorProfile}
+                  >
+                    Edit Profile
+                  </Button>
+                }
+              />
+              <CardContent>
+                {profileLoading ? (
+                  <Box display="flex" justifyContent="center" py={4}>
+                    <CircularProgress />
+                  </Box>
+                ) : doctorProfile ? (
+                  <Grid container spacing={4}>
+                    {/* Left Column - Personal Information */}
+                    <Grid item xs={12} md={6}>
+                      <Box display="flex" flexDirection="column" gap={3}>
+                        <Typography variant="h6" gutterBottom color="primary" fontWeight="bold">
+                          Personal Information
                         </Typography>
+                        
+                        <Box display="flex" justifyContent="space-between" alignItems="center">
+                          <Typography color="text.secondary" fontWeight="medium">Full Name:</Typography>
+                          <Typography fontWeight="600">
+                            {doctorProfile.firstName} {doctorProfile.lastName}
+                          </Typography>
+                        </Box>
+                        
+                        <Box display="flex" justifyContent="space-between" alignItems="center">
+                          <Typography color="text.secondary" fontWeight="medium">Email:</Typography>
+                          <Typography fontWeight="600">
+                            {doctorProfile.email || 'Not provided'}
+                          </Typography>
+                        </Box>
+                        
+                        <Box display="flex" justifyContent="space-between" alignItems="center">
+                          <Typography color="text.secondary" fontWeight="medium">Phone:</Typography>
+                          <Typography fontWeight="600">
+                            {doctorProfile.phoneNumber || 'Not provided'}
+                          </Typography>
+                        </Box>
+                        
+                        <Box display="flex" justifyContent="space-between" alignItems="center">
+                          <Typography color="text.secondary" fontWeight="medium">IDNP:</Typography>
+                          <Typography fontWeight="600">
+                            {doctorProfile.idnp || 'Not provided'}
+                          </Typography>
+                        </Box>
+                        
+                        <Box display="flex" justifyContent="space-between" alignItems="center">
+                          <Typography color="text.secondary" fontWeight="medium">Gender:</Typography>
+                          <Typography fontWeight="600">
+                            {getGenderDisplay(doctorProfile.gender)}
+                          </Typography>
+                        </Box>
+                        
+                        <Box display="flex" justifyContent="space-between" alignItems="center">
+                          <Typography color="text.secondary" fontWeight="medium">Blood Type:</Typography>
+                          <Chip 
+                            label={getBloodTypeDisplay(doctorProfile.bloodType)} 
+                            color="error" 
+                            variant="outlined" 
+                            size="small"
+                          />
+                        </Box>
+                        
+                        <Box display="flex" justifyContent="space-between" alignItems="flex-start">
+                          <Typography color="text.secondary" fontWeight="medium">Address:</Typography>
+                          <Typography fontWeight="600" textAlign="right" maxWidth="60%">
+                            {doctorProfile.address || 'Not provided'}
+                          </Typography>
+                        </Box>
                       </Box>
-                      <Box display="flex" justifyContent="space-between">
-                        <Typography color="text.secondary">Email:</Typography>
-                        <Typography fontWeight="medium">
-                          {dashboardData.profile.email || 'N/A'}
+                    </Grid>
+
+                    {/* Right Column - Professional Information */}
+                    <Grid item xs={12} md={6}>
+                      <Box display="flex" flexDirection="column" gap={3}>
+                        <Typography variant="h6" gutterBottom color="primary" fontWeight="bold">
+                          Professional Details
                         </Typography>
+                        
+                        <Box display="flex" justifyContent="space-between" alignItems="center">
+                          <Typography color="text.secondary" fontWeight="medium">Specialty:</Typography>
+                          <Chip 
+                            label={doctorProfile.specialty || 'Not specified'} 
+                            color="primary" 
+                            variant="outlined"
+                          />
+                        </Box>
+                        
+                        <Box display="flex" justifyContent="space-between" alignItems="center">
+                          <Typography color="text.secondary" fontWeight="medium">Experience:</Typography>
+                          <Typography fontWeight="600">
+                            {doctorProfile.experience || 'Not specified'}
+                          </Typography>
+                        </Box>
+                        
+                        <Box display="flex" justifyContent="space-between" alignItems="center">
+                          <Typography color="text.secondary" fontWeight="medium">Total Patients:</Typography>
+                          <Typography fontWeight="600" color="primary.main">
+                            {doctorProfile.totalPatients}
+                          </Typography>
+                        </Box>
+                        
+                        <Box display="flex" justifyContent="space-between" alignItems="center">
+                          <Typography color="text.secondary" fontWeight="medium">Clinic ID:</Typography>
+                          <Typography fontWeight="600">
+                            {doctorProfile.clinicId || 'Not assigned'}
+                          </Typography>
+                        </Box>
+                        
+                        <Box display="flex" justifyContent="space-between" alignItems="center">
+                          <Typography color="text.secondary" fontWeight="medium">Date of Birth:</Typography>
+                          <Typography fontWeight="600">
+                            {doctorProfile.dateOfBirth 
+                              ? new Date(doctorProfile.dateOfBirth).toLocaleDateString()
+                              : 'Not provided'
+                            }
+                          </Typography>
+                        </Box>
+                        
+                        <Box display="flex" justifyContent="space-between" alignItems="center">
+                          <Typography color="text.secondary" fontWeight="medium">Last Activity:</Typography>
+                          <Typography fontWeight="600" color="success.main">
+                            {doctorProfile.lastActivity 
+                              ? new Date(doctorProfile.lastActivity).toLocaleString()
+                              : 'No recent activity'
+                            }
+                          </Typography>
+                        </Box>
+                        
+                        <Box display="flex" justifyContent="space-between" alignItems="center">
+                          <Typography color="text.secondary" fontWeight="medium">Status:</Typography>
+                          <Chip 
+                            label={doctorProfile.isActive ? 'Active' : 'Inactive'} 
+                            color={doctorProfile.isActive ? 'success' : 'error'} 
+                            variant="filled"
+                            size="small"
+                          />
+                        </Box>
                       </Box>
-                      <Box display="flex" justifyContent="space-between">
-                        <Typography color="text.secondary">Phone:</Typography>
-                        <Typography fontWeight="medium">
-                          {dashboardData.profile.phoneNumber || 'N/A'}
+                    </Grid>
+
+                    {/* Roles Section */}
+                    <Grid item xs={12}>
+                      <Box mt={2}>
+                        <Typography variant="h6" gutterBottom color="primary" fontWeight="bold">
+                          Roles & Permissions
                         </Typography>
+                        <Box display="flex" gap={1} flexWrap="wrap">
+                          {doctorProfile.roles && doctorProfile.roles.length > 0 ? (
+                            doctorProfile.roles.map((role, index) => (
+                              <Chip 
+                                key={index}
+                                label={role}
+                                color="secondary"
+                                variant="filled"
+                                size="small"
+                              />
+                            ))
+                          ) : (
+                            <Typography color="text.secondary">No roles assigned</Typography>
+                          )}
+                        </Box>
                       </Box>
-                      <Box display="flex" justifyContent="space-between">
-                        <Typography color="text.secondary">Specialty:</Typography>
-                        <Typography fontWeight="medium">
-                          {dashboardData.profile.specialty || 'N/A'}
-                        </Typography>
-                      </Box>
-                    </Box>
+                    </Grid>
                   </Grid>
-                  <Grid item xs={12} md={6}>
-                    <Box display="flex" flexDirection="column" gap={2}>
-                      <Typography variant="h6" gutterBottom>
-                        Professional Details
-                      </Typography>
-                      <Box display="flex" justifyContent="space-between">
-                        <Typography color="text.secondary">License Number:</Typography>
-                        <Typography fontWeight="medium">
-                          {dashboardData.profile.licenseNumber || 'N/A'}
-                        </Typography>
-                      </Box>
-                      <Box display="flex" justifyContent="space-between">
-                        <Typography color="text.secondary">Years of Experience:</Typography>
-                        <Typography fontWeight="medium">
-                          {dashboardData.profile.experience || 'N/A'}
-                        </Typography>
-                      </Box>
-                      <Box display="flex" justifyContent="space-between">
-                        <Typography color="text.secondary">Hospital/Clinic:</Typography>
-                        <Typography fontWeight="medium">
-                          {dashboardData.profile.workplace || 'N/A'}
-                        </Typography>
-                      </Box>
-                    </Box>
-                  </Grid>
+                ) : (
+                  <Alert severity="warning">
+                    <Typography>
+                      Profile information could not be loaded. Please try refreshing the page or contact support.
+                    </Typography>
+                  </Alert>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Quick Stats Cards for Profile */}
+            {doctorProfile && (
+              <Grid container spacing={3}>
+                <Grid item xs={12} md={3}>
+                  <StatCard
+                    title="Profile Completeness"
+                    value={`${Math.round(
+                      ((doctorProfile.firstName ? 1 : 0) +
+                       (doctorProfile.phoneNumber ? 1 : 0) +
+                       (doctorProfile.specialty ? 1 : 0) +
+                       (doctorProfile.experience ? 1 : 0) +
+                       (doctorProfile.clinicId ? 1 : 0) +
+                       (doctorProfile.address ? 1 : 0)) / 6 * 100
+                    )}%`}
+                    icon={<Person />}
+                    color="#2196f3"
+                    subtitle="Complete your profile"
+                  />
                 </Grid>
-              ) : (
-                <Typography color="text.secondary" textAlign="center" py={4}>
-                  Profile information not available
-                </Typography>
-              )}
-            </CardContent>
-          </Card>
+                <Grid item xs={12} md={3}>
+                  <StatCard
+                    title="Total Patients"
+                    value={doctorProfile.totalPatients}
+                    icon={<People />}
+                    color="#4caf50"
+                    subtitle="Under your care"
+                  />
+                </Grid>
+                <Grid item xs={12} md={3}>
+                  <StatCard
+                    title="Account Status"
+                    value={doctorProfile.isActive ? "Active" : "Inactive"}
+                    icon={<LocalHospital />}
+                    color={doctorProfile.isActive ? "#4caf50" : "#f44336"}
+                    subtitle="Current status"
+                  />
+                </Grid>
+                <Grid item xs={12} md={3}>
+                  <StatCard
+                    title="Experience"
+                    value={doctorProfile.experience || "N/A"}
+                    icon={<Assignment />}
+                    color="#ff9800"
+                    subtitle="Years in practice"
+                  />
+                </Grid>
+              </Grid>
+            )}
+          </Box>
         )}
       </Box>
+
+      {/* Edit Profile Dialog */}
+      <EditProfileDialog
+        open={editProfileOpen}
+        onClose={() => setEditProfileOpen(false)}
+        doctorProfile={doctorProfile}
+        onProfileUpdated={handleProfileUpdated}
+      />
     </Box>
   );
 };

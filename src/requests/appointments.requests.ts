@@ -232,3 +232,54 @@ export const updateAppointmentStatus = async (appointmentId: number, status: num
     return false;
   }
 };
+
+// Get my appointments (patient/doctor specific)
+export const getMyAppointmentsRequest = async (): Promise<{ success: boolean; data?: AppointmentType[]; error?: string }> => {
+  try {
+    const token = getSession() || localStorage.getItem('token');
+    if (!token) throw new Error('No authentication token found');
+
+    const response = await axiosInstance.get('/appointment/my', {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+
+    return { success: true, data: response.data.data };
+  } catch (error: any) {
+    console.error('Error fetching my appointments:', error);
+    return { success: false, error: error.message || 'Failed to fetch appointments' };
+  }
+};
+
+// Get doctor schedule (Doctor only)
+export const getDoctorScheduleRequest = async (doctorId?: string): Promise<{ success: boolean; data?: any; error?: string }> => {
+  try {
+    const token = getSession() || localStorage.getItem('token');
+    if (!token) throw new Error('No authentication token found');
+
+    const response = await axiosInstance.get('/appointment/doctor/schedule', {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+
+    return { success: true, data: response.data.data };
+  } catch (error: any) {
+    console.error('Error fetching doctor schedule:', error);
+    return { success: false, error: error.message || 'Failed to fetch schedule' };
+  }
+};
+
+// Get all doctor appointments (Doctor only)
+export const getAllDoctorAppointmentsRequest = async (doctorId?: string): Promise<{ success: boolean; data?: AppointmentType[]; error?: string }> => {
+  try {
+    const token = getSession() || localStorage.getItem('token');
+    if (!token) throw new Error('No authentication token found');
+
+    const response = await axiosInstance.get('/appointment/doctor/all', {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+
+    return { success: true, data: response.data.data };
+  } catch (error: any) {
+    console.error('Error fetching doctor appointments:', error);
+    return { success: false, error: error.message || 'Failed to fetch appointments' };
+  }
+};

@@ -134,12 +134,19 @@ const authSlice = createSlice({
       }
     },
     setToken(state, action: PayloadAction<string>) {
+      // Clean token - remove extra quotes if they exist
+      let cleanToken = action.payload
+      if (typeof cleanToken === 'string') {
+        // Remove extra quotes that might have been added by double serialization
+        cleanToken = cleanToken.replace(/^"(.*)"$/, '$1')
+      }
+
       // if payload is same as current token, do nothing
-      if (state.token === action.payload) {
+      if (state.token === cleanToken) {
         return
       }
 
-      state.token = action.payload
+      state.token = cleanToken
     },
     setPermissions(state, action: PayloadAction<PermissionType[]>) {
       state.permissions = action.payload

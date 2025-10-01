@@ -121,12 +121,12 @@ export const registerUserRequest = async (payload: {
 }
 
 export const verifyCodeLoginRequest = async (payload: {
-  code: string
+  otp: string
   email: string
 }): Promise<ApiResponseType> => {
   try {
     console.log('Making request to /Auth/verify-code with payload:', payload)
-    const response = await axiosInstance.post('/Auth/verify-code', {
+    const response = await axiosInstance.post('/Auth/verify-mfa', {
       ...payload,
     })
 

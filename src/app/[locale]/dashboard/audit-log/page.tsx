@@ -1,3 +1,5 @@
+import { RoleBasedGuard } from '@/auth/guard';
+import { PERMISSIONS } from '@/utils/permissions.utils';
 import { Box, Typography } from '@mui/material'
 
 export const metadata = {
@@ -6,9 +8,12 @@ export const metadata = {
 
 export default function AuditLogPage() {
   return (
-    <Box sx={{ p: 3 }}>
-      <Typography variant="h4">Audit Log</Typography>
-      <Typography color="text.secondary">Your account activity will appear here.</Typography>
-    </Box>
+    <RoleBasedGuard permissions={[PERMISSIONS.ROLES.ADMIN]} hasContent>
+      <Box sx={{ p: 3 }}>
+        <Typography variant="h4">Audit Log</Typography>
+        <Typography color="text.secondary">Your account activity will appear here.</Typography>
+      </Box>
+    </RoleBasedGuard>
+    
   )
 }

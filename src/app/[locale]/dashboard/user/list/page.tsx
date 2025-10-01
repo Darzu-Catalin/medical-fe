@@ -1,3 +1,5 @@
+import { RoleBasedGuard } from '@/auth/guard';
+import { PERMISSIONS } from '@/utils/permissions.utils';
 import UserListView from '@/views/dashboard/user/list/list-view'
 
 export const metadata = {
@@ -6,5 +8,9 @@ export const metadata = {
 }
 
 export default function Page() {
-  return <UserListView />
+  return (
+    <RoleBasedGuard permissions={[PERMISSIONS.ROLES.ADMIN]} hasContent>
+      <UserListView />
+    </RoleBasedGuard>
+  )
 }

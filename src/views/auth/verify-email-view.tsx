@@ -20,10 +20,11 @@ import { useRouter } from 'src/routes/hooks'
 
 import { useSnackbar } from 'notistack'
 import { setSession } from '@/auth/context/utils'
-import { setUser, setPermissions } from '@/redux/slices/auth'
+import { setUser, setPermissions, setToken } from '@/redux/slices/auth'
 import { magicLoginRequest } from '@/requests/auth/auth.requests'
-import { verifyCodeLoginRequest } from '@/requests/auth/auth.requests'
+import { verifyCodeLoginRequest, getCurrentUserRequest } from '@/requests/auth/auth.requests'
 import { getVerificationCodeRequest } from '@/requests/admin/user.requests'
+import { getPathAfterLogin } from '@/config-global'
 
 import { Box } from '@mui/material'
 
@@ -81,7 +82,7 @@ export default function VerifyEmailView() {
 
         console.log('verifyCodeLoginRequest:', verifyCodeLoginRequest)
         const result = await verifyCodeLoginRequest({
-          code: data.code,
+          otp: data.code,
           email: initialEmail,
         })
 
@@ -89,16 +90,36 @@ export default function VerifyEmailView() {
           throw new Error(result.message)
         }
 
-        enqueueSnackbar('Emailul a fost validat cu succes!', {
-          variant: 'success',
-        })
+        // Handle successful MFA verification with authentication data
+        if (result.data && result.data.token && result.data.user) {
+          enqueueSnackbar('Emailul a fost validat cu succes!', {
+            variant: 'success',
+          })
 
-        dispatch(setUser(result.user))
-        dispatch(setPermissions(result.permissions))
-        setSession(result.token)
-        
-        // Navigate to dashboard after successful verification
-        router.push('/dashboard')
+          // Set authentication data in Redux and session
+          dispatch(setUser(result.data.user))
+          
+          // Set permissions - use roles array or default permissions
+          const perms = Array.isArray(result.data.user.roles) && result.data.user.roles.length > 0
+            ? result.data.user.roles
+            : ['*']
+          dispatch(setPermissions(perms))
+          
+          // Set session token
+          setSession(result.data.token)
+          dispatch(setToken(result.data.token))
+
+          // Get user role for navigation - use first role from roles array
+          const userRole = result.data.user.roles && result.data.user.roles.length > 0 
+            ? result.data.user.roles[0].toLowerCase()  // Convert "Patient" to "patient"
+            : 'patient'
+          
+          // Navigate to role-specific dashboard after successful verification
+          const redirectPath = getPathAfterLogin(userRole as any)
+          router.push(redirectPath)
+        } else {
+          throw new Error('Email verification failed')
+        }
       } catch (error) {
         setErrorMsg(error.message)
       }
@@ -132,7 +153,7 @@ export default function VerifyEmailView() {
           justifyContent: 'center',
           maxWidth: '600px',
           mx: 'auto',
-          mt: 16,
+          mt: 6,
         }}
       >
         {/* Head */}
@@ -141,6 +162,7 @@ export default function VerifyEmailView() {
             variant="h4"
             sx={{
               textAlign: 'center',
+              color: 'white',
             }}
           >
             Verifică-ți emailul
@@ -153,6 +175,7 @@ export default function VerifyEmailView() {
                 mt:-2,
                 textAlign: 'center',
                 mb: -1,
+                color: 'white',
               }}
             >
               Am trimis un mail de verificare la adresa de email: <b>{initialEmail}</b>
@@ -162,7 +185,7 @@ export default function VerifyEmailView() {
               variant="body1"
               sx={{
                 textAlign: 'center',
-                opacity: 0.7,
+                color: 'white',
               }}
             >
               Te rugăm să verifici emailul și în folderul de spam / promoții / reclame /
@@ -185,7 +208,51 @@ export default function VerifyEmailView() {
               maxWidth: '350px',
             }}
           >
-            <RHFCode name="code" />
+            <RHFCode 
+              name="code" 
+              sx={{
+                '& .MuiOutlinedInput-root': {
+                  color: 'white',
+                  '& fieldset': {
+                    borderColor: 'white',
+                  },
+                  '&:hover fieldset': {
+                    borderColor: 'white',
+                  },
+                  '&.Mui-focused fieldset': {
+                    borderColor: 'white',
+                  },
+                },
+                '& .MuiInputBase-input': {
+                  color: 'white',
+                },
+                '& .MuiOutlinedInput-input::placeholder': {
+                  color: 'rgba(255, 255, 255, 0.7)',
+                },
+              }}
+              TextFieldsProps={{
+                sx: {
+                  '& .MuiOutlinedInput-root': {
+                    color: 'white',
+                    '& fieldset': {
+                      borderColor: 'white',
+                    },
+                    '&:hover fieldset': {
+                      borderColor: 'white',
+                    },
+                    '&.Mui-focused fieldset': {
+                      borderColor: 'white',
+                    },
+                  },
+                  '& .MuiInputBase-input': {
+                    color: 'white',
+                  },
+                  '& .MuiOutlinedInput-input::placeholder': {
+                    color: 'rgba(255, 255, 255, 0.7)',
+                  },
+                }
+              }}
+            />
 
             <LoadingButton
               sx={{

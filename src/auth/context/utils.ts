@@ -5,9 +5,14 @@ import axios from 'src/utils/axios'
 
 export const setSession = (accessToken: string | null) => {
   if (accessToken) {
-    localStorage.setItem('accessToken', accessToken)
-
-    axios.defaults.headers.common.Authorization = `Bearer ${accessToken}`
+    // Clean token - remove extra quotes if they exist from double serialization
+    let cleanToken = accessToken
+    if (typeof cleanToken === 'string') {
+      cleanToken = cleanToken.replace(/^"(.*)"$/, '$1')
+    }
+    
+    localStorage.setItem('accessToken', cleanToken)
+    axios.defaults.headers.common.Authorization = `Bearer ${cleanToken}`
 
     // Decode token to get expire time
     // Add expiredTimer to session
@@ -22,10 +27,16 @@ export const getSession = () => {
   const accessToken = localStorage.getItem('accessToken')
 
   if (accessToken) {
-    axios.defaults.headers.common.Authorization = `Bearer ${accessToken}`
+    // Clean token - remove extra quotes if they exist
+    let cleanToken = accessToken
+    if (typeof cleanToken === 'string') {
+      cleanToken = cleanToken.replace(/^"(.*)"$/, '$1')
+    }
+    
+    axios.defaults.headers.common.Authorization = `Bearer ${cleanToken}`
+    return cleanToken
   } else {
     delete axios.defaults.headers.common.Authorization
+    return null
   }
-
-  return accessToken
 }

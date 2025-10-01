@@ -1,3 +1,5 @@
+'use client'
+
 import { m } from 'framer-motion'
 import { userCan } from '@/utils/permissions.utils'
 import { DISABLE_AUTH } from '@/config-global'
