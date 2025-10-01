@@ -965,7 +965,7 @@ const AdminDashboardView = () => {
     { label: 'Total Doctors', value: dashboardData?.totalDoctors || 0, icon: <GroupOutlinedIcon sx={{ color: '#2563EB', fontSize: 30 }} />, bgColor: '#E0ECFF' },
     { label: 'Active Doctors', value: dashboardData?.activeDoctorsCount || 0, icon: <GroupOutlinedIcon sx={{ color: '#16A34A', fontSize: 30 }} />, bgColor: '#D9FBE5' },
     { label: 'Total Patients', value: dashboardData?.totalPatients || 0, icon: <PersonOutlineIcon sx={{ color: '#9333EA', fontSize: 30 }} />, bgColor: '#F3E8FF' },
-    { label: 'To be determined', value: 0, icon: <ShowChartIcon sx={{ color: '#000000', fontSize: 30 }} />, bgColor: '#F5F5F5' },
+    // { label: 'To be determined', value: 0, icon: <ShowChartIcon sx={{ color: '#000000', fontSize: 30 }} />, bgColor: '#F5F5F5' },
   ];
 
   return (
@@ -1372,10 +1372,10 @@ const AdminDashboardView = () => {
                               </Grid>
                               <Grid item xs={12} sm={6}>
                                 <TextField
-                                  label="Clinic ID"
-                                  name="clinicId"
+                                  label="Email"
+                                  name="email"
                                   fullWidth
-                                  value={editingDoctor?.clinicId || ''}
+                                  value={editingDoctor?.email || ''}
                                   onChange={handleEditInputChange}
                                 />
                               </Grid>
@@ -1418,12 +1418,11 @@ const AdminDashboardView = () => {
                               </Grid>
                               <Grid item xs={12}>
                                 <TextField
-                                  label="Date of Birth"
-                                  name="dateOfBirth"
-                                  type="date"
+                                  label="Clinic"
+                                  name="clinicId"
                                   fullWidth
                                   InputLabelProps={{ shrink: true }}
-                                  value={editingDoctor?.dateOfBirth || ''}
+                                  value={editingDoctor?.clinicId || ''}
                                   onChange={handleEditInputChange}
                                 />
                               </Grid>
