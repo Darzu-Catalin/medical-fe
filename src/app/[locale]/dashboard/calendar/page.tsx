@@ -1,12 +1,12 @@
 
 // ----------------------------------------------------------------------
 
-import { CalendarView } from "@/views/dashboard/calendar/view";
+import AppointmentTabs from "@/views/dashboard/appointments/appointment-tabs-view";
 
 export const metadata = {
-  title: 'Dashboard: Calendar',
+  title: 'Dashboard: My Appointments',
 };
 
 export default function CalendarPage() {
-  return <CalendarView />;
+  return <AppointmentTabs />;
 }

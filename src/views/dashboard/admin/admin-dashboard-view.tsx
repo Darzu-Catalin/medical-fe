@@ -1224,15 +1224,15 @@ const AdminDashboardView = () => {
                   borderCollapse: 'separate',
                   borderSpacing: 0,
                   '& th': {
-                    backgroundColor: 'white',
+                    backgroundColor: 'background.primary', // light grey header
                     fontWeight: 'bold',
-                    color: 'black',
+                    color: 'primary',
                   },
                   '& td': {
                     py: 0.5, 
                   },
                   '& td, & th': {
-                    borderBottom: '1px solid #E5E7EB', // light grey lines between rows
+                    borderBottom: '', // light grey lines between rows
                   },
                 }}>
                 <TableHead>

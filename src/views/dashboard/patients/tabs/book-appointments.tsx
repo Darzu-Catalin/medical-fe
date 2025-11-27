@@ -1,6 +1,6 @@
 'use client';
 
-import { Box, Typography, Grid, Card, CardContent, Button, MenuItem, Select, FormControl, InputLabel, Dialog, DialogTitle, DialogContent, DialogActions, TextField } from '@mui/material';
+import { Box, Typography, Grid, Card, CardContent, Button, MenuItem, Select, FormControl, InputLabel, Dialog, DialogTitle, DialogContent, DialogActions, TextField, Pagination, Chip, Avatar, Stack } from '@mui/material';
 import { useState, useEffect } from 'react';
 import axiosInstance from '@/utils/axios';
 import { getSession } from '@/auth/context/utils';
@@ -62,6 +62,14 @@ const BookAppointments = () => {
     reason: '',
     notes: '',
   });
+  
+  // Pagination state for doctors and appointments
+  const [doctorPage, setDoctorPage] = useState(1);
+  const [appointmentPage, setAppointmentPage] = useState(1);
+  const [upcomingPage, setUpcomingPage] = useState(1);
+  const [pastPage, setPastPage] = useState(1);
+  const doctorsPerPage = 4;
+  const appointmentsPerPage = 6;
 
   const [openCancelModal, setOpenCancelModal] = useState(false); // Cancel modal visibility state]
   const [selectedAppointment, setSelectedAppointment] = useState<any | null>(null);
@@ -429,9 +437,52 @@ if (!appointment || !rating) {
     fetchAppointments();
   }, []);
 
+  // Pagination logic for doctors
+  const totalDoctorPages = Math.ceil(filteredDoctors.length / doctorsPerPage);
+  const startDoctorIndex = (doctorPage - 1) * doctorsPerPage;
+  const paginatedDoctors = filteredDoctors.slice(startDoctorIndex, startDoctorIndex + doctorsPerPage);
+
+  // Pagination logic for appointments
+  const upcomingPerPage = 3;
+  const pastPerPage = 3;
+  
+  // Upcoming appointments pagination
+  const totalUpcomingPages = Math.ceil(appointments.upcoming.length / upcomingPerPage);
+  const startUpcomingIndex = (upcomingPage - 1) * upcomingPerPage;
+  const paginatedUpcoming = appointments.upcoming.slice(startUpcomingIndex, startUpcomingIndex + upcomingPerPage);
+  
+  // Past appointments pagination
+  const totalPastPages = Math.ceil(appointments.past.length / pastPerPage);
+  const startPastIndex = (pastPage - 1) * pastPerPage;
+  const paginatedPast = appointments.past.slice(startPastIndex, startPastIndex + pastPerPage);
+
+  const handleDoctorPageChange = (_: React.ChangeEvent<unknown>, value: number) => {
+    setDoctorPage(value);
+  };
+
+  const handleAppointmentPageChange = (_: React.ChangeEvent<unknown>, value: number) => {
+    setAppointmentPage(value);
+  };
+
+  const handleUpcomingPageChange = (_: React.ChangeEvent<unknown>, value: number) => {
+    setUpcomingPage(value);
+  };
+
+  const handlePastPageChange = (_: React.ChangeEvent<unknown>, value: number) => {
+    setPastPage(value);
+  };
+
   return (
      <Box >
-      <Card sx={{ p: 5, mb:4, boxShadow: 'none',  border: '1px solid #e0e0e0' }}>
+      <Card sx={{ 
+        p: 5, 
+        mb: 4, 
+        bgcolor: 'background.paper',
+        border: 1,
+        borderColor: 'divider',
+        borderRadius: 2,
+        boxShadow: 'none'
+      }}>
 
       <Box sx={{ mb: 3 }}>
         <Box display="flex">
@@ -468,26 +519,26 @@ if (!appointment || !rating) {
           onChange={handleSpecialtyChange}
           displayEmpty
           sx={{
-            backgroundColor: '#f5f5f5',
+            backgroundColor: 'action.hover',
             '& .MuiOutlinedInput-notchedOutline': {
-              border: 'none', // Remove border
+              border: 'none',
             },
             '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-              border: 'none', // Prevent border emphasis on focus
+              border: 'none',
             },
             '&:hover .MuiOutlinedInput-notchedOutline': {
-              border: 'none', // Prevent border emphasis on hover
+              border: 'none',
             },
           }}
           MenuProps={{
             PaperProps: {
               sx: {
-                boxShadow: '0px 4px 10px rgba(0, 0, 0, 0.1)',
+                boxShadow: 3,
                 borderRadius: 2,
                 padding: 1,
-                backdropFilter: 'none',
-                bgcolor: '#ffffff',
-                backgroundImage: 'none',
+                bgcolor: 'background.paper',
+                border: 1,
+                borderColor: 'divider',
               },
             },
             MenuListProps: {
@@ -502,12 +553,21 @@ if (!appointment || !rating) {
               key={index}
               value={specialty}
               sx={{
-                backgroundColor: '#ffffff',
+                bgcolor: 'background.paper',
                 margin: '4px 0',
                 borderRadius: 1,
-                '&:hover': { backgroundColor: '#29A644', color: '#ffffff' },
-                '&.Mui-selected': { backgroundColor: '#29A644', color: '#ffffff' },
-                '&.Mui-selected:hover': { backgroundColor: '#29A644', color: '#ffffff' },
+                '&:hover': { 
+                  bgcolor: 'primary.main', 
+                  color: 'primary.contrastText' 
+                },
+                '&.Mui-selected': { 
+                  bgcolor: 'primary.main', 
+                  color: 'primary.contrastText' 
+                },
+                '&.Mui-selected:hover': { 
+                  bgcolor: 'primary.dark', 
+                  color: 'primary.contrastText' 
+                },
               }}
             >
               {specialty}
@@ -531,17 +591,21 @@ if (!appointment || !rating) {
             Available Doctors
           </Typography>
           <Grid container spacing={2}>
-            {filteredDoctors.map((doctor, index) => (
+            {paginatedDoctors.map((doctor, index) => (
               <Grid item xs={12} key={index}>
                 <Card
                   sx={{
-                    border: '1px solid #e0e0e0',
+                    bgcolor: 'background.paper',
+                    border: 1,
+                    borderColor: 'divider',
                     borderRadius: 2,
-                    boxShadow: '0px 4px 10px rgba(0, 0, 0, 0.1)', // Add shadow to the card
+                    boxShadow: 2,
                     p: 2,
-                    transition: 'box-shadow 0.3s ease-in-out', // Smooth transition for hover effect
+                    transition: 'all 0.3s ease-in-out',
                     '&:hover': {
-                      boxShadow: '0px 6px 15px rgba(0, 0, 0, 0.2)', // Increase shadow on hover
+                      boxShadow: 4,
+                      borderColor: 'primary.light',
+                      transform: 'translateY(-2px)',
                     },
                   }}
                 >
@@ -595,7 +659,7 @@ if (!appointment || !rating) {
                           </Box>
                         </Box>
                         <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-                          <span style={{ color: '#757575' }}>📍</span> {doctor.address || 'N/A'}
+                          <Box component="span" sx={{ color: 'text.secondary' }}>📍</Box> {doctor.address || 'N/A'}
                         </Typography>
                         <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
                           {doctor.description || 'No description available.'}
@@ -661,6 +725,34 @@ if (!appointment || !rating) {
               </Grid>
             ))}
           </Grid>
+          
+          {/* Pagination for doctors */}
+          {totalDoctorPages > 1 && (
+            <Box sx={{ 
+              display: 'flex', 
+              justifyContent: 'center', 
+              mt: 3,
+              p: 2,
+              bgcolor: 'action.hover',
+              borderRadius: 2,
+              border: 1,
+              borderColor: 'divider'
+            }}>
+              <Pagination
+                count={totalDoctorPages}
+                page={doctorPage}
+                onChange={handleDoctorPageChange}
+                color="primary"
+                showFirstButton
+                showLastButton
+                sx={{
+                  '& .MuiPaginationItem-root': {
+                    fontWeight: 500,
+                  }
+                }}
+              />
+            </Box>
+          )}
         </Box>
       )}
 
@@ -761,7 +853,14 @@ if (!appointment || !rating) {
       </Dialog>
       </Card>
 
-      <Card sx={{ p: 5, boxShadow: 'none', border: '1px solid #e0e0e0' }}>
+      <Card sx={{ 
+        p: 5, 
+        bgcolor: 'background.paper',
+        border: 1,
+        borderColor: 'divider',
+        borderRadius: 2,
+        boxShadow: 'none'
+      }}>
         <Box sx={{ mb: 3 }}>
           <Box display="flex">
             <CalendarTodayIcon sx={{ color: '#29A644', mr: 1 }} />
@@ -780,14 +879,22 @@ if (!appointment || !rating) {
           Upcoming Appointments
         </Typography>
         {appointments.upcoming.length > 0 ? (
+        <>
         <Grid container spacing={2}>
-            {appointments.upcoming.map((appointment, index) => (
+            {paginatedUpcoming.map((appointment, index) => (
               <Grid item xs={12} key={index}>
                 <Card
                   sx={{
-                    border: '1px solid #e0e0e0',
+                    bgcolor: 'background.paper',
+                    border: 1,
+                    borderColor: 'divider',
                     borderRadius: 2,
-                    boxShadow: 'none', // Remove box shadow
+                    boxShadow: 'none',
+                    transition: 'all 0.3s ease-in-out',
+                    '&:hover': {
+                      bgcolor: 'action.hover',
+                      borderColor: 'primary.light',
+                    },
                   }}
                 >
                   <CardContent>
@@ -802,13 +909,13 @@ if (!appointment || !rating) {
                         </Typography>
                         <Box display="flex" alignItems="center" gap={2} sx={{ mt: 1 }}>
                           <Box display="flex" alignItems="center" gap={1}>
-                            <CalendarTodayIcon sx={{ fontSize: 16, color: '#757575' }} />
+                            <CalendarTodayIcon sx={{ fontSize: 16, color: 'text.secondary' }} />
                             <Typography variant="body2" color="text.secondary">
                               {new Date(appointment.appointmentDate).toLocaleDateString()}
                             </Typography>
                           </Box>
                           <Box display="flex" alignItems="center" gap={1}>
-                            <QueryBuilderIcon sx={{ fontSize: 16, color: '#757575' }} />
+                            <QueryBuilderIcon sx={{ fontSize: 16, color: 'text.secondary' }} />
                             <Typography variant="body2" color="text.secondary">
                               {new Date(appointment.appointmentDate).toLocaleTimeString([], {
                                 hour: '2-digit',
@@ -823,29 +930,29 @@ if (!appointment || !rating) {
                       {/* Right Column: Appointment Status and Cancel Button */}
                       <Grid item xs={3} display="flex" flexDirection="column" alignItems="flex-end" gap={1}>
                         <Box
-                          sx={{
+                          sx={(theme) => ({
                             backgroundColor:
                               appointment.status === 1
-                                ? '#e0f7fa'
+                                ? theme.palette.info.light
                                 : appointment.status === 4
-                                ? '#e8f5e9'
+                                ? theme.palette.success.light
                                 : appointment.status === 5
-                                ? '#ffebee'
-                                : '#e0e0e0',
+                                ? theme.palette.error.light
+                                : theme.palette.action.disabled,
                             color:
                               appointment.status === 1
-                                ? '#00796b'
+                                ? theme.palette.info.dark
                                 : appointment.status === 4
-                                ? '#388e3c'
+                                ? theme.palette.success.dark
                                 : appointment.status === 5
-                                ? '#d32f2f'
-                                : '#757575',
+                                ? theme.palette.error.dark
+                                : theme.palette.text.secondary,
                             padding: '4px 12px',
                             borderRadius: '16px',
                             fontSize: '0.875rem',
                             fontWeight: 500,
                             textAlign: 'center',
-                          }}
+                          })}
                         >
                           {appointmentStatusMap[appointment.status] || 'Unknown'}
                         </Box>
@@ -878,6 +985,33 @@ if (!appointment || !rating) {
               </Grid>
             ))}
           </Grid>
+          
+          {/* Pagination for upcoming appointments */}
+          {totalUpcomingPages > 1 && (
+            <Box display="flex" justifyContent="center" sx={{ mt: 3 }}>
+              <Pagination
+                count={totalUpcomingPages}
+                page={upcomingPage}
+                onChange={handleUpcomingPageChange}
+                color="primary"
+                sx={{
+                  '& .MuiPaginationItem-root': {
+                    bgcolor: 'background.paper',
+                    border: 1,
+                    borderColor: 'divider',
+                    '&:hover': {
+                      bgcolor: 'action.hover',
+                    },
+                    '&.Mui-selected': {
+                      bgcolor: 'primary.main',
+                      color: 'primary.contrastText',
+                    },
+                  },
+                }}
+              />
+            </Box>
+          )}
+        </>
         ) : (
           <Typography variant="body2" color="text.secondary">
             No upcoming appointments
@@ -889,14 +1023,22 @@ if (!appointment || !rating) {
           Past Appointments
         </Typography>
         {appointments.past.length > 0 ? (
+          <>
           <Grid container spacing={2}>
-          {appointments.past.map((appointment, index) => (
+          {paginatedPast.map((appointment, index) => (
             <Grid item xs={12} key={index}>
               <Card
                 sx={{
-                  border: '1px solid #e0e0e0',
+                  bgcolor: 'background.paper',
+                  border: 1,
+                  borderColor: 'divider',
                   borderRadius: 2,
-                  boxShadow: 'none', // Remove box shadow
+                  boxShadow: 'none',
+                  transition: 'all 0.3s ease-in-out',
+                  '&:hover': {
+                    bgcolor: 'action.hover',
+                    borderColor: 'primary.light',
+                  },
                 }}
               >
                 <CardContent>
@@ -911,13 +1053,13 @@ if (!appointment || !rating) {
                       </Typography>
                       <Box display="flex" alignItems="center" gap={2} sx={{ mt: 1 }}>
                         <Box display="flex" alignItems="center" gap={1}>
-                          <CalendarTodayIcon sx={{ fontSize: 16, color: '#757575' }} />
+                          <CalendarTodayIcon sx={{ fontSize: 16, color: 'text.secondary' }} />
                           <Typography variant="body2" color="text.secondary">
                             {new Date(appointment.appointmentDate).toLocaleDateString()}
                           </Typography>
                         </Box>
                         <Box display="flex" alignItems="center" gap={1}>
-                          <QueryBuilderIcon sx={{ fontSize: 16, color: '#757575' }} />
+                          <QueryBuilderIcon sx={{ fontSize: 16, color: 'text.secondary' }} />
                           <Typography variant="body2" color="text.secondary">
                             {new Date(appointment.appointmentDate).toLocaleTimeString([], {
                               hour: '2-digit',
@@ -933,29 +1075,29 @@ if (!appointment || !rating) {
                     <Grid item xs={3} display="flex" justifyContent="flex-end" alignItems="center">
                       <Box display={"flex"} alignItems="center" gap={1}>
                         <Box
-                          sx={{
+                          sx={(theme) => ({
                             backgroundColor:
                               appointment.status === 1
-                                ? '#e0f7fa'
+                                ? theme.palette.info.light
                                 : appointment.status === 4
-                                ? '#e8f5e9'
+                                ? theme.palette.success.light
                                 : appointment.status === 5
-                                ? '#ffebee'
-                                : '#e0e0e0',
+                                ? theme.palette.error.light
+                                : theme.palette.action.disabled,
                             color:
                               appointment.status === 1
-                                ? '#00796b'
+                                ? theme.palette.info.dark
                                 : appointment.status === 4
-                                ? '#388e3c'
+                                ? theme.palette.success.dark
                                 : appointment.status === 5
-                                ? '#d32f2f'
-                                : '#757575',
+                                ? theme.palette.error.dark
+                                : theme.palette.text.secondary,
                             padding: '4px 12px',
                             borderRadius: '16px',
                             fontSize: '0.875rem',
                             fontWeight: 500,
                             textAlign: 'center',
-                          }}
+                          })}
                         >
                           {appointmentStatusMap[appointment.status] || 'Unknown'}
                         </Box>
@@ -988,7 +1130,35 @@ if (!appointment || !rating) {
               </Card>
             </Grid>
           ))}
-        </Grid> ): (
+        </Grid>
+        
+        {/* Pagination for past appointments */}
+        {totalPastPages > 1 && (
+          <Box display="flex" justifyContent="center" sx={{ mt: 3 }}>
+            <Pagination
+              count={totalPastPages}
+              page={pastPage}
+              onChange={handlePastPageChange}
+              color="primary"
+              sx={{
+                '& .MuiPaginationItem-root': {
+                  bgcolor: 'background.paper',
+                  border: 1,
+                  borderColor: 'divider',
+                  '&:hover': {
+                    bgcolor: 'action.hover',
+                  },
+                  '&.Mui-selected': {
+                    bgcolor: 'primary.main',
+                    color: 'primary.contrastText',
+                  },
+                },
+              }}
+            />
+          </Box>
+        )}
+        </>
+        ) : (
           <Typography variant="body2" color="text.secondary">
             No past appointments
           </Typography>
