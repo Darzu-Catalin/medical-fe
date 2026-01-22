@@ -1,6 +1,8 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useSelector } from 'react-redux'
+import { RootState } from 'src/redux/store'
 import {
   Box,
   Card,
@@ -35,7 +37,7 @@ const AppointmentTabs = () => {
   const [page, setPage] = useState(1)
   const appointmentsPerPage = 6
   const { appointments = [], appointmentsLoading, appointmentsError } = useAppointmentsForCalendar()
-  const { userRole } = useAppSelector((state) => state.auth)
+  const { userRole } = useSelector((state: RootState) => state.auth)
 
   // Separate appointments into upcoming and past
   const now = new Date()
