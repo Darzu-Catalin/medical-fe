@@ -191,3 +191,62 @@ export const getDoctorPatientMedicalRecords = async (patientId: string): Promise
     return ApiResponse.error(error);
   }
 };
+
+/**
+ * Link patient to doctor
+ */
+export interface LinkPatientPayload {
+  email?: string;
+  idnp?: string;
+  notes?: string;
+}
+
+export const linkPatient = async (payload: LinkPatientPayload): Promise<ApiResponseType> => {
+  try {
+    const token = getSession() || localStorage.getItem('token');
+    if (!token) {
+      throw new Error('No authentication token found');
+    }
+
+    const response = await axiosInstance.post('/Doctor/link-patient', payload, {
+      headers: { 
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      }
+    });
+
+    return ApiResponse.success(response.data);
+  } catch (error: any) {
+    console.error('Error linking patient:', error);
+    return ApiResponse.error(error);
+  }
+};
+
+/**
+ * Unlink patient from doctor
+ */
+export const unlinkPatient = async (patientId: string, reason?: string): Promise<ApiResponseType> => {
+  try {
+    const token = getSession() || localStorage.getItem('token');
+    if (!token) {
+      throw new Error('No authentication token found');
+    }
+
+    // Backend expects [FromBody] string? reason, so send just the string or null
+    const response = await axiosInstance.post(
+      `/Doctor/unlink-patient/${patientId}`, 
+      reason || null,
+      {
+        headers: { 
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      }
+    );
+
+    return ApiResponse.success(response.data);
+  } catch (error: any) {
+    console.error('Error unlinking patient:', error);
+    return ApiResponse.error(error);
+  }
+};

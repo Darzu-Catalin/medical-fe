@@ -10,7 +10,7 @@ import { useState, useEffect } from 'react';
 import { 
   CalendarToday, SecurityOutlined, WarningAmberOutlined, People, Assignment,
   Search, Visibility, FileDownload, Upload, Delete, Edit, Dashboard,
-  Person, Schedule, LocalHospital, Phone, Email, LocationOn
+  Person, Schedule, LocalHospital, Phone, Email, LocationOn, LinkOff
 } from '@mui/icons-material';
 import axiosInstance from '@/utils/axios';
 import { getSession } from '@/auth/context/utils';
@@ -21,20 +21,28 @@ import {
   getGenderDisplay 
 } from '@/requests/doctor/doctor.requests';
 import EditProfileDialog from '@/components/custom/dialogs/EditProfileDialog';
+import AddPatientDialog from '@/components/custom/dialogs/AddPatientDialog';
+import PatientDetailsDialog from '@/components/custom/dialogs/PatientDetailsDialog';
+import UnlinkPatientDialog from '@/components/custom/dialogs/UnlinkPatientDialog';
 
 
 
 
 interface Patient {
   id: string;
-  firstName: string;
-  lastName: string;
-  idnp: string;
-  dateOfBirth: string;
-  phoneNumber: string;
-  email: string;
-  address: string;
+  patientId: string;
+  patientName: string;
+  patientEmail: string;
+  patientPhoneNumber: string;
+  patientIDNP: string;
   bloodType: string;
+  dateOfBirth: string;
+  assignedDate: string;
+  isActive: boolean;
+  notes?: string;
+  assignedBy?: string;
+  lastVisit?: string;
+  totalVisits: number;
 }
 
 interface DashboardStats {
@@ -60,6 +68,10 @@ const DoctorDashboardView = () => {
   const [doctorProfile, setDoctorProfile] = useState<DoctorProfile | null>(null);
   const [profileLoading, setProfileLoading] = useState(false);
   const [editProfileOpen, setEditProfileOpen] = useState(false);
+  const [addPatientOpen, setAddPatientOpen] = useState(false);
+  const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
+  const [patientDetailsOpen, setPatientDetailsOpen] = useState(false);
+  const [unlinkPatientOpen, setUnlinkPatientOpen] = useState(false);
   
   // Dashboard stats
   const [dashboardStats, setDashboardStats] = useState<DashboardStats>({
@@ -131,14 +143,14 @@ const DoctorDashboardView = () => {
         params: { page, pageSize }
       });
 
-      if (res.data?.data) {
+      if (res.data?.success && res.data?.data) {
         setPatients(res.data.data);
-        setTotalPages(Math.ceil(res.data.total / pageSize));
+        setTotalPages(res.data.pagination?.totalPages || 1);
         
         // Update dashboard stats
         setDashboardStats(prev => ({
           ...prev,
-          totalPatients: res.data.total || 0
+          totalPatients: res.data.pagination?.totalItems || 0
         }));
       }
     } catch (err) {
@@ -207,6 +219,30 @@ const DoctorDashboardView = () => {
 
   const handlePageChange = (event: React.ChangeEvent<unknown>, value: number) => {
     setCurrentPage(value);
+  };
+
+  const handlePatientAdded = () => {
+    // Refresh the patients list
+    fetchPatients(1);
+    // Reset to first page
+    setCurrentPage(1);
+  };
+
+  const handleViewPatient = (patient: Patient) => {
+    setSelectedPatient(patient);
+    setPatientDetailsOpen(true);
+  };
+
+  const handleUnlinkPatient = (patient: Patient) => {
+    console.log('Selected patient for unlink:', patient);
+    console.log('Patient ID:', patient.patientId);
+    setSelectedPatient(patient);
+    setUnlinkPatientOpen(true);
+  };
+
+  const handlePatientUnlinked = () => {
+    // Refresh the patients list
+    fetchPatients(currentPage);
   };
 
   const StatCard = ({ title, value, icon, color, subtitle }: {
@@ -431,7 +467,11 @@ const DoctorDashboardView = () => {
                   <Typography variant="h6" fontWeight="bold">
                     My Patients ({dashboardStats.totalPatients})
                   </Typography>
-                  <Button variant="contained" startIcon={<Person />}>
+                  <Button 
+                    variant="contained" 
+                    startIcon={<Person />}
+                    onClick={() => setAddPatientOpen(true)}
+                  >
                     Add Patient
                   </Button>
                 </Box>
@@ -497,19 +537,16 @@ const DoctorDashboardView = () => {
                               <TableCell>
                                 <Box display="flex" alignItems="center" gap={2}>
                                   <Avatar sx={{ bgcolor: 'primary.main' }}>
-                                    {patient.firstName?.[0]}{patient.lastName?.[0]}
+                                    {patient.patientName?.split(' ')[0]?.[0]}{patient.patientName?.split(' ')[1]?.[0]}
                                   </Avatar>
                                   <Box>
                                     <Typography variant="body1" fontWeight="medium">
-                                      {patient.firstName} {patient.lastName}
-                                    </Typography>
-                                    <Typography variant="body2" color="text.secondary">
-                                      ID: {patient.id.substring(0, 8)}...
+                                      {patient.patientName}
                                     </Typography>
                                   </Box>
                                 </Box>
                               </TableCell>
-                              <TableCell>{patient.idnp || 'N/A'}</TableCell>
+                              <TableCell>{patient.patientIDNP || 'N/A'}</TableCell>
                               <TableCell>
                                 {patient.dateOfBirth 
                                   ? new Date(patient.dateOfBirth).toLocaleDateString()
@@ -520,11 +557,11 @@ const DoctorDashboardView = () => {
                                 <Box>
                                   <Typography variant="body2" display="flex" alignItems="center" gap={1}>
                                     <Phone fontSize="small" />
-                                    {patient.phoneNumber || 'N/A'}
+                                    {patient.patientPhoneNumber || 'N/A'}
                                   </Typography>
                                   <Typography variant="body2" display="flex" alignItems="center" gap={1} color="text.secondary">
                                     <Email fontSize="small" />
-                                    {patient.email || 'N/A'}
+                                    {patient.patientEmail || 'N/A'}
                                   </Typography>
                                 </Box>
                               </TableCell>
@@ -538,11 +575,21 @@ const DoctorDashboardView = () => {
                               </TableCell>
                               <TableCell align="center">
                                 <Box display="flex" gap={1}>
-                                  <IconButton size="small" color="primary">
+                                  <IconButton 
+                                    size="small" 
+                                    color="primary"
+                                    onClick={() => handleViewPatient(patient)}
+                                    title="View Details"
+                                  >
                                     <Visibility />
                                   </IconButton>
-                                  <IconButton size="small" color="secondary">
-                                    <Edit />
+                                  <IconButton 
+                                    size="small" 
+                                    color="error"
+                                    onClick={() => handleUnlinkPatient(patient)}
+                                    title="Unlink Patient"
+                                  >
+                                    <LinkOff />
                                   </IconButton>
                                 </Box>
                               </TableCell>
@@ -925,6 +972,29 @@ const DoctorDashboardView = () => {
         onClose={() => setEditProfileOpen(false)}
         doctorProfile={doctorProfile}
         onProfileUpdated={handleProfileUpdated}
+      />
+
+      {/* Add Patient Dialog */}
+      <AddPatientDialog
+        open={addPatientOpen}
+        onClose={() => setAddPatientOpen(false)}
+        onPatientAdded={handlePatientAdded}
+      />
+
+      {/* Patient Details Dialog */}
+      <PatientDetailsDialog
+        open={patientDetailsOpen}
+        onClose={() => setPatientDetailsOpen(false)}
+        patient={selectedPatient}
+      />
+
+      {/* Unlink Patient Dialog */}
+      <UnlinkPatientDialog
+        open={unlinkPatientOpen}
+        onClose={() => setUnlinkPatientOpen(false)}
+        patientName={selectedPatient?.patientName || ''}
+        patientId={selectedPatient?.patientId || ''}
+        onUnlinked={handlePatientUnlinked}
       />
     </Box>
   );
