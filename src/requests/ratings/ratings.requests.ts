@@ -5,13 +5,13 @@ import { ApiResponseType } from '@/types/types'
 // ######################################################### RATING REQUESTS ######################################################
 
 export interface RatingData {
-  id: string
-  rating: number // 1-5 stars
-  comment?: string
+  ratingId: number
+  ratingNr: number // 1-5 stars
+  ratingCommentary?: string
   patientId: string
   patientName?: string
   doctorId: string
-  appointmentId: string
+  appointmentId?: string
   createdAt: string
 }
 
@@ -42,10 +42,26 @@ export const addRatingRequest = async (payload: {
   rating: number
   comment?: string
   doctorId: string
+  patientId: string
   appointmentId?: string
 }): Promise<ApiResponseType> => {
   try {
-    const response = await axiosInstance.post('/rating', payload)
+    // Transform to API's expected field names
+    const apiPayload: any = {
+      RatingNr: payload.rating,
+      DoctorId: payload.doctorId,
+      PatientId: payload.patientId,
+    }
+    
+    if (payload.comment) {
+      apiPayload.RatingCommentary = payload.comment
+    }
+    
+    if (payload.appointmentId) {
+      apiPayload.AppointmentId = payload.appointmentId
+    }
+    
+    const response = await axiosInstance.post('/rating', apiPayload)
     return ApiResponse.success(response.data)
   } catch (error) {
     return ApiResponse.error(error)
@@ -56,6 +72,16 @@ export const addRatingRequest = async (payload: {
 export const getDoctorRatingsRequest = async (doctorId: string): Promise<ApiResponseType> => {
   try {
     const response = await axiosInstance.get(`/rating/doctor/${doctorId}`)
+    return ApiResponse.success(response.data)
+  } catch (error) {
+    return ApiResponse.error(error)
+  }
+}
+
+// Get patient's submitted ratings
+export const getPatientRatingsRequest = async (patientId: string): Promise<ApiResponseType> => {
+  try {
+    const response = await axiosInstance.get(`/rating/patient/${patientId}`)
     return ApiResponse.success(response.data)
   } catch (error) {
     return ApiResponse.error(error)

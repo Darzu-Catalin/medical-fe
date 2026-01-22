@@ -118,6 +118,7 @@ export function useNavData() {
         {
           subheader: 'Communication',
           items: [
+            { title: 'Medical Clinics', path: '/dashboard/medical-clinics', icon: ICONS.clinics },
             { title: 'Rate Doctors', path: '/dashboard/ratings', icon: ICONS.ratings },
             { title: 'Notifications', path: '/dashboard/notifications', icon: ICONS.notifications },
           ],

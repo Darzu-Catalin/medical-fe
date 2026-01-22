@@ -229,12 +229,12 @@ export default function MedicalClinicsMap() {
   return (
     <Box>
       {/* Info Alert */}
-      <Alert severity="info" sx={{ mb: 3 }}>
+      {/* <Alert severity="info" sx={{ mb: 3 }}>
         <Typography variant="body2">
           <strong>Note:</strong> Currently displaying sample clinic data for demonstration. 
           Replace with real clinic data from your backend API when available.
         </Typography>
-      </Alert>
+      </Alert> */}
 
       {/* Map Section */}
       <Card sx={{ mb: 3 }}>
