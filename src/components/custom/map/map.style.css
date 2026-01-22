@@ -48,6 +48,31 @@
   background: #fff;
 }
 
+/* Popup Styles */
+.maplibregl-popup-content {
+  padding: 16px !important;
+  border-radius: 8px !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+  max-width: 280px !important;
+}
+
+.maplibregl-popup-tip {
+  border-top-color: #fff !important;
+}
+
+.maplibregl-popup-close-button {
+  font-size: 20px !important;
+  padding: 4px !important;
+  color: #666 !important;
+  right: 8px !important;
+  top: 8px !important;
+}
+
+.maplibregl-popup-close-button:hover {
+  background-color: rgba(0, 0, 0, 0.05) !important;
+  color: #000 !important;
+}
+
 .stadiamaps-search-box .results .result-label {
   font-size: 14px;
 }
