@@ -356,12 +356,13 @@ export default function CalendarView({
           justifyContent: "space-between",
           alignItems: "center",
         }}>
-          {openForm && formMode === 'event' && (
-            <> {currentEvent?.id && currentEvent.id > 0 ? 'Modifică eveniment' : 'Adaugă eveniment'}</>
-          )}
           {openForm && formMode === 'appointment' && (
             <> Adaugă programare </>
           )}
+          {openForm && formMode === 'event' && (
+            <> {currentEvent?.id && currentEvent.id > 0 ? 'Modifică eveniment' : 'Adaugă eveniment'}</>
+          )}
+          
           {formMode === 'event' && (
             <SmallModalInfoCard
               model={currentEvent?.main_parent ?? null}

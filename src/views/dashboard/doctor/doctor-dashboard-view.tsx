@@ -32,6 +32,8 @@ interface Patient {
   id: string;
   patientId: string;
   patientName: string;
+  patientId?: string;
+  patientName?: string;
   patientEmail: string;
   patientPhoneNumber: string;
   patientIDNP: string;
@@ -86,7 +88,10 @@ const DoctorDashboardView = () => {
     try {
       const response = await getDoctorProfile();
       
-      if (!response.error && response.data) {
+      console.log('Full response:', response);
+      
+      if (response && !response.error && response.data) {
+        // Response.data contains the DoctorProfile
         setDoctorProfile(response.data);
         
         // Update dashboard stats with profile data
@@ -95,12 +100,13 @@ const DoctorDashboardView = () => {
           totalPatients: response.data.totalPatients || 0,
         }));
         
-        console.log('Doctor Profile:', response.data);
+        console.log('Doctor Profile set successfully:', response.data);
       } else {
-        console.error('Error fetching profile:', response.message);
+        console.error('Error fetching profile:', response?.message || response?.error || 'Unknown error');
+        console.error('Full error response:', response);
       }
     } catch (err: any) {
-      console.error('Error fetching doctor profile:', err);
+      console.error('Exception fetching doctor profile:', err);
     } finally {
       setProfileLoading(false);
     }
@@ -518,7 +524,6 @@ const DoctorDashboardView = () => {
                             <TableCell>Date of Birth</TableCell>
                             <TableCell>Contact</TableCell>
                             <TableCell>Blood Type</TableCell>
-                            <TableCell align="center">Actions</TableCell>
                           </TableRow>
                         </TableHead>
                         <TableBody>
@@ -527,11 +532,11 @@ const DoctorDashboardView = () => {
                               <TableCell>
                                 <Box display="flex" alignItems="center" gap={2}>
                                   <Avatar sx={{ bgcolor: 'primary.main' }}>
-                                    {patient.patientName?.split(' ')[0]?.[0]}{patient.patientName?.split(' ')[1]?.[0]}
+                                    {patient.patientName?.[0] || patient.firstName?.[0] || 'P'}
                                   </Avatar>
                                   <Box>
                                     <Typography variant="body1" fontWeight="medium">
-                                      {patient.patientName}
+                                      {patient.patientName || `${patient.firstName} ${patient.lastName}`}
                                     </Typography>
                                   </Box>
                                 </Box>

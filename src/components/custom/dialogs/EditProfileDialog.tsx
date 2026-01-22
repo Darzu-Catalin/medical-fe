@@ -28,7 +28,7 @@ import {
   UpdateDoctorProfilePayload,
   updateDoctorProfile,
   getClinics,
-  BLOOD_TYPES
+  DoctorSpecialty
 } from '@/requests/doctor/doctor.requests';
 
 interface EditProfileDialogProps {
@@ -45,22 +45,26 @@ interface Clinic {
 }
 
 const SPECIALTIES = [
-  'Cardiology',
-  'Dermatology', 
-  'Emergency Medicine',
-  'Family Medicine',
-  'Internal Medicine',
-  'Neurology',
-  'Obstetrics and Gynecology',
-  'Oncology',
-  'Ophthalmology',
-  'Orthopedics',
-  'Pediatrics',
-  'Psychiatry',
-  'Radiology',
-  'Surgery',
-  'Urology',
-  'Other'
+  { label: 'General Practice', value: 0 },
+  { label: 'Cardiology', value: 1 },
+  { label: 'Neurology', value: 2 },
+  { label: 'Pediatrics', value: 3 },
+  { label: 'Dermatology', value: 4 },
+  { label: 'Orthopedics', value: 5 },
+  { label: 'Psychiatry', value: 6 },
+  { label: 'Oncology', value: 7 },
+  { label: 'Radiology', value: 8 },
+  { label: 'Surgery', value: 9 },
+  { label: 'Ophthalmology', value: 10 },
+  { label: 'ENT', value: 11 },
+  { label: 'Urology', value: 12 },
+  { label: 'Gynecology', value: 13 },
+  { label: 'Endocrinology', value: 14 },
+  { label: 'Gastroenterology', value: 15 },
+  { label: 'Pulmonology', value: 16 },
+  { label: 'Nephrology', value: 17 },
+  { label: 'Rheumatology', value: 18 },
+  { label: 'Other', value: 99 }
 ];
 
 const EditProfileDialog = ({ open, onClose, doctorProfile, onProfileUpdated }: EditProfileDialogProps) => {
@@ -74,9 +78,8 @@ const EditProfileDialog = ({ open, onClose, doctorProfile, onProfileUpdated }: E
       lastName: '',
       phoneNumber: '',
       address: '',
-      bloodType: 1,
       clinicId: '',
-      specialty: '',
+      specialty: 0,
       experience: ''
     }
   });
@@ -84,14 +87,23 @@ const EditProfileDialog = ({ open, onClose, doctorProfile, onProfileUpdated }: E
   // Load doctor profile data into form
   useEffect(() => {
     if (doctorProfile && open) {
+      // Convert specialty string to enum value
+      let specialtyValue = 0; // Default to GeneralPractice
+      if (doctorProfile.specialty) {
+        // Find matching specialty
+        const specialty = SPECIALTIES.find(
+          s => s.label.toLowerCase() === doctorProfile.specialty?.toLowerCase()
+        );
+        specialtyValue = specialty ? specialty.value : 0;
+      }
+
       reset({
         firstName: doctorProfile.firstName || '',
         lastName: doctorProfile.lastName || '',
         phoneNumber: doctorProfile.phoneNumber || '',
         address: doctorProfile.address || '',
-        bloodType: doctorProfile.bloodType || 1,
         clinicId: doctorProfile.clinicId || '',
-        specialty: doctorProfile.specialty || '',
+        specialty: specialtyValue,
         experience: doctorProfile.experience || ''
       });
     }
@@ -242,24 +254,7 @@ const EditProfileDialog = ({ open, onClose, doctorProfile, onProfileUpdated }: E
               />
             </Grid>
 
-            <Grid item xs={12} md={6}>
-              <Controller
-                name="bloodType"
-                control={control}
-                render={({ field }) => (
-                  <FormControl fullWidth disabled={loading}>
-                    <InputLabel>Blood Type</InputLabel>
-                    <Select {...field} label="Blood Type">
-                      {Object.entries(BLOOD_TYPES).map(([value, label]) => (
-                        <MenuItem key={value} value={parseInt(value)}>
-                          {label}
-                        </MenuItem>
-                      ))}
-                    </Select>
-                  </FormControl>
-                )}
-              />
-            </Grid>
+
 
             <Grid item xs={12}>
               <Controller
@@ -290,21 +285,20 @@ const EditProfileDialog = ({ open, onClose, doctorProfile, onProfileUpdated }: E
                 name="specialty"
                 control={control}
                 render={({ field }) => (
-                  <Autocomplete
-                    {...field}
-                    options={SPECIALTIES}
-                    freeSolo
-                    disabled={loading}
-                    onChange={(_, value) => field.onChange(value)}
-                    renderInput={(params) => (
-                      <TextField
-                        {...params}
-                        label="Specialty"
-                        fullWidth
-                        placeholder="Select or type your specialty"
-                      />
-                    )}
-                  />
+                  <FormControl fullWidth disabled={loading}>
+                    <InputLabel>Specialty</InputLabel>
+                    <Select 
+                      {...field} 
+                      label="Specialty"
+                      value={field.value || 0}
+                    >
+                      {SPECIALTIES.map((specialty) => (
+                        <MenuItem key={specialty.value} value={specialty.value}>
+                          {specialty.label}
+                        </MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
                 )}
               />
             </Grid>
