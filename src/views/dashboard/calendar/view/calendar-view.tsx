@@ -114,7 +114,8 @@ export default function CalendarView({
   const { 
     calendarEvents: appointmentEvents, 
     appointments, 
-    appointmentsLoading 
+    appointmentsLoading,
+    refreshAppointments
   } = useAppointmentsForCalendar();
 
   const currentEvent = useEvent(events, selectEventId, selectedRange, openForm);
@@ -412,6 +413,10 @@ export default function CalendarView({
           setSelectedAppointment(null);
         }}
         appointmentEvent={selectedAppointment}
+        onAppointmentCompleted={() => {
+          // Refresh appointments list after completion
+          refreshAppointments();
+        }}
       />
     </>
   );

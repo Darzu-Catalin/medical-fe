@@ -82,7 +82,6 @@ export function useNavData() {
           items: [
             { title: 'Documents', path: '/dashboard/documents', icon: ICONS.documents },
             { title: 'Patient Ratings', path: '/dashboard/ratings', icon: ICONS.ratings },
-            { title: 'Vaccines', path: paths.dashboard.vaccines.root, icon: ICONS.vaccines },
             { title: 'Reports', path: '/dashboard/reports', icon: ICONS.reports },
           ],
         },

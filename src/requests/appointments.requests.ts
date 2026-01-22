@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import useSWR from 'swr';
 import axiosInstance from '@/utils/axios';
 import { getSession } from '@/auth/context/utils';
+import { useAppSelector } from '@/redux/store';
 
 // Types for appointment data
 export interface AppointmentType {
@@ -56,26 +57,37 @@ export interface CalendarAppointmentEvent {
 }
 
 // Fetch appointments function
-const fetchAppointments = async (): Promise<AppointmentType[]> => {
+const fetchAppointments = async (userRole: string): Promise<AppointmentType[]> => {
   const token = getSession() || localStorage.getItem('token');
   if (!token) {
     throw new Error('No authentication token found');
   }
 
-  const res = await axiosInstance.get('/appointment/my', {
+  // Use different endpoint based on user role
+  const endpoint = userRole === 'doctor' 
+    ? '/appointment/doctor/all' 
+    : '/appointment/my';
+
+  const res = await axiosInstance.get(endpoint, {
     headers: { Authorization: `Bearer ${token}` },
     params: { page: 1, pageSize: 100 }, // Get more appointments for calendar
   });
 
-  console.log('Fetched appointments for calendar:', res.data);
+  console.log('Fetched appointments for calendar - Full response:', res.data);
+  console.log('Appointments data:', res.data?.data);
+  
+  // Both endpoints return: { success, error, message, data: [...] }
+  // The data field contains the array of appointments directly
   return res.data?.data || [];
 };
 
 // Hook to get appointments for calendar
 export const useAppointmentsForCalendar = () => {
-  const { data: appointments, error, isLoading } = useSWR(
-    'appointments-calendar',
-    fetchAppointments,
+  const { userRole } = useAppSelector((state) => state.auth);
+  
+  const { data: appointments, error, isLoading, mutate } = useSWR(
+    userRole ? ['appointments-calendar', userRole] : null,
+    ([_, role]) => fetchAppointments(role),
     {
       revalidateOnFocus: false,
       revalidateOnReconnect: false,
@@ -101,6 +113,7 @@ export const useAppointmentsForCalendar = () => {
     calendarEvents,
     appointmentsLoading: isLoading,
     appointmentsError: error,
+    refreshAppointments: mutate, // Expose mutate for manual refresh
   };
 };
 
@@ -281,5 +294,69 @@ export const getAllDoctorAppointmentsRequest = async (doctorId?: string): Promis
   } catch (error: any) {
     console.error('Error fetching doctor appointments:', error);
     return { success: false, error: error.message || 'Failed to fetch appointments' };
+  }
+};
+
+// Complete appointment with medical record (Doctor only)
+export interface CompleteMedicalRecordDto {
+  diagnosis: string;
+  symptoms?: string;
+  treatment?: string;
+  prescription?: string;
+  notes?: string;
+  recordDate?: string;
+}
+
+export const completeAppointmentWithRecord = async (
+  appointmentId: number,
+  medicalRecord: CompleteMedicalRecordDto
+): Promise<{ success: boolean; data?: any; error?: string }> => {
+  try {
+    const token = getSession() || localStorage.getItem('token');
+    if (!token) throw new Error('No authentication token found');
+
+    const response = await axiosInstance.post(
+      `/appointment/${appointmentId}/complete`,
+      medicalRecord,
+      {
+        headers: { 
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      }
+    );
+
+    return { success: true, data: response.data.data };
+  } catch (error: any) {
+    console.error('Error completing appointment:', error);
+    return { 
+      success: false, 
+      error: error.response?.data?.message || error.message || 'Failed to complete appointment' 
+    };
+  }
+};
+
+// Check if appointment can be completed
+export const canCompleteAppointment = async (
+  appointmentId: number
+): Promise<{ success: boolean; data?: any; error?: string }> => {
+  try {
+    const token = getSession() || localStorage.getItem('token');
+    if (!token) throw new Error('No authentication token found');
+
+    const response = await axiosInstance.get(
+      `/appointment/${appointmentId}/can-complete`,
+      {
+        headers: { Authorization: `Bearer ${token}` }
+      }
+    );
+
+    return { success: true, data: response.data.data };
+  } catch (error: any) {
+    console.error('Error checking appointment completion status:', error);
+    return { 
+      success: false, 
+      error: error.response?.data?.message || error.message || 'Failed to check status' 
+    };
   }
 };

@@ -25,6 +25,7 @@ import {
 import { useAppointmentsForCalendar, AppointmentType, appointmentStatusMap } from '@/requests/appointments.requests'
 import BookAppointments from '../patients/tabs/book-appointments'
 import { CalendarView } from '../calendar/view'
+import { useAppSelector } from '@/redux/store'
 
 interface AppointmentTabsProps {}
 
@@ -33,6 +34,7 @@ const AppointmentTabs = () => {
   const [page, setPage] = useState(1)
   const appointmentsPerPage = 6
   const { appointments = [], appointmentsLoading, appointmentsError } = useAppointmentsForCalendar()
+  const { userRole } = useAppSelector((state) => state.auth)
 
   // Separate appointments into upcoming and past
   const now = new Date()
@@ -81,12 +83,14 @@ const AppointmentTabs = () => {
           iconPosition="start"
           sx={{ gap: 1 }}
         />
-        <Tab 
-          icon={<Schedule />} 
-          label="Book Appointment" 
-          iconPosition="start"
-          sx={{ gap: 1 }}
-        />
+        {userRole !== 'doctor' && (
+          <Tab 
+            icon={<Schedule />} 
+            label="Book Appointment" 
+            iconPosition="start"
+            sx={{ gap: 1 }}
+          />
+        )}
         <Tab 
           icon={<ViewModule />} 
           label={`Appointments (${appointments.length})`} 
@@ -102,13 +106,13 @@ const AppointmentTabs = () => {
         </Box>
       )}
 
-      {activeTab === 1 && (
+      {activeTab === 1 && userRole !== 'doctor' && (
         <Box>
           <BookAppointments />
         </Box>
       )}
 
-      {activeTab === 2 && (
+      {((activeTab === 1 && userRole === 'doctor') || activeTab === 2) && (
         <Box>
           {appointmentsLoading ? (
             <Box sx={{ 

@@ -369,16 +369,6 @@ const DoctorDashboardView = () => {
                           Documents
                         </Button>
                       </Grid>
-                      <Grid item xs={6}>
-                        <Button
-                          variant="contained"
-                          fullWidth
-                          startIcon={<CalendarToday />}
-                          sx={{ py: 2 }}
-                        >
-                          Schedule Visit
-                        </Button>
-                      </Grid>
                     </Grid>
                   </CardContent>
                 </Card>

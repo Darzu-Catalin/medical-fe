@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Dialog,
   DialogTitle,
@@ -10,6 +10,9 @@ import {
   Chip,
   Grid,
   Divider,
+  TextField,
+  Alert,
+  CircularProgress,
 } from '@mui/material';
 import {
   CalendarToday as CalendarIcon,
@@ -17,20 +20,101 @@ import {
   Person as PatientIcon,
   LocalHospital as DoctorIcon,
   Description as NotesIcon,
+  CheckCircle as CompleteIcon,
 } from '@mui/icons-material';
-import { appointmentStatusMap, CalendarAppointmentEvent } from '@/requests/appointments.requests';
+import { appointmentStatusMap, CalendarAppointmentEvent, completeAppointmentWithRecord, canCompleteAppointment } from '@/requests/appointments.requests';
+import { useAppSelector } from '@/redux/store';
 
 interface AppointmentDetailDialogProps {
   open: boolean;
   onClose: () => void;
   appointmentEvent: CalendarAppointmentEvent | null;
+  onAppointmentCompleted?: () => void;
 }
 
 const AppointmentDetailDialog: React.FC<AppointmentDetailDialogProps> = ({
   open,
   onClose,
   appointmentEvent,
+  onAppointmentCompleted,
 }) => {
+  const { userRole } = useAppSelector((state) => state.auth);
+  const [showMedicalRecordForm, setShowMedicalRecordForm] = useState(false);
+  const [canComplete, setCanComplete] = useState(false);
+  const [completionInfo, setCompletionInfo] = useState<any>(null);
+  const [loading, setLoading] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState(false);
+  
+  const [medicalRecord, setMedicalRecord] = useState({
+    diagnosis: '',
+    symptoms: '',
+    treatment: '',
+    prescription: '',
+    notes: '',
+  });
+
+  useEffect(() => {
+    if (open && appointmentEvent && userRole === 'doctor') {
+      checkCompletionStatus();
+    }
+  }, [open, appointmentEvent, userRole]);
+
+  const checkCompletionStatus = async () => {
+    if (!appointmentEvent) return;
+    
+    setLoading(true);
+    const result = await canCompleteAppointment(appointmentEvent.extendedProps.appointmentId);
+    setLoading(false);
+    
+    if (result.success && result.data) {
+      setCanComplete(result.data.canComplete);
+      setCompletionInfo(result.data);
+    }
+  };
+
+  const handleCompleteAppointment = async () => {
+    if (!appointmentEvent || !medicalRecord.diagnosis.trim()) {
+      setError('Diagnosis is required to complete the appointment');
+      return;
+    }
+
+    setSubmitting(true);
+    setError(null);
+
+    const result = await completeAppointmentWithRecord(
+      appointmentEvent.extendedProps.appointmentId,
+      medicalRecord
+    );
+
+    setSubmitting(false);
+
+    if (result.success) {
+      setSuccess(true);
+      setTimeout(() => {
+        onAppointmentCompleted?.();
+        handleClose();
+      }, 1500);
+    } else {
+      setError(result.error || 'Failed to complete appointment');
+    }
+  };
+
+  const handleClose = () => {
+    setShowMedicalRecordForm(false);
+    setMedicalRecord({
+      diagnosis: '',
+      symptoms: '',
+      treatment: '',
+      prescription: '',
+      notes: '',
+    });
+    setError(null);
+    setSuccess(false);
+    onClose();
+  };
+
   if (!appointmentEvent) return null;
 
   const { extendedProps } = appointmentEvent;
@@ -175,18 +259,161 @@ const AppointmentDetailDialog: React.FC<AppointmentDetailDialogProps> = ({
               </Typography>
             </Box>
           </Grid>
+
+          {/* Show completion status for doctors */}
+          {userRole === 'doctor' && completionInfo && (
+            <Grid item xs={12}>
+              <Box 
+                sx={{ 
+                  backgroundColor: canComplete ? '#e8f5e9' : '#fff3e0', 
+                  borderRadius: 1, 
+                  p: 2,
+                  mt: 1,
+                  border: 1,
+                  borderColor: canComplete ? '#4caf50' : '#ff9800',
+                }}
+              >
+                <Typography variant="body2" fontWeight="500">
+                  {completionInfo.message}
+                </Typography>
+                {canComplete && (
+                  <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, display: 'block' }}>
+                    Time remaining: {completionInfo.minutesRemaining} minutes
+                  </Typography>
+                )}
+              </Box>
+            </Grid>
+          )}
         </Grid>
+
+        {/* Medical Record Form */}
+        {showMedicalRecordForm && userRole === 'doctor' && (
+          <Box sx={{ mt: 3 }}>
+            <Divider sx={{ mb: 2 }} />
+            <Typography variant="h6" fontWeight="bold" gutterBottom>
+              Medical Record
+            </Typography>
+            
+            {error && (
+              <Alert severity="error" sx={{ mb: 2 }}>
+                {error}
+              </Alert>
+            )}
+
+            {success && (
+              <Alert severity="success" sx={{ mb: 2 }}>
+                Appointment completed successfully!
+              </Alert>
+            )}
+
+            <Grid container spacing={2}>
+              <Grid item xs={12}>
+                <TextField
+                  fullWidth
+                  required
+                  label="Diagnosis"
+                  multiline
+                  rows={2}
+                  value={medicalRecord.diagnosis}
+                  onChange={(e) => setMedicalRecord({ ...medicalRecord, diagnosis: e.target.value })}
+                  disabled={submitting || success}
+                />
+              </Grid>
+              <Grid item xs={12}>
+                <TextField
+                  fullWidth
+                  label="Symptoms"
+                  multiline
+                  rows={2}
+                  value={medicalRecord.symptoms}
+                  onChange={(e) => setMedicalRecord({ ...medicalRecord, symptoms: e.target.value })}
+                  disabled={submitting || success}
+                />
+              </Grid>
+              <Grid item xs={12}>
+                <TextField
+                  fullWidth
+                  label="Treatment"
+                  multiline
+                  rows={2}
+                  value={medicalRecord.treatment}
+                  onChange={(e) => setMedicalRecord({ ...medicalRecord, treatment: e.target.value })}
+                  disabled={submitting || success}
+                />
+              </Grid>
+              <Grid item xs={12}>
+                <TextField
+                  fullWidth
+                  label="Prescription"
+                  multiline
+                  rows={2}
+                  value={medicalRecord.prescription}
+                  onChange={(e) => setMedicalRecord({ ...medicalRecord, prescription: e.target.value })}
+                  disabled={submitting || success}
+                />
+              </Grid>
+              <Grid item xs={12}>
+                <TextField
+                  fullWidth
+                  label="Additional Notes"
+                  multiline
+                  rows={2}
+                  value={medicalRecord.notes}
+                  onChange={(e) => setMedicalRecord({ ...medicalRecord, notes: e.target.value })}
+                  disabled={submitting || success}
+                />
+              </Grid>
+            </Grid>
+          </Box>
+        )}
       </DialogContent>
 
       <DialogActions sx={{ px: 3, pb: 3 }}>
-        <Button 
-          onClick={onClose} 
-          variant="outlined" 
-          color="primary"
-          sx={{ minWidth: 100 }}
-        >
-          Close
-        </Button>
+        {!showMedicalRecordForm && userRole === 'doctor' && canComplete && extendedProps.status !== 4 && (
+          <Button
+            onClick={() => setShowMedicalRecordForm(true)}
+            variant="contained"
+            color="success"
+            startIcon={<CompleteIcon />}
+            sx={{ minWidth: 150 }}
+          >
+            Complete Appointment
+          </Button>
+        )}
+        
+        {showMedicalRecordForm && (
+          <>
+            <Button 
+              onClick={() => setShowMedicalRecordForm(false)} 
+              variant="outlined"
+              disabled={submitting || success}
+              sx={{ minWidth: 100 }}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleCompleteAppointment}
+              variant="contained"
+              color="success"
+              disabled={submitting || success || !medicalRecord.diagnosis.trim()}
+              startIcon={submitting ? <CircularProgress size={20} /> : <CompleteIcon />}
+              sx={{ minWidth: 150 }}
+            >
+              {submitting ? 'Completing...' : 'Complete & Save'}
+            </Button>
+          </>
+        )}
+        
+        {!showMedicalRecordForm && (
+          <Button 
+            onClick={handleClose} 
+            variant="outlined" 
+            color="primary"
+            sx={{ minWidth: 100 }}
+          >
+            Close
+          </Button>
+        )}
       </DialogActions>
     </Dialog>
   );
