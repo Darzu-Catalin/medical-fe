@@ -143,3 +143,51 @@ export const getBloodTypeDisplay = (bloodType: number): string => {
 export const getGenderDisplay = (gender: number): string => {
   return GENDER_TYPES[gender as keyof typeof GENDER_TYPES] || 'Unknown';
 };
+
+/**
+ * Get doctor's medical records
+ */
+export const getDoctorMedicalRecords = async (page: number = 1, pageSize: number = 50): Promise<ApiResponseType> => {
+  try {
+    const token = getSession() || localStorage.getItem('token');
+    if (!token) {
+      throw new Error('No authentication token found');
+    }
+
+    const response = await axiosInstance.get(`/Doctor/medical-records?page=${page}&pageSize=${pageSize}`, {
+      headers: { 
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      }
+    });
+
+    return ApiResponse.success(response.data);
+  } catch (error: any) {
+    console.error('Error fetching doctor medical records:', error);
+    return ApiResponse.error(error);
+  }
+};
+
+/**
+ * Get doctor's medical records for a specific patient
+ */
+export const getDoctorPatientMedicalRecords = async (patientId: string): Promise<ApiResponseType> => {
+  try {
+    const token = getSession() || localStorage.getItem('token');
+    if (!token) {
+      throw new Error('No authentication token found');
+    }
+
+    const response = await axiosInstance.get(`/Doctor/medical-records/patient/${patientId}`, {
+      headers: { 
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      }
+    });
+
+    return ApiResponse.success(response.data);
+  } catch (error: any) {
+    console.error('Error fetching patient medical records:', error);
+    return ApiResponse.error(error);
+  }
+};
