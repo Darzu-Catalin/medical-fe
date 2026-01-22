@@ -35,7 +35,8 @@ import {
   sendLoginOtpRequest, 
   verifyLoginOtpRequest,
   forgotPasswordRequest,
-  resetPasswordRequest
+  resetPasswordRequest,
+  changePasswordWithTokenRequest
 } from '@/requests/auth/auth.requests'
 import { setSession } from '@/auth/context/utils'
 import { setUser, setPermissions, setToken } from '@/redux/slices/auth'
@@ -67,6 +68,11 @@ type ForgotPasswordResetForm = {
   confirmPassword: string
 }
 
+type MandatoryPasswordChangeForm = {
+  newPassword: string
+  confirmNewPassword: string
+}
+
 export default function LoginView() {
   const [errorMsg, setErrorMsg] = useState('')
   const [selectedRole, setSelectedRole] = useState<'patient' | 'doctor' | 'admin' | null>(null)
@@ -79,6 +85,10 @@ export default function LoginView() {
   const [emailLoading, setEmailLoading] = useState(false)
   const [emailSent, setEmailSent] = useState(false)
   const [secondsAfterEmailSent, setSecondsAfterEmailSent] = useState(0)
+  // Mandatory password change state (for doctors with temp passwords)
+  const [showMandatoryPasswordChange, setShowMandatoryPasswordChange] = useState(false)
+  const [passwordChangeToken, setPasswordChangeToken] = useState('')
+  const [passwordChangeUserData, setPasswordChangeUserData] = useState<any>(null)
   
   const splashTimerRef = useRef<number | null>(null)
   const router = useRouter()
@@ -115,6 +125,15 @@ export default function LoginView() {
       .required('Confirm password is required'),
   })
 
+  const MandatoryPasswordChangeSchema = Yup.object().shape({
+    newPassword: Yup.string()
+      .min(6, 'Password must be at least 6 characters')
+      .required('New password is required'),
+    confirmNewPassword: Yup.string()
+      .oneOf([Yup.ref('newPassword')], 'Passwords do not match')
+      .required('Confirm password is required'),
+  })
+
   const defaultValues: FormValuesProps = {
     email: '',
     password: '',
@@ -132,6 +151,11 @@ export default function LoginView() {
     // resetCode is handled via local state
     newPassword: '',
     confirmPassword: '',
+  }
+
+  const mandatoryPasswordChangeDefaults: MandatoryPasswordChangeForm = {
+    newPassword: '',
+    confirmNewPassword: '',
   }
 
   const methods = useForm<FormValuesProps>({
@@ -153,6 +177,11 @@ export default function LoginView() {
     resolver: yupResolver(ForgotPasswordResetSchema),
     mode: 'onSubmit',
     defaultValues: forgotPasswordResetDefaults,
+  })
+
+  const mandatoryPasswordChangeMethods = useForm<MandatoryPasswordChangeForm>({
+    resolver: yupResolver(MandatoryPasswordChangeSchema),
+    defaultValues: mandatoryPasswordChangeDefaults,
   })
 
   // Countdown timer for resend button
@@ -257,13 +286,11 @@ export default function LoginView() {
         if (result.data && result.data.requiresPasswordChange) {
           enqueueSnackbar('You must change your temporary password', { variant: 'info' })
           
-          // Redirect to mandatory password change with the token
-          router.push('/auth/change-password-mandatory')
-          
-          // Store necessary data in session/local storage for the password change page
-          sessionStorage.setItem('passwordChangeEmail', mfaEmail)
-          sessionStorage.setItem('passwordChangeToken', result.data.passwordChangeToken || '')
-          sessionStorage.setItem('passwordChangeUser', JSON.stringify(result.data.user))
+          // Show inline mandatory password change (same style as MFA/forgot password)
+          setPasswordChangeToken(result.data.passwordChangeToken || '')
+          setPasswordChangeUserData(result.data.user)
+          setShowMFAVerification(false)
+          setShowMandatoryPasswordChange(true)
           
           return
         }
@@ -377,15 +404,53 @@ export default function LoginView() {
     [forgotPasswordEmail, forgotPasswordResetCode, forgotPasswordEmailMethods, forgotPasswordResetMethods]
   )
 
+  const onMandatoryPasswordChangeSubmit = useCallback(
+    async (data: MandatoryPasswordChangeForm) => {
+      try {
+        setErrorMsg('')
+
+        const response = await changePasswordWithTokenRequest({
+          email: mfaEmail,
+          passwordChangeToken,
+          newPassword: data.newPassword,
+          confirmPassword: data.confirmNewPassword,
+        })
+
+        if (response.error) {
+          setErrorMsg(response.message || 'Failed to change password')
+          return
+        }
+
+        enqueueSnackbar('Password changed successfully! Please login with your new password.', {
+          variant: 'success',
+        })
+
+        // Reset back to login view
+        setShowMandatoryPasswordChange(false)
+        setPasswordChangeToken('')
+        setPasswordChangeUserData(null)
+        mandatoryPasswordChangeMethods.reset()
+      } catch (error) {
+        console.error('Change password error:', error)
+        setErrorMsg(error.message || 'Failed to change password')
+      }
+    },
+    [mfaEmail, passwordChangeToken, mandatoryPasswordChangeMethods]
+  )
+
   const handleBackToLogin = useCallback(() => {
     setShowForgotPassword(false)
     setShowMFAVerification(false)
+    setShowMandatoryPasswordChange(false)
     setForgotPasswordStep('email')
     setForgotPasswordResetCode('')
+    setPasswordChangeToken('')
+    setPasswordChangeUserData(null)
     setErrorMsg('')
     forgotPasswordEmailMethods.reset()
     forgotPasswordResetMethods.reset()
-  }, [forgotPasswordEmailMethods, forgotPasswordResetMethods])
+    mandatoryPasswordChangeMethods.reset()
+  }, [forgotPasswordEmailMethods, forgotPasswordResetMethods, mandatoryPasswordChangeMethods])
 
   const renderHead = (
     <Stack spacing={2} sx={{ mb: 4 }}>
@@ -1180,9 +1245,201 @@ export default function LoginView() {
     </Box>
   )
 
+  const renderMandatoryPasswordChange = (
+    <Box
+      sx={{
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        maxWidth: '600px',
+        mx: 'auto',
+      }}
+    >
+      {/* Head */}
+      <Stack spacing={2} sx={{ mb: 5 }}>
+        <Typography
+          variant="h4"
+          sx={{
+            textAlign: 'center',
+            color: 'white',
+          }}
+        >
+          Change Your Password
+        </Typography>
+
+        <Stack spacing={0.5}>
+          <Typography
+            variant="body1"
+            sx={{
+              mt: -2,
+              textAlign: 'center',
+              mb: -1,
+              color: 'white',
+            }}
+          >
+            Your account requires a password change
+          </Typography>
+
+          <Typography
+            variant="body1"
+            sx={{
+              textAlign: 'center',
+              color: 'white',
+            }}
+          >
+            Please set a new secure password to continue
+          </Typography>
+        </Stack>
+      </Stack>
+
+      {/* Body */}
+      <Stack
+        spacing={2.5}
+        sx={{
+          minWidth: '320px',
+        }}
+      >
+        {!!errorMsg && <Alert severity="error">{errorMsg}</Alert>}
+
+        <Box
+          sx={{
+            mx: 'auto',
+            maxWidth: '350px',
+          }}
+        >
+          <RHFTextField
+            name="newPassword"
+            label="New Password"
+            type="password"
+            inputProps={{ minLength: 6 }}
+            sx={(theme) => ({
+              mb: 2,
+              '& .MuiOutlinedInput-root': {
+                background: 'rgba(255,255,255,0.06)',
+                backdropFilter: 'blur(12px) saturate(140%)',
+                WebkitBackdropFilter: 'blur(12px) saturate(140%)',
+                borderRadius: 2,
+                '&.Mui-focused': {
+                  background: 'rgba(255,255,255,0.06)',
+                },
+                '& .MuiOutlinedInput-notchedOutline': {
+                  borderColor: 'rgba(255,255,255,0.24)',
+                },
+                '&:hover .MuiOutlinedInput-notchedOutline': {
+                  borderColor: 'rgba(255,255,255,0.48)',
+                },
+                '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                  borderColor: theme.palette.primary.light,
+                  boxShadow: `0 0 0 1px ${alpha(theme.palette.primary.light, 0.35)}`,
+                },
+              },
+              '& .MuiInputBase-input': {
+                color: theme.palette.common.white,
+              },
+              '& .MuiInputLabel-root': {
+                color: 'rgba(255,255,255,0.72)',
+                '&.Mui-focused': {
+                  color: 'rgba(255,255,255,0.72)',
+                },
+              },
+              '& .MuiInputBase-input:-webkit-autofill, & .MuiInputBase-input:-webkit-autofill:hover, & .MuiInputBase-input:-webkit-autofill:focus': {
+                WebkitBoxShadow: '0 0 0 1000px rgba(255,255,255,0.06) inset',
+                WebkitTextFillColor: theme.palette.common.white,
+                caretColor: theme.palette.common.white,
+                transition: 'background-color 9999s ease-in-out 0s',
+              },
+            })}
+          />
+
+          <RHFTextField
+            name="confirmNewPassword"
+            label="Confirm New Password"
+            type="password"
+            sx={(theme) => ({
+              mb: 2,
+              '& .MuiOutlinedInput-root': {
+                background: 'rgba(255,255,255,0.06)',
+                backdropFilter: 'blur(12px) saturate(140%)',
+                WebkitBackdropFilter: 'blur(12px) saturate(140%)',
+                borderRadius: 2,
+                '&.Mui-focused': {
+                  background: 'rgba(255,255,255,0.06)',
+                },
+                '& .MuiOutlinedInput-notchedOutline': {
+                  borderColor: 'rgba(255,255,255,0.24)',
+                },
+                '&:hover .MuiOutlinedInput-notchedOutline': {
+                  borderColor: 'rgba(255,255,255,0.48)',
+                },
+                '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                  borderColor: theme.palette.primary.light,
+                  boxShadow: `0 0 0 1px ${alpha(theme.palette.primary.light, 0.35)}`,
+                },
+              },
+              '& .MuiInputBase-input': {
+                color: theme.palette.common.white,
+              },
+              '& .MuiInputLabel-root': {
+                color: 'rgba(255,255,255,0.72)',
+                '&.Mui-focused': {
+                  color: 'rgba(255,255,255,0.72)',
+                },
+              },
+              '& .MuiInputBase-input:-webkit-autofill, & .MuiInputBase-input:-webkit-autofill:hover, & .MuiInputBase-input:-webkit-autofill:focus': {
+                WebkitBoxShadow: '0 0 0 1000px rgba(255,255,255,0.06) inset',
+                WebkitTextFillColor: theme.palette.common.white,
+                caretColor: theme.palette.common.white,
+                transition: 'background-color 9999s ease-in-out 0s',
+              },
+            })}
+          />
+
+          <LoadingButton
+            sx={{
+              mt: 4,
+              mb: 1,
+            }}
+            fullWidth
+            color="primary"
+            size="large"
+            type="submit"
+            variant="contained"
+            loading={mandatoryPasswordChangeMethods.formState.isSubmitting}
+          >
+            Change Password
+          </LoadingButton>
+
+          <Box sx={{ textAlign: 'center', mt: 2 }}>
+            <Link
+              component="button"
+              type="button"
+              variant="body2"
+              color="white"
+              onClick={handleBackToLogin}
+              sx={{ 
+                '&:hover': { color: '#166bd4ff', textDecoration: 'none' },
+                cursor: 'pointer',
+                border: 'none',
+                background: 'none'
+              }}
+            >
+              Back to login
+            </Link>
+          </Box>
+        </Box>
+      </Stack>
+    </Box>
+  )
+
   return (
     <>
-      {showForgotPassword ? (
+      {showMandatoryPasswordChange ? (
+        // Mandatory Password Change Flow
+        <FormProvider methods={mandatoryPasswordChangeMethods} onSubmit={mandatoryPasswordChangeMethods.handleSubmit(onMandatoryPasswordChangeSubmit)}>
+          {renderMandatoryPasswordChange}
+        </FormProvider>
+      ) : showForgotPassword ? (
         // Forgot Password Flow
         forgotPasswordStep === 'email' ? (
           <FormProvider methods={forgotPasswordEmailMethods} onSubmit={forgotPasswordEmailMethods.handleSubmit(onForgotPasswordEmailSubmit)}>
