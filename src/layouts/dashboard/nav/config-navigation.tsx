@@ -43,7 +43,6 @@ export function useNavData() {
           subheader: 'Administrative',
           items: [
             { title: 'Dashboard', path: paths.dashboard.admin, icon: ICONS.dashboard },
-            { title: 'System Settings', path: '/dashboard/settings', icon: ICONS.settings },
             { title: 'Activity Log', path: paths.dashboard.auditLog.root, icon: ICONS.audit },
           ],
         },

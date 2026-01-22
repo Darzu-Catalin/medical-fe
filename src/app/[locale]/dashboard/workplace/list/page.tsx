@@ -1,8 +1,8 @@
 import WorkplaceListView from "@/views/dashboard/workplace/list/list-view"
 
 export const metadata = {
-  title: 'Lista punctelor de lucru',
-  description: 'Listare din sistem',
+  title: 'Clinics',
+  description: 'Clinics Map',
 }
 
 export default function Page() {
