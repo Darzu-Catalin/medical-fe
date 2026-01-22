@@ -1,4 +1,5 @@
 import { alpha, styled } from '@mui/material/styles';
+import { border } from '@mui/system';
 
 // ----------------------------------------------------------------------
 
@@ -43,36 +44,28 @@ export const StyledCalendar = styled('div')(({ theme }) => ({
     backgroundColor: 'transparent !important',
   },
   '& .fc .fc-event .fc-event-main': {
-    padding: '2px 4px',
-    borderRadius: 6,
-    backgroundColor: theme.palette.common.white,
+    padding: '2px 6px',
+    borderRadius: 4,
+    backgroundColor: `${alpha(theme.palette.grey[100], 0.8)} !important`,
+    borderLeft: `4px solid currentColor`, // Asana style left border
+    borderBottom: `1px solid ${alpha(theme.palette.grey[500], 0.16)}`,
+    borderTop: `1px solid ${alpha(theme.palette.grey[500], 0.16)}`,
+    borderRight: `1px solid ${alpha(theme.palette.grey[500], 0.16)}`,
+    boxShadow: theme.customShadows.z1,
     '&:before': {
-      top: 0,
-      left: 0,
-      width: '100%',
-      content: "''",
-      opacity: 0.24,
-      height: '100%',
-      borderRadius: 6,
-      position: 'absolute',
-      backgroundColor: 'currentColor',
-      transition: theme.transitions.create(['opacity']),
-      '&:hover': {
-        '&:before': {
-          opacity: 0.32,
-        },
-      },
+      display: 'none', // Remove the overlay
     },
   },
   '& .fc .fc-event .fc-event-main-frame': {
     fontSize: 13,
-    lineHeight: '20px',
-    filter: 'brightness(0.48)',
+    lineHeight: '18px',
+    color: theme.palette.text.primary, // Ensure text is visible
   },
   '& .fc .fc-daygrid-event .fc-event-title': {
     overflow: 'hidden',
     whiteSpace: 'nowrap',
     textOverflow: 'ellipsis',
+    fontWeight: 600,
   },
   '& .fc .fc-event .fc-event-time': {
     overflow: 'unset',

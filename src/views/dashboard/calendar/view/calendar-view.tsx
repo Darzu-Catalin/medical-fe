@@ -15,14 +15,13 @@ import { upsertEvent, useGetEvents } from '@/requests/admin/calendar.requests';
 import { useAppointmentsForCalendar, CalendarAppointmentEvent, appointmentStatusMap } from '@/requests/appointments.requests';
 import SmallModalInfoCard from '@/components/custom/small-modal-info-card/small-modal-info-card';
 import AppointmentDetailDialog from '@/components/custom/appointment-detail-dialog/appointment-detail-dialog';
-import AppointmentStats from '@/components/custom/appointment-stats/appointment-stats';
-import AppointmentLegend from '@/components/custom/appointment-legend/appointment-legend';
+
 import '@/styles/appointment-calendar.css';
 
 import Card from '@mui/material/Card';
 import Stack from '@mui/material/Stack';
 import Dialog from '@mui/material/Dialog';
-import { IconButton } from '@mui/material';
+import { IconButton, Tab, Tabs, Box, SpeedDial, SpeedDialAction, SpeedDialIcon } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
 import Container from '@mui/material/Container';
 import Typography from '@mui/material/Typography';
@@ -39,6 +38,7 @@ import { ICalendarFilterValue, CALENDAR_COLOR_OPTIONS } from 'src/types/calendar
 
 import { StyledCalendar } from '../styles';
 import CalendarForm from '../calendar-form';
+import AppointmentForm from '../appointment-form';
 import { useEvent, useCalendar } from '../hooks';
 import CalendarToolbar from '../calendar-toolbar';
 import CalendarFilters from '../calendar-filters';
@@ -46,6 +46,7 @@ import CalendarFiltersResult from '../calendar-filters-result';
 
 // ----------------------------------------------------------------------
 
+type FormMode = 'event' | 'appointment';
 
 // ----------------------------------------------------------------------
 
@@ -66,7 +67,9 @@ export default function CalendarView({
   // State for appointment detail dialog
   const [selectedAppointment, setSelectedAppointment] = useState<CalendarAppointmentEvent | null>(null);
   const [appointmentDialogOpen, setAppointmentDialogOpen] = useState(false);
-
+  
+  // State for form mode (event vs appointment)
+  const [formMode, setFormMode] = useState<FormMode>('event');
 
 
 
@@ -110,11 +113,13 @@ export default function CalendarView({
   // Get regular calendar events
   const { events, eventsLoading } = useGetEvents(swrPayload);
   
-  // Get appointments for calendar
+  // Get appointments for calendar from API
   const { 
     calendarEvents: appointmentEvents, 
     appointments, 
-    appointmentsLoading 
+    appointmentsLoading,
+    addAppointment,
+    refreshAppointments
   } = useAppointmentsForCalendar();
 
   const currentEvent = useEvent(events, selectEventId, selectedRange, openForm);
@@ -261,44 +266,21 @@ export default function CalendarView({
             mb: { xs: 3, md: 5 },
           }}
         >
-          <Typography variant="h4"> </Typography>
-          <IconButton
-            sx={{
-              position: "fixed",
-              bottom: "32px",
-              right: "32px",
-              zIndex: 1000,
-              backgroundColor: theme.palette.primary.main,
-              color: theme.palette.primary.contrastText,
-              "&:hover": {
-                backgroundColor: theme.palette.primary.dark,
-                transform: "scale(1.2)",
-                transition: "all 0.3s ease",
-              },
-            }}
-            onClick={onOpenForm}
-          >
-            <Iconify
-              icon="ant-design:plus"
-              style={{
-                width: "32px",
-                height: "32px",
-                color: "white"
-              }}
-            />
-          </IconButton>
+          
+          {/* Speed Dial for adding events or appointments */}
+          
         </Stack>
 
         {canReset && renderResults}
 
         {/* Appointment Statistics */}
-        <AppointmentStats 
+        {/* <AppointmentStats 
           appointments={appointments} 
           loading={appointmentsLoading} 
-        />
+        /> */}
 
         {/* Appointment Legend */}
-        <AppointmentLegend />
+        {/* <AppointmentLegend /> */}
 
         <Card>
           <StyledCalendar>
@@ -310,7 +292,10 @@ export default function CalendarView({
               onPrevDate={onDatePrev}
               onToday={onDateToday}
               onChangeView={onChangeView}
-              onOpenFilters={openFilters.onTrue}
+              onAddEvent={() => {
+                setFormMode('appointment');
+                onOpenForm();
+              }}
             />
 
             <Calendar
@@ -358,7 +343,7 @@ export default function CalendarView({
 
       <Dialog
         fullWidth
-        maxWidth="xs"
+        maxWidth={formMode === 'appointment' ? 'sm' : 'xs'}
         open={openForm}
         onClose={onCloseForm}
         transitionDuration={{
@@ -371,19 +356,57 @@ export default function CalendarView({
           justifyContent: "space-between",
           alignItems: "center",
         }}>
-          {openForm && <> {currentEvent?.id && currentEvent.id > 0 ? 'Modifică eveniment' : 'Adaugă eveniment'}</>}
-          <SmallModalInfoCard
-            model={currentEvent?.main_parent ?? null}
-          />
+          {openForm && formMode === 'event' && (
+            <> {currentEvent?.id && currentEvent.id > 0 ? 'Modifică eveniment' : 'Adaugă eveniment'}</>
+          )}
+          {openForm && formMode === 'appointment' && (
+            <> Adaugă programare </>
+          )}
+          {formMode === 'event' && (
+            <SmallModalInfoCard
+              model={currentEvent?.main_parent ?? null}
+            />
+          )}
         </DialogTitle>
 
+        {/* Tabs to switch between event and appointment */}
+        <Box sx={{ borderBottom: 1, borderColor: 'divider', px: 2 }}>
+          <Tabs 
+            value={formMode} 
+            onChange={(_, newValue) => setFormMode(newValue as FormMode)}
+            aria-label="form type tabs"
+          >
+            <Tab label="Eveniment" value="event" />
+            <Tab label="Programare" value="appointment" />
+          </Tabs>
+        </Box>
 
-        <CalendarForm
-          swrPayload={swrPayload}
-          currentEvent={currentEvent}
-          colorOptions={CALENDAR_COLOR_OPTIONS}
-          onClose={onCloseForm}
-        />
+        {formMode === 'event' ? (
+          <CalendarForm
+            swrPayload={swrPayload}
+            currentEvent={currentEvent}
+            colorOptions={CALENDAR_COLOR_OPTIONS}
+            onClose={onCloseForm}
+          />
+        ) : (
+          <AppointmentForm
+            selectedRange={selectedRange}
+            onClose={onCloseForm}
+            onSubmit={async (appointmentData: {
+              doctorId: string;
+              appointmentDate: string;
+              duration: number;
+              reason?: string;
+              notes?: string;
+            }) => {
+              const result = await addAppointment(appointmentData);
+              if (result.success) {
+                refreshAppointments();
+                onCloseForm();
+              }
+            }}
+          />
+        )}
       </Dialog>
 
       <CalendarFilters
@@ -412,6 +435,10 @@ export default function CalendarView({
           setSelectedAppointment(null);
         }}
         appointmentEvent={selectedAppointment}
+        onAppointmentCompleted={() => {
+          // Refresh appointments list after completion
+          refreshAppointments();
+        }}
       />
     </>
   );

@@ -150,8 +150,9 @@ const MapComponent = ({
                 debouncedOnChange(viewport.viewState);
             }}
             style={{
-                width: "100%", height: "50vh",
-                borderRadius: "10px 10px 0 0",
+                width: "100%",
+                height: "100%",
+                borderRadius: "8px",
             }}
             mapStyle="https://api.maptiler.com/maps/streets-v2-dark/style.json?key=hOQ3s9ElzSMNJ5fUgstr" // mapStyle importend from map.style.ts
         >

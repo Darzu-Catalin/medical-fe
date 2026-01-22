@@ -20,16 +20,19 @@ import {
   Avatar,
   Chip,
   Grid,
-  Paper
+  Paper,
+  Autocomplete
 } from '@mui/material'
 import { LoadingButton } from '@mui/lab'
 import Iconify from '@/components/ui/minimals/iconify'
 import { useAppSelector } from '@/redux/store'
 import { 
   getDoctorRatingsRequest,
+  getPatientRatingsRequest,
   addRatingRequest,
   RatingData 
 } from '@/requests/ratings/ratings.requests'
+import { useGetDoctors } from '@/requests/appointments.requests'
 
 interface RatingFormData {
   doctorId: string
@@ -50,18 +53,70 @@ export default function RatingsView() {
   })
   
   const { user, userRole } = useAppSelector((state) => state.auth)
+  const { doctors, doctorsLoading } = useGetDoctors()
 
   const fetchRatings = async () => {
     setLoading(true)
+    console.log('🔍 Fetching ratings...', { userRole, userId: user?.id, doctorsCount: doctors.length })
     try {
       let response
       if (userRole === 'doctor' && user?.id) {
         // Doctor sees their own ratings
         response = await getDoctorRatingsRequest(user.id.toString())
-      } else if (userRole === 'patient') {
-        // Patient could see ratings for all doctors or their submitted ratings
-        // For now, we'll show empty state and let them add new ratings
-        response = { success: true, data: [] }
+        // Extract ratings array from the response (it's at top level, has structure { doctorId, averageRating, ratingsCount, ratings })
+        if (response?.ratings) {
+          response = { success: true, data: response.ratings }
+        }
+      } else if (userRole === 'patient' && user?.id) {
+        // Patient sees ratings they submitted
+        // Wait for doctors to load first
+        if (doctorsLoading || doctors.length === 0) {
+          console.log('⏳ Waiting for doctors to load...', { doctorsLoading, doctorsLength: doctors.length })
+          setLoading(false)
+          return
+        }
+        
+        console.log('👨‍⚕️ Fetching ratings from', doctors.length, 'doctors')
+        
+        // Fetch all doctors and check each one for this patient's ratings
+        const allRatings: RatingData[] = []
+        
+        for (const doctor of doctors) {
+          try {
+            console.log(`Checking doctor ${doctor.id}: ${doctor.firstName} ${doctor.lastName}`)
+            const doctorRatingsResponse = await getDoctorRatingsRequest(doctor.id.toString())
+            console.log(`Doctor ${doctor.id} full response:`, doctorRatingsResponse)
+            
+            // The response already has the structure { doctorId, averageRating, ratingsCount, ratings: [...] } at top level
+            const ratingsArray = doctorRatingsResponse?.ratings || []
+            console.log(`Ratings array for doctor ${doctor.id}:`, ratingsArray)
+            
+            // Filter to only include ratings from current patient
+            const patientRatings = ratingsArray.filter(
+              (r: RatingData) => {
+                const ratingPatientId = r.patientId?.toString().toLowerCase()
+                const currentUserId = user.id?.toString().toLowerCase()
+                console.log(`Comparing: "${ratingPatientId}" === "${currentUserId}"`, r.patientId === user.id)
+                return ratingPatientId === currentUserId
+              }
+            )
+            
+            console.log(`Found ${patientRatings.length} ratings for current patient from doctor ${doctor.id}`)
+            
+            // Add doctor name to each rating for display
+            patientRatings.forEach((r: any) => {
+              r.doctorName = `${doctor.firstName} ${doctor.lastName}`
+            })
+            
+            allRatings.push(...patientRatings)
+          } catch (err) {
+            // Skip doctors that fail
+            console.error(`Failed to fetch ratings for doctor ${doctor.id}`, err)
+          }
+        }
+        
+        console.log('✅ Total ratings found:', allRatings.length, allRatings)
+        response = { success: true, data: allRatings }
       } else {
         response = { success: true, data: [] }
       }
@@ -81,8 +136,12 @@ export default function RatingsView() {
   }
 
   useEffect(() => {
+    if (userRole === 'patient' && doctorsLoading) {
+      // Wait for doctors to load
+      return
+    }
     fetchRatings()
-  }, [user, userRole])
+  }, [user, userRole, doctors, doctorsLoading])
 
   const handleSubmitRating = async () => {
     if (!formData.doctorId || formData.rating === 0) {
@@ -90,9 +149,17 @@ export default function RatingsView() {
       return
     }
 
+    if (!user?.id) {
+      enqueueSnackbar('User not authenticated', { variant: 'error' })
+      return
+    }
+
     setSubmitting(true)
     try {
-      const response = await addRatingRequest(formData)
+      const response = await addRatingRequest({
+        ...formData,
+        patientId: user.id.toString()
+      })
       
       if (response.error) {
         enqueueSnackbar(response.message || 'Failed to submit rating', { variant: 'error' })
@@ -111,15 +178,15 @@ export default function RatingsView() {
 
   const calculateAverageRating = () => {
     if (ratings.length === 0) return 0
-    const sum = ratings.reduce((acc, rating) => acc + rating.rating, 0)
+    const sum = ratings.reduce((acc, rating) => acc + rating.ratingNr, 0)
     return sum / ratings.length
   }
 
   const getRatingDistribution = () => {
     const distribution = [0, 0, 0, 0, 0] // for 1-5 stars
     ratings.forEach(rating => {
-      if (rating.rating >= 1 && rating.rating <= 5) {
-        distribution[rating.rating - 1]++
+      if (rating.ratingNr >= 1 && rating.ratingNr <= 5) {
+        distribution[rating.ratingNr - 1]++
       }
     })
     return distribution
@@ -244,26 +311,32 @@ export default function RatingsView() {
       ) : (
         <Stack spacing={2}>
           {ratings.map((rating) => (
-            <Card key={rating.id}>
+            <Card key={rating.ratingId}>
               <CardContent>
                 <Stack direction="row" alignItems="flex-start" spacing={2}>
                   <Avatar>
-                    {rating.patientName?.[0] || 'P'}
+                    {userRole === 'doctor' 
+                      ? (rating.patientName?.[0] || 'P')
+                      : ((rating as any).doctorName?.[0] || 'D')
+                    }
                   </Avatar>
                   <Box flex={1}>
                     <Stack direction="row" alignItems="center" spacing={2} sx={{ mb: 1 }}>
                       <Typography variant="subtitle1">
-                        {rating.patientName || 'Anonymous Patient'}
+                        {userRole === 'doctor' 
+                          ? (rating.patientName || 'Anonymous Patient')
+                          : ((rating as any).doctorName || 'Doctor')
+                        }
                       </Typography>
-                      <Rating value={rating.rating} readOnly size="small" />
-                      <Chip label={`${rating.rating}/5`} size="small" color="primary" />
+                      <Rating value={rating.ratingNr} readOnly size="small" />
+                      <Chip label={`${rating.ratingNr}/5`} size="small" color="primary" />
                       <Typography variant="caption" color="text.secondary">
                         {new Date(rating.createdAt).toLocaleDateString()}
                       </Typography>
                     </Stack>
-                    {rating.comment && (
+                    {rating.ratingCommentary && (
                       <Typography variant="body2" color="text.secondary">
-                        {rating.comment}
+                        {rating.ratingCommentary}
                       </Typography>
                     )}
                   </Box>
@@ -279,12 +352,22 @@ export default function RatingsView() {
         <DialogTitle>Rate Doctor</DialogTitle>
         <DialogContent>
           <Stack spacing={3} sx={{ mt: 2 }}>
-            <TextField
-              label="Doctor ID"
-              value={formData.doctorId}
-              onChange={(e) => setFormData({ ...formData, doctorId: e.target.value })}
-              fullWidth
-              helperText="Enter the ID of the doctor you want to rate"
+            <Autocomplete
+              options={doctors}
+              getOptionLabel={(option) => `${option.firstName} ${option.lastName} - ${option.specialty}`}
+              value={doctors.find(d => d.id.toString() === formData.doctorId) || null}
+              onChange={(_, newValue) => {
+                setFormData({ ...formData, doctorId: newValue ? newValue.id.toString() : '' })
+              }}
+              loading={doctorsLoading}
+              renderInput={(params) => (
+                <TextField
+                  {...params}
+                  label="Select Doctor"
+                  helperText="Choose the doctor you want to rate"
+                  required
+                />
+              )}
             />
             
             <Box>
