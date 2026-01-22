@@ -25,7 +25,8 @@ import {
 import { useAppointmentsForCalendar, AppointmentType, appointmentStatusMap } from '@/requests/appointments.requests'
 import BookAppointments from '../patients/tabs/book-appointments'
 import { CalendarView } from '../calendar/view'
-import { useAppSelector } from '@/redux/store'
+import AppointmentStats from '@/components/custom/appointment-stats/appointment-stats';
+
 
 interface AppointmentTabsProps {}
 
@@ -83,14 +84,12 @@ const AppointmentTabs = () => {
           iconPosition="start"
           sx={{ gap: 1 }}
         />
-        {userRole !== 'doctor' && (
-          <Tab 
-            icon={<Schedule />} 
-            label="Book Appointment" 
-            iconPosition="start"
-            sx={{ gap: 1 }}
-          />
-        )}
+        {/* <Tab 
+          icon={<Schedule />} 
+          label="Book Appointment" 
+          iconPosition="start"
+          sx={{ gap: 1 }}
+        /> */}
         <Tab 
           icon={<ViewModule />} 
           label={`Appointments (${appointments.length})`} 
@@ -106,14 +105,21 @@ const AppointmentTabs = () => {
         </Box>
       )}
 
-      {activeTab === 1 && userRole !== 'doctor' && (
+      {/* {activeTab === 1 && (
         <Box>
           <BookAppointments />
         </Box>
-      )}
+      )} */}
 
-      {((activeTab === 1 && userRole === 'doctor') || activeTab === 2) && (
+      {activeTab === 1 && (
         <Box>
+<Grid item xs={1} md={12}>
+                  <AppointmentStats 
+                   appointments={appointments} 
+                   loading={appointmentsLoading} 
+                 />
+                </Grid>
+
           {appointmentsLoading ? (
             <Box sx={{ 
               display: 'flex', 
@@ -325,87 +331,8 @@ const AppointmentTabs = () => {
                   </Card>
                 </Grid>
 
-                {/* Summary Stats */}
-                <Grid item xs={12}>
-                  <Card sx={{ 
-                    bgcolor: 'background.paper',
-                    border: 1,
-                    borderColor: 'divider',
-                    '&:hover': { boxShadow: 3 }
-                  }}>
-                    <CardContent>
-                      <Typography variant="h6" gutterBottom fontWeight="bold">
-                        Appointment Summary
-                      </Typography>
-                      <Grid container spacing={3}>
-                        <Grid item xs={12} sm={3}>
-                          <Box textAlign="center" sx={{ 
-                            p: 2, 
-                            bgcolor: 'primary.lighter', 
-                            borderRadius: 2,
-                            border: 1,
-                            borderColor: 'primary.light'
-                          }}>
-                            <Typography variant="h4" color="primary.main" fontWeight="bold">
-                              {appointments.length}
-                            </Typography>
-                            <Typography variant="body2" color="text.secondary" fontWeight="medium">
-                              Total Appointments
-                            </Typography>
-                          </Box>
-                        </Grid>
-                        <Grid item xs={12} sm={3}>
-                          <Box textAlign="center" sx={{ 
-                            p: 2, 
-                            bgcolor: 'success.lighter', 
-                            borderRadius: 2,
-                            border: 1,
-                            borderColor: 'success.light'
-                          }}>
-                            <Typography variant="h4" color="success.main" fontWeight="bold">
-                              {appointments.filter(apt => apt.status === 4).length}
-                            </Typography>
-                            <Typography variant="body2" color="text.secondary" fontWeight="medium">
-                              Completed
-                            </Typography>
-                          </Box>
-                        </Grid>
-                        <Grid item xs={12} sm={3}>
-                          <Box textAlign="center" sx={{ 
-                            p: 2, 
-                            bgcolor: 'warning.lighter', 
-                            borderRadius: 2,
-                            border: 1,
-                            borderColor: 'warning.light'
-                          }}>
-                            <Typography variant="h4" color="warning.main" fontWeight="bold">
-                              {upcomingAppointments.length}
-                            </Typography>
-                            <Typography variant="body2" color="text.secondary" fontWeight="medium">
-                              Upcoming
-                            </Typography>
-                          </Box>
-                        </Grid>
-                        <Grid item xs={12} sm={3}>
-                          <Box textAlign="center" sx={{ 
-                            p: 2, 
-                            bgcolor: 'error.lighter', 
-                            borderRadius: 2,
-                            border: 1,
-                            borderColor: 'error.light'
-                          }}>
-                            <Typography variant="h4" color="error.main" fontWeight="bold">
-                              {appointments.filter(apt => apt.status === 5).length}
-                            </Typography>
-                            <Typography variant="body2" color="text.secondary" fontWeight="medium">
-                              Cancelled
-                            </Typography>
-                          </Box>
-                        </Grid>
-                      </Grid>
-                    </CardContent>
-                  </Card>
-                </Grid>
+                
+                
               </Grid>
 
               {/* Pagination */}

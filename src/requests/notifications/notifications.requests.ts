@@ -5,13 +5,19 @@ import { ApiResponseType } from '@/types/types'
 // ######################################################### NOTIFICATION REQUESTS ######################################################
 
 export interface NotificationData {
-  id: string
+  id: number
   title: string
-  message: string
-  type: 'appointment' | 'visit-record' | 'registration' | 'general'
-  userId: string
-  isRead: boolean
+  body: string
+  type: string
+  toEmail: string
+  status: string
   createdAt: string
+  updatedAt: string
+  scheduledAt: string | null
+  campaign: any | null
+  campaignId: number | null
+  data: any | null
+  mainCompanyId: number | null
 }
 
 // Get user notifications

@@ -20,6 +20,34 @@ export interface AppointmentType {
   createdAt: string;
 }
 
+// Doctor type from API
+export interface DoctorType {
+  id: number;
+  firstName: string;
+  lastName: string;
+  specialty: string;
+  email?: string;
+  phone?: string;
+}
+
+// Calendar event from API
+export interface CalendarEventFromAPI {
+  id: number;
+  title?: string;
+  start: string;
+  end: string;
+  allDay?: boolean;
+  doctorId?: string;
+  patientId?: string;
+  doctorName?: string;
+  patientName?: string;
+  specialty?: string;
+  status?: number;
+  reason?: string;
+  notes?: string;
+  duration?: number;
+}
+
 // Status mapping for appointments
 export const appointmentStatusMap: { [key: number]: { label: string; color: string; bgColor: string } } = {
   1: { label: 'Scheduled', color: '#00796b', bgColor: '#e0f7fa' },
@@ -56,122 +84,358 @@ export interface CalendarAppointmentEvent {
   };
 }
 
-// Fetch appointments function
-const fetchAppointments = async (userRole: string): Promise<AppointmentType[]> => {
+// ============================================
+// Calendar API Functions (NEW ENDPOINTS)
+// ============================================
+
+// Fetch calendar events for authenticated user (auto-filters by role)
+const fetchCalendarEvents = async (): Promise<CalendarEventFromAPI[]> => {
   const token = getSession() || localStorage.getItem('token');
   if (!token) {
-    throw new Error('No authentication token found');
+    console.warn('No authentication token found');
+    return [];
   }
 
-  // Use different endpoint based on user role
-  const endpoint = userRole === 'doctor' 
-    ? '/appointment/doctor/all' 
-    : '/appointment/my';
+  try {
+    const res = await axiosInstance.get('/Calendar/my', {
+      headers: { Authorization: `Bearer ${token}` },
+    });
 
-  const res = await axiosInstance.get(endpoint, {
-    headers: { Authorization: `Bearer ${token}` },
-    params: { page: 1, pageSize: 100 }, // Get more appointments for calendar
-  });
-
-  console.log('Fetched appointments for calendar - Full response:', res.data);
-  console.log('Appointments data:', res.data?.data);
-  
-  // Both endpoints return: { success, error, message, data: [...] }
-  // The data field contains the array of appointments directly
-  return res.data?.data || [];
+    console.log('Fetched calendar events:', res.data);
+    return res.data?.data || res.data || [];
+  } catch (error) {
+    console.error('Error fetching calendar events:', error);
+    return [];
+  }
 };
 
-// Hook to get appointments for calendar
-export const useAppointmentsForCalendar = () => {
-  const { userRole } = useAppSelector((state) => state.auth);
-  
-  const { data: appointments, error, isLoading, mutate } = useSWR(
-    userRole ? ['appointments-calendar', userRole] : null,
-    ([_, role]) => fetchAppointments(role),
+// Fetch all calendar events with optional filters
+export const fetchAllCalendarEvents = async (params?: {
+  start?: string;
+  end?: string;
+  doctorId?: string;
+  patientId?: string;
+  status?: number;
+}): Promise<CalendarEventFromAPI[]> => {
+  const token = getSession() || localStorage.getItem('token');
+  if (!token) {
+    console.warn('No authentication token found');
+    return [];
+  }
+
+  try {
+    const res = await axiosInstance.get('/Calendar', {
+      headers: { Authorization: `Bearer ${token}` },
+      params,
+    });
+
+    console.log('Fetched all calendar events:', res.data);
+    return res.data?.data || res.data || [];
+  } catch (error) {
+    console.error('Error fetching all calendar events:', error);
+    return [];
+  }
+};
+
+// Fetch calendar events for a specific day
+export const fetchCalendarEventsForDay = async (date: string): Promise<CalendarEventFromAPI[]> => {
+  const token = getSession() || localStorage.getItem('token');
+  if (!token) {
+    console.warn('No authentication token found');
+    return [];
+  }
+
+  try {
+    const res = await axiosInstance.get('/Calendar/day', {
+      headers: { Authorization: `Bearer ${token}` },
+      params: { date },
+    });
+
+    console.log('Fetched calendar events for day:', res.data);
+    return res.data?.data || res.data || [];
+  } catch (error) {
+    console.error('Error fetching calendar events for day:', error);
+    return [];
+  }
+};
+
+// Fetch calendar events for a specific week
+export const fetchCalendarEventsForWeek = async (date: string): Promise<CalendarEventFromAPI[]> => {
+  const token = getSession() || localStorage.getItem('token');
+  if (!token) {
+    console.warn('No authentication token found');
+    return [];
+  }
+
+  try {
+    const res = await axiosInstance.get('/Calendar/week', {
+      headers: { Authorization: `Bearer ${token}` },
+      params: { date },
+    });
+
+    console.log('Fetched calendar events for week:', res.data);
+    return res.data?.data || res.data || [];
+  } catch (error) {
+    console.error('Error fetching calendar events for week:', error);
+    return [];
+  }
+};
+
+// Fetch available time slots for a doctor
+export const fetchDoctorAvailability = async (doctorId: string, date: string): Promise<string[]> => {
+  const token = getSession() || localStorage.getItem('token');
+  if (!token) {
+    console.warn('No authentication token found');
+    return [];
+  }
+
+  try {
+    const res = await axiosInstance.get('/Calendar/availability', {
+      headers: { Authorization: `Bearer ${token}` },
+      params: { doctorId, date },
+    });
+
+    console.log('Fetched doctor availability:', res.data);
+    return res.data?.data || res.data || [];
+  } catch (error) {
+    console.error('Error fetching doctor availability:', error);
+    return [];
+  }
+};
+
+// ============================================
+// Doctor API Functions
+// ============================================
+
+// Fetch all doctors
+export const fetchDoctors = async (): Promise<DoctorType[]> => {
+  const token = getSession() || localStorage.getItem('token');
+  if (!token) {
+    console.warn('No authentication token found');
+    return [];
+  }
+
+  try {
+    const res = await axiosInstance.get('/Doctor', {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+
+    console.log('Fetched doctors:', res.data);
+    return res.data?.data || res.data || [];
+  } catch (error) {
+    console.error('Error fetching doctors:', error);
+    return [];
+  }
+};
+
+// Hook to get doctors
+export const useGetDoctors = () => {
+  const { data, error, isLoading, mutate } = useSWR(
+    'doctors-list',
+    fetchDoctors,
     {
       revalidateOnFocus: false,
       revalidateOnReconnect: false,
     }
   );
 
-  const calendarEvents = useMemo(() => {
-    if (!appointments || appointments.length === 0) return [];
-    
-    try {
-      console.log('Transforming appointments to calendar events:', appointments);
-      const events = transformAppointmentsToCalendarEvents(appointments);
-      console.log('Generated calendar events:', events);
-      return events;
-    } catch (error) {
-      console.error('Error transforming appointments to calendar events:', error);
-      return [];
-    }
-  }, [appointments]);
-
   return {
-    appointments: appointments || [],
-    calendarEvents,
-    appointmentsLoading: isLoading,
-    appointmentsError: error,
-    refreshAppointments: mutate, // Expose mutate for manual refresh
+    doctors: data || [],
+    doctorsLoading: isLoading,
+    doctorsError: error,
+    refreshDoctors: mutate,
   };
 };
 
-// Transform appointments to calendar events
-const transformAppointmentsToCalendarEvents = (appointments: AppointmentType[]): CalendarAppointmentEvent[] => {
-  const validEvents: CalendarAppointmentEvent[] = [];
+// ============================================
+// Appointment Creation/Update Functions
+// ============================================
 
-  appointments.forEach((appointment) => {
-    // Skip appointments with invalid or missing dates
-    if (!appointment.appointmentDate) {
-      console.warn(`Appointment ${appointment.id} has no date`);
-      return;
-    }
+// Create a new appointment via API
+export const createAppointmentRequest = async (appointmentData: {
+  patientId: string;
+  doctorId: string;
+  appointmentDate: string;
+  duration: number;
+  reason?: string;
+  notes?: string;
+}): Promise<{ success: boolean; data?: any; error?: string }> => {
+  const token = getSession() || localStorage.getItem('token');
+  if (!token) {
+    return { success: false, error: 'No authentication token found' };
+  }
 
-    // Handle various date formats and clean the date string
-    let dateString = appointment.appointmentDate;
-    if (typeof dateString === 'string') {
-      // Remove any extra characters and normalize the date string
-      dateString = dateString.trim();
-    }
+  try {
+    // Transform to match API expectations (PatientId with capital P)
+    const payload = {
+      PatientId: appointmentData.patientId,
+      DoctorId: appointmentData.doctorId,
+      AppointmentDate: appointmentData.appointmentDate,
+      Duration: appointmentData.duration,
+      Reason: appointmentData.reason || '',
+      Notes: appointmentData.notes || '',
+    };
 
-    const startDate = new Date(dateString);
-    
-    // Validate start date
-    if (isNaN(startDate.getTime())) {
-      console.warn(`Invalid appointment date for appointment ${appointment.id}:`, appointment.appointmentDate, 'Parsed as:', startDate);
-      return;
-    }
-    
-    const endDate = new Date(startDate.getTime() + (appointment.duration || 30) * 60000);
-    
-    // Validate end date
-    if (isNaN(endDate.getTime())) {
-      console.warn(`Invalid end date calculated for appointment ${appointment.id}`);
-      return;
-    }
-
-    const statusInfo = appointmentStatusMap[appointment.status] || appointmentStatusMap[1];
-    
-    // Create detailed title with multiple lines of information
-    const appointmentTime = startDate.toLocaleTimeString('en-US', {
-      hour: '2-digit',
-      minute: '2-digit',
-      hour12: true
+    const res = await axiosInstance.post('/appointment', payload, {
+      headers: { Authorization: `Bearer ${token}` },
     });
 
-    // Create a more compact display format
-    const title = `🏥 Dr. ${appointment.doctorName}
-${appointment.specialty}
-${appointment.reason || 'General Consultation'}
-${statusInfo.label} • ${appointment.duration || 30}min`;
+    console.log('Created appointment:', res.data);
+    return { success: true, data: res.data };
+  } catch (error: any) {
+    console.error('Error creating appointment:', error);
+    return { success: false, error: error.response?.data?.message || error.message || 'Failed to create appointment' };
+  }
+};
 
-    const event: CalendarAppointmentEvent = {
-      id: `appointment_${appointment.id}`,
+// Hook to get appointments for calendar (using new Calendar API)
+export const useAppointmentsForCalendar = () => {
+  const { data: calendarData, error, isLoading, mutate: mutateCalendar } = useSWR(
+    'calendar-events-my',
+    fetchCalendarEvents,
+    {
+      revalidateOnFocus: false,
+      revalidateOnReconnect: false,
+    }
+  );
+
+  // Normalize calendar data to always be an array
+  const normalizedCalendarData = useMemo((): CalendarEventFromAPI[] => {
+    if (!calendarData) return [];
+    
+    // If it's already an array, use it directly
+    if (Array.isArray(calendarData)) return calendarData as CalendarEventFromAPI[];
+    
+    // If it has a data property that's an array, use that
+    if ((calendarData as any).data && Array.isArray((calendarData as any).data)) {
+      return (calendarData as any).data as CalendarEventFromAPI[];
+    }
+    
+    // If it has an events property that's an array, use that
+    if ((calendarData as any).events && Array.isArray((calendarData as any).events)) {
+      return (calendarData as any).events as CalendarEventFromAPI[];
+    }
+    
+    // If it has an items property that's an array, use that
+    if ((calendarData as any).items && Array.isArray((calendarData as any).items)) {
+      return (calendarData as any).items as CalendarEventFromAPI[];
+    }
+    
+    // If it's an object but not an array, wrap it in an array
+    if (typeof calendarData === 'object') {
+      console.warn('Calendar data is an object, not an array:', calendarData);
+      return [];
+    }
+    
+    return [];
+  }, [calendarData]);
+
+  const calendarEvents = useMemo(() => {
+    if (!normalizedCalendarData || normalizedCalendarData.length === 0) {
+      console.log('No calendar events found from API');
+      return [];
+    }
+    
+    try {
+      console.log('Transforming calendar events:', normalizedCalendarData);
+      const events = transformCalendarEventsToFullCalendar(normalizedCalendarData);
+      console.log('Generated FullCalendar events:', events);
+      return events;
+    } catch (err) {
+      console.error('Error transforming calendar events:', err);
+      return [];
+    }
+  }, [normalizedCalendarData]);
+
+  // Convert to AppointmentType for compatibility with existing components
+  const appointments: AppointmentType[] = useMemo(() => {
+    if (!normalizedCalendarData || normalizedCalendarData.length === 0) return [];
+    
+    return normalizedCalendarData.map(event => ({
+      id: event.id,
+      patientId: event.patientId || '',
+      doctorId: event.doctorId || '',
+      patientName: event.patientName || '',
+      doctorName: event.doctorName || '',
+      specialty: event.specialty || '',
+      appointmentDate: event.start,
+      duration: event.duration || 30,
+      status: event.status || 1,
+      reason: event.reason,
+      notes: event.notes,
+      createdAt: event.start,
+    }));
+  }, [normalizedCalendarData]);
+
+  // Function to add a new appointment via API
+  const addAppointment = async (appointmentData: {
+    patientId: string;
+    doctorId: string;
+    appointmentDate: string;
+    duration: number;
+    reason?: string;
+    notes?: string;
+  }) => {
+    const result = await createAppointmentRequest(appointmentData);
+    if (result.success) {
+      // Refresh calendar data
+      mutateCalendar();
+    }
+    return result;
+  };
+
+  return {
+    appointments,
+    calendarEvents,
+    appointmentsLoading: isLoading,
+    appointmentsError: error,
+    addAppointment,
+    refreshAppointments: mutateCalendar,
+  };
+};
+
+// Transform API calendar events to FullCalendar format
+const transformCalendarEventsToFullCalendar = (events: CalendarEventFromAPI[]): CalendarAppointmentEvent[] => {
+  const validEvents: CalendarAppointmentEvent[] = [];
+
+  events.forEach((event) => {
+    if (!event.start) {
+      console.warn(`Event ${event.id} has no start date`);
+      return;
+    }
+
+    const startDate = new Date(event.start);
+    if (isNaN(startDate.getTime())) {
+      console.warn(`Invalid start date for event ${event.id}:`, event.start);
+      return;
+    }
+    
+    const endDate = event.end ? new Date(event.end) : new Date(startDate.getTime() + (event.duration || 30) * 60000);
+    if (isNaN(endDate.getTime())) {
+      console.warn(`Invalid end date for event ${event.id}`);
+      return;
+    }
+
+    const status = event.status || 1;
+    const statusInfo = appointmentStatusMap[status] || appointmentStatusMap[1];
+    const duration = event.duration || Math.round((endDate.getTime() - startDate.getTime()) / 60000);
+    
+    // Create title from event data
+    const doctorName = event.doctorName || 'Unknown Doctor';
+    const specialty = event.specialty || 'General';
+    const reason = event.reason || 'Consultation';
+    
+    const title = event.title || `🏥 Dr. ${doctorName}
+${specialty}
+${reason}
+${statusInfo.label} • ${duration}min`;
+
+    const calendarEvent: CalendarAppointmentEvent = {
+      id: `appointment_${event.id}`,
       title,
       start: startDate.toISOString(),
       end: endDate.toISOString(),
-      allDay: false,
+      allDay: event.allDay || false,
       backgroundColor: statusInfo.bgColor,
       borderColor: statusInfo.color,
       textColor: statusInfo.color,
@@ -180,25 +444,27 @@ ${statusInfo.label} • ${appointment.duration || 30}min`;
         `appointment-${statusInfo.label.toLowerCase().replace(' ', '-')}`
       ],
       extendedProps: {
-        appointmentId: appointment.id,
-        patientId: appointment.patientId,
-        doctorId: appointment.doctorId,
-        patientName: appointment.patientName,
-        doctorName: appointment.doctorName,
-        specialty: appointment.specialty,
-        status: appointment.status,
-        reason: appointment.reason,
-        notes: appointment.notes,
+        appointmentId: event.id,
+        patientId: event.patientId || '',
+        doctorId: event.doctorId || '',
+        patientName: event.patientName || '',
+        doctorName: doctorName,
+        specialty: specialty,
+        status: status,
+        reason: event.reason,
+        notes: event.notes,
         type: 'appointment' as const,
-        duration: appointment.duration,
+        duration: duration,
       },
     };
 
-    validEvents.push(event);
+    validEvents.push(calendarEvent);
   });
 
   return validEvents;
-};// Helper to decode JWT token (copied from book-appointments)
+};
+
+// Helper to decode JWT token
 const decodeToken = (token: string) => {
   try {
     const base64Url = token.split('.')[1];
@@ -216,7 +482,7 @@ const decodeToken = (token: string) => {
   }
 };
 
-// Check if user is doctor (for future use)
+// Check if user is doctor
 export const getUserRole = (): 'patient' | 'doctor' | null => {
   const token = getSession() || localStorage.getItem('token');
   if (!token) return null;
@@ -252,11 +518,11 @@ export const getMyAppointmentsRequest = async (): Promise<{ success: boolean; da
     const token = getSession() || localStorage.getItem('token');
     if (!token) throw new Error('No authentication token found');
 
-    const response = await axiosInstance.get('/appointment/my', {
+    const response = await axiosInstance.get('/Calendar/my', {
       headers: { Authorization: `Bearer ${token}` }
     });
 
-    return { success: true, data: response.data.data };
+    return { success: true, data: response.data?.data || response.data };
   } catch (error: any) {
     console.error('Error fetching my appointments:', error);
     return { success: false, error: error.message || 'Failed to fetch appointments' };
@@ -269,11 +535,12 @@ export const getDoctorScheduleRequest = async (doctorId?: string): Promise<{ suc
     const token = getSession() || localStorage.getItem('token');
     if (!token) throw new Error('No authentication token found');
 
-    const response = await axiosInstance.get('/appointment/doctor/schedule', {
-      headers: { Authorization: `Bearer ${token}` }
+    const response = await axiosInstance.get('/Calendar/availability', {
+      headers: { Authorization: `Bearer ${token}` },
+      params: doctorId ? { doctorId } : undefined
     });
 
-    return { success: true, data: response.data.data };
+    return { success: true, data: response.data?.data || response.data };
   } catch (error: any) {
     console.error('Error fetching doctor schedule:', error);
     return { success: false, error: error.message || 'Failed to fetch schedule' };
@@ -281,16 +548,21 @@ export const getDoctorScheduleRequest = async (doctorId?: string): Promise<{ suc
 };
 
 // Get all doctor appointments (Doctor only)
-export const getAllDoctorAppointmentsRequest = async (doctorId?: string): Promise<{ success: boolean; data?: AppointmentType[]; error?: string }> => {
+export const getAllDoctorAppointmentsRequest = async (params?: { 
+  start?: string; 
+  end?: string; 
+  doctorId?: string 
+}): Promise<{ success: boolean; data?: CalendarEventFromAPI[]; error?: string }> => {
   try {
     const token = getSession() || localStorage.getItem('token');
     if (!token) throw new Error('No authentication token found');
 
-    const response = await axiosInstance.get('/appointment/doctor/all', {
-      headers: { Authorization: `Bearer ${token}` }
+    const response = await axiosInstance.get('/Calendar', {
+      headers: { Authorization: `Bearer ${token}` },
+      params
     });
 
-    return { success: true, data: response.data.data };
+    return { success: true, data: response.data?.data || response.data };
   } catch (error: any) {
     console.error('Error fetching doctor appointments:', error);
     return { success: false, error: error.message || 'Failed to fetch appointments' };
