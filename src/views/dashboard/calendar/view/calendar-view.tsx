@@ -435,6 +435,10 @@ export default function CalendarView({
           setSelectedAppointment(null);
         }}
         appointmentEvent={selectedAppointment}
+        onAppointmentCompleted={() => {
+          // Refresh appointments list after completion
+          refreshAppointments();
+        }}
       />
     </>
   );

@@ -35,6 +35,7 @@ const AppointmentTabs = () => {
   const [page, setPage] = useState(1)
   const appointmentsPerPage = 6
   const { appointments = [], appointmentsLoading, appointmentsError } = useAppointmentsForCalendar()
+  const { userRole } = useAppSelector((state) => state.auth)
 
   // Separate appointments into upcoming and past
   const now = new Date()

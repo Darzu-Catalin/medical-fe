@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import useSWR from 'swr';
 import axiosInstance from '@/utils/axios';
 import { getSession } from '@/auth/context/utils';
+import { useAppSelector } from '@/redux/store';
 
 // Types for appointment data
 export interface AppointmentType {
@@ -565,5 +566,69 @@ export const getAllDoctorAppointmentsRequest = async (params?: {
   } catch (error: any) {
     console.error('Error fetching doctor appointments:', error);
     return { success: false, error: error.message || 'Failed to fetch appointments' };
+  }
+};
+
+// Complete appointment with medical record (Doctor only)
+export interface CompleteMedicalRecordDto {
+  diagnosis: string;
+  symptoms?: string;
+  treatment?: string;
+  prescription?: string;
+  notes?: string;
+  recordDate?: string;
+}
+
+export const completeAppointmentWithRecord = async (
+  appointmentId: number,
+  medicalRecord: CompleteMedicalRecordDto
+): Promise<{ success: boolean; data?: any; error?: string }> => {
+  try {
+    const token = getSession() || localStorage.getItem('token');
+    if (!token) throw new Error('No authentication token found');
+
+    const response = await axiosInstance.post(
+      `/appointment/${appointmentId}/complete`,
+      medicalRecord,
+      {
+        headers: { 
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      }
+    );
+
+    return { success: true, data: response.data.data };
+  } catch (error: any) {
+    console.error('Error completing appointment:', error);
+    return { 
+      success: false, 
+      error: error.response?.data?.message || error.message || 'Failed to complete appointment' 
+    };
+  }
+};
+
+// Check if appointment can be completed
+export const canCompleteAppointment = async (
+  appointmentId: number
+): Promise<{ success: boolean; data?: any; error?: string }> => {
+  try {
+    const token = getSession() || localStorage.getItem('token');
+    if (!token) throw new Error('No authentication token found');
+
+    const response = await axiosInstance.get(
+      `/appointment/${appointmentId}/can-complete`,
+      {
+        headers: { Authorization: `Bearer ${token}` }
+      }
+    );
+
+    return { success: true, data: response.data.data };
+  } catch (error: any) {
+    console.error('Error checking appointment completion status:', error);
+    return { 
+      success: false, 
+      error: error.response?.data?.message || error.message || 'Failed to check status' 
+    };
   }
 };

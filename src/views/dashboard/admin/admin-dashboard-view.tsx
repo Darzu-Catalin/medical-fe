@@ -26,6 +26,7 @@ import {
 import { Bloodtype, Edit } from '@mui/icons-material';
 import GroupOutlinedIcon from '@mui/icons-material/GroupOutlined';
 import PersonOutlineIcon from '@mui/icons-material/PersonOutline';
+import AdminPanelSettingsOutlinedIcon from '@mui/icons-material/AdminPanelSettingsOutlined';
 import ShowChartIcon from '@mui/icons-material/ShowChart';
 import axiosInstance from '@/utils/axios';
 import { getSession } from '@/auth/context/utils';
@@ -348,6 +349,42 @@ interface EditingPatient {
 
 }
 
+export interface Admin {
+  id: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  phoneNumber?: string;
+  idnp: string;
+  dateOfBirth: string;
+  address?: string;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt?: string;
+  roles: string[];
+  gender?: number;
+}
+
+interface CreateAdminRequest {
+  firstName: string;
+  lastName: string;
+  email: string;
+  password: string;
+  phoneNumber?: string;
+  idnp: string;
+  dateOfBirth: string;
+  address?: string;
+}
+
+interface UpdateAdminRequest {
+  firstName?: string;
+  lastName?: string;
+  phoneNumber?: string;
+  idnp?: string;
+  dateOfBirth?: string;
+  address?: string;
+}
+
 interface DashboardData {
   totalDoctors: number;
   totalPatients: number;
@@ -471,6 +508,36 @@ const AdminDashboardView = () => {
     isActive: true,
     roles: ['Patient'],
     bloodType: ''
+  });
+
+  // Admin management state
+  const [admins, setAdmins] = useState<Admin[]>([]);
+  const [totalAdmins, setTotalAdmins] = useState(0);
+  const [loadingAdmins, setLoadingAdmins] = useState(false);
+  const [adminPage, setAdminPage] = useState(1);
+  const [totalAdminPages, setTotalAdminPages] = useState(1);
+  const [searchTermAdmin, setSearchTermAdmin] = useState('');
+  const [openAddAdmin, setOpenAddAdmin] = useState(false);
+  const [openEditAdmin, setOpenEditAdmin] = useState(false);
+  const [selectedAdmin, setSelectedAdmin] = useState<Admin | null>(null);
+  const [openAdminProfile, setOpenAdminProfile] = useState(false);
+  const [newAdmin, setNewAdmin] = useState<CreateAdminRequest>({
+    firstName: '',
+    lastName: '',
+    email: '',
+    password: '',
+    phoneNumber: '',
+    idnp: '',
+    dateOfBirth: '',
+    address: ''
+  });
+  const [editingAdmin, setEditingAdmin] = useState<UpdateAdminRequest>({
+    firstName: '',
+    lastName: '',
+    phoneNumber: '',
+    idnp: '',
+    dateOfBirth: '',
+    address: ''
   });
 
   const specialties = [
@@ -939,6 +1006,135 @@ const AdminDashboardView = () => {
       }
     };
 
+    // Admin API Functions
+    const fetchAdmins = async (page = adminPage) => {
+      setLoadingAdmins(true);
+      try {
+        const token = getSession() || localStorage.getItem('token');
+        if (!token) throw new Error('Unauthorized');
+
+        const res = await axiosInstance.get('/Admin/admins', {
+          headers: { Authorization: `Bearer ${token}` },
+          params: { page, pageSize },
+        });
+
+        const responseData = res.data.data;
+        setAdmins(responseData.admins || []);
+        setTotalAdmins(responseData.totalCount || 0);
+        setTotalAdminPages(responseData.totalPages || 1);
+      } catch (err) {
+        console.error('Error fetching admins:', err);
+        setAdmins([]);
+        setTotalAdmins(0);
+      } finally {
+        setLoadingAdmins(false);
+      }
+    };
+
+    const handleCreateAdmin = async () => {
+      try {
+        const token = getSession() || localStorage.getItem('token');
+        if (!token) throw new Error('Unauthorized');
+
+        await axiosInstance.post('/Admin/admins', newAdmin, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+
+        alert('Admin created successfully!');
+        setOpenAddAdmin(false);
+        setNewAdmin({
+          firstName: '',
+          lastName: '',
+          email: '',
+          password: '',
+          phoneNumber: '',
+          idnp: '',
+          dateOfBirth: '',
+          address: ''
+        });
+        fetchAdmins(adminPage);
+      } catch (err: any) {
+        console.error('Error creating admin:', err);
+        alert(err.response?.data?.message || 'Failed to create admin');
+      }
+    };
+
+    const handleUpdateAdmin = async () => {
+      if (!selectedAdmin) return;
+      
+      try {
+        const token = getSession() || localStorage.getItem('token');
+        if (!token) throw new Error('Unauthorized');
+
+        await axiosInstance.put(`/Admin/admins/${selectedAdmin.id}`, editingAdmin, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+
+        alert('Admin updated successfully!');
+        setOpenEditAdmin(false);
+        setSelectedAdmin(null);
+        fetchAdmins(adminPage);
+      } catch (err: any) {
+        console.error('Error updating admin:', err);
+        alert(err.response?.data?.message || 'Failed to update admin');
+      }
+    };
+
+    const toggleAdminStatus = async (adminId: string, isActive: boolean) => {
+      try {
+        const token = getSession() || localStorage.getItem('token');
+        if (!token) throw new Error('Unauthorized');
+
+        await axiosInstance.patch(`/Admin/admins/${adminId}/status`, 
+          { isActive },
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+
+        alert(`Admin ${isActive ? 'activated' : 'deactivated'} successfully!`);
+        fetchAdmins(adminPage);
+      } catch (err: any) {
+        console.error('Error toggling admin status:', err);
+        alert(err.response?.data?.message || 'Failed to update admin status');
+      }
+    };
+
+    const handleDeleteAdmin = async (adminId: string) => {
+      if (!confirm('Are you sure you want to delete this admin?')) return;
+
+      try {
+        const token = getSession() || localStorage.getItem('token');
+        if (!token) throw new Error('Unauthorized');
+
+        await axiosInstance.delete(`/Admin/admins/${adminId}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+
+        alert('Admin deleted successfully!');
+        fetchAdmins(adminPage);
+      } catch (err: any) {
+        console.error('Error deleting admin:', err);
+        alert(err.response?.data?.message || 'Failed to delete admin');
+      }
+    };
+
+    const handleViewAdminProfile = (admin: Admin) => {
+      setSelectedAdmin(admin);
+      setOpenAdminProfile(true);
+    };
+
+    const handleOpenEditAdmin = (admin: Admin) => {
+      setSelectedAdmin(admin);
+      setEditingAdmin({
+        firstName: admin.firstName,
+        lastName: admin.lastName,
+        phoneNumber: admin.phoneNumber,
+        idnp: admin.idnp,
+        dateOfBirth: admin.dateOfBirth.split('T')[0],
+        address: admin.address
+      });
+      setOpenEditAdmin(true);
+    };
+
     const filteredDoctors = doctors.filter(doc =>
       `${doc.firstName} ${doc.lastName}`.toLowerCase().includes(searchTerm.toLowerCase()) ||
       doc.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -951,21 +1147,29 @@ const AdminDashboardView = () => {
       pat.phoneNumber.toLowerCase().includes(searchTermp.toLowerCase())
     );
 
+    const filteredAdmins = admins.filter(admin =>
+      `${admin.firstName} ${admin.lastName}`.toLowerCase().includes(searchTermAdmin.toLowerCase()) ||
+      admin.email.toLowerCase().includes(searchTermAdmin.toLowerCase()) ||
+      (admin.phoneNumber && admin.phoneNumber.toLowerCase().includes(searchTermAdmin.toLowerCase()))
+    );
+
 
   useEffect(() => {
     fetchDashboardData();
+    fetchAdmins();
   }, []);
 
   useEffect(() => {
     if (activeTab === 0) fetchDoctors();
     if (activeTab === 1) fetchPatients();
+    if (activeTab === 2) fetchAdmins();
   }, [activeTab]);
 
   const stats = [
     { label: 'Total Doctors', value: dashboardData?.totalDoctors || 0, icon: <GroupOutlinedIcon sx={{ color: '#2563EB', fontSize: 30 }} />, bgColor: '#E0ECFF' },
     { label: 'Active Doctors', value: dashboardData?.activeDoctorsCount || 0, icon: <GroupOutlinedIcon sx={{ color: '#16A34A', fontSize: 30 }} />, bgColor: '#D9FBE5' },
     { label: 'Total Patients', value: dashboardData?.totalPatients || 0, icon: <PersonOutlineIcon sx={{ color: '#9333EA', fontSize: 30 }} />, bgColor: '#F3E8FF' },
-    // { label: 'To be determined', value: 0, icon: <ShowChartIcon sx={{ color: '#000000', fontSize: 30 }} />, bgColor: '#F5F5F5' },
+    { label: 'Total Admins', value: totalAdmins, icon: <AdminPanelSettingsOutlinedIcon sx={{ color: '#F59E0B', fontSize: 30 }} />, bgColor: '#FEF3C7' },
   ];
 
   return (
@@ -997,7 +1201,7 @@ const AdminDashboardView = () => {
       <Tabs value={activeTab} onChange={(_, val) => setActiveTab(val)} sx={{ mb: 2 }}>
         <Tab label="Manage Doctors" />
         <Tab label="Manage Patients" />
-        {/* <Tab label="System Logs" /> */}
+        <Tab label="Manage Admins" />
       </Tabs>
 
       {activeTab === 0 && (
@@ -1278,58 +1482,61 @@ const AdminDashboardView = () => {
                       <TableCell>
                         <TableCell>
                           <Box display="flex" gap={1} flexWrap="wrap">
-                            {/* Status toggle button */}
-                            <Button
-                              sx={{
-                                textTransform: 'none',
-                                backgroundColor: doc.status === 'Active' ? '#FEE2E2' : '#DCFCE7',
-                                color: doc.status === 'Active' ? '#DC2626' : '#16A34A',
-                                fontWeight: 500,
-                                px: 2,
-                                py: 0.5,
-                                borderRadius: 1.5,
-                                '&:hover': {
-                                  backgroundColor: doc.status === 'Active' ? '#FCA5A5' : '#86EFAC',
-                                },
-                              }}
-                              onClick={() => toggleUserStatus(doc.id, 'Doctor', doc.status === 'Active')}
-                            >
-                              {doc.status === 'Active' ? 'Deactivate' : 'Activate'}
-                            </Button>
-
-                            {/* View Profile */}
-                            <Button
-                              sx={{
-                                textTransform: 'none',
-                                backgroundColor: '#DBEAFE',
-                                color: '#1D4ED8',
-                                fontWeight: 500,
-                                px: 2,
-                                py: 0.5,
-                                borderRadius: 1.5,
-                                '&:hover': {
-                                  backgroundColor: '#BFDBFE',
-                                },
-                              }}
-                              onClick={() => handleViewProfile(doc)}
-                            >
-                              View Profile
-                            </Button>
-
-                            {/* Edit button as icon */}
-                            <IconButton
-                              sx={{
-                                backgroundColor: '#FEF3C7',
-                                color: '#B45309',
-                                '&:hover': { backgroundColor: '#FDE68A' },
-                                p: 0.5,
-                                width: 32,
-                                height: 32,
-                              }}
-                              onClick={() => handleOpenEditDoctor(doc)}
-                            >
-                              <Edit fontSize="small" />
-                            </IconButton>
+                          <Button
+                            size="small"
+                            variant="outlined"
+                            onClick={() => handleViewProfile(doc)}
+                            sx={{
+                              textTransform: 'none',
+                              borderColor: '#2563EB',
+                              color: '#2563EB',
+                              '&:hover': { borderColor: '#1E40AF', backgroundColor: '#EFF6FF' }
+                            }}
+                          >
+                            View
+                          </Button>
+                          <Button
+                            size="small"
+                            variant="outlined"
+                            onClick={() => handleOpenEditDoctor(doc)}
+                            sx={{
+                              textTransform: 'none',
+                              borderColor: '#10B981',
+                              color: '#10B981',
+                              '&:hover': { borderColor: '#059669', backgroundColor: '#ECFDF5' }
+                            }}
+                          >
+                            Edit
+                          </Button>
+                          <Button
+                            size="small"
+                            variant="outlined"
+                            onClick={() => toggleUserStatus(doc.id, 'Doctor', doc.status === 'Active')}
+                            sx={{
+                              textTransform: 'none',
+                              borderColor: doc.status === 'Active' ? '#F59E0B' : '#10B981',
+                              color: doc.status === 'Active' ? '#F59E0B' : '#10B981',
+                              '&:hover': {
+                                borderColor: doc.status === 'Active' ? '#D97706' : '#059669',
+                                backgroundColor: doc.status === 'Active' ? '#FEF3C7' : '#ECFDF5'
+                              }
+                            }}
+                          >
+                            {doc.status === 'Active' ? 'Deactivate' : 'Activate'}
+                          </Button>
+                          <Button
+                            size="small"
+                            variant="outlined"
+                            onClick={() => handleDeleteDoctor(doc.id)}
+                            sx={{
+                              textTransform: 'none',
+                              borderColor: '#EF4444',
+                              color: '#EF4444',
+                              '&:hover': { borderColor: '#DC2626', backgroundColor: '#FEE2E2' }
+                            }}
+                          >
+                            Delete
+                          </Button>
                           </Box>
                         </TableCell>
 
@@ -1734,7 +1941,11 @@ const AdminDashboardView = () => {
             </Box>
 
             {loadingPatients ? (
-              <Typography>Loading patients...</Typography>
+              <Box display="flex" justifyContent="center" py={3}>
+                <CircularProgress />
+              </Box>
+            ) : patients.length === 0 ? (
+              <Typography>No patients found.</Typography>
             ) : (
               <Table
                 sx={{
@@ -1788,58 +1999,48 @@ const AdminDashboardView = () => {
                       <TableCell>
                         <TableCell>
                           <Box display="flex" gap={1} flexWrap="wrap">
-                            {/* Status toggle button */}
-                            <Button
-                              sx={{
-                                textTransform: 'none',
-                                backgroundColor: pat.status === 'Active' ? '#FEE2E2' : '#DCFCE7',
-                                color: pat.status === 'Active' ? '#DC2626' : '#16A34A',
-                                fontWeight: 500,
-                                px: 2,
-                                py: 0.5,
-                                borderRadius: 1.5,
-                                '&:hover': {
-                                  backgroundColor: pat.status === 'Active' ? '#FCA5A5' : '#86EFAC',
-                                },
-                              }}
-                              onClick={() => toggleUserStatus(pat.id, 'Patient', pat.status === 'Active')}
-                            >
-                              {pat.status === 'Active' ? 'Deactivate' : 'Activate'}
-                            </Button>
-
-                            {/* View Profile */}
-                            <Button
-                              sx={{
-                                textTransform: 'none',
-                                backgroundColor: '#DBEAFE',
-                                color: '#1D4ED8',
-                                fontWeight: 500,
-                                px: 2,
-                                py: 0.5,
-                                borderRadius: 1.5,
-                                '&:hover': {
-                                  backgroundColor: '#BFDBFE',
-                                },
-                              }}
-                              onClick={() => handleViewProfilePatient(pat)}
-                            >
-                              View Profile
-                            </Button>
-
-                            {/* Edit button as icon */}
-                            <IconButton
-                              sx={{
-                                backgroundColor: '#FEF3C7',
-                                color: '#B45309',
-                                '&:hover': { backgroundColor: '#FDE68A' },
-                                p: 0.5,
-                                width: 32,
-                                height: 32,
-                              }}
-                              onClick={() => handleOpenEditPatient(pat)}
-                            >
-                              <Edit fontSize="small" />
-                            </IconButton>
+                          <Button
+                            size="small"
+                            variant="outlined"
+                            onClick={() => handleViewProfilePatient(pat)}
+                            sx={{
+                              textTransform: 'none',
+                              borderColor: '#2563EB',
+                              color: '#2563EB',
+                              '&:hover': { borderColor: '#1E40AF', backgroundColor: '#EFF6FF' }
+                            }}
+                          >
+                            View
+                          </Button>
+                          <Button
+                            size="small"
+                            variant="outlined"
+                            onClick={() => handleOpenEditPatient(pat)}
+                            sx={{
+                              textTransform: 'none',
+                              borderColor: '#10B981',
+                              color: '#10B981',
+                              '&:hover': { borderColor: '#059669', backgroundColor: '#ECFDF5' }
+                            }}
+                          >
+                            Edit
+                          </Button>
+                          <Button
+                            size="small"
+                            variant="outlined"
+                            onClick={() => toggleUserStatus(pat.id, 'Patient', pat.status === 'Active')}
+                            sx={{
+                              textTransform: 'none',
+                              borderColor: pat.status === 'Active' ? '#F59E0B' : '#10B981',
+                              color: pat.status === 'Active' ? '#F59E0B' : '#10B981',
+                              '&:hover': {
+                                borderColor: pat.status === 'Active' ? '#D97706' : '#059669',
+                                backgroundColor: pat.status === 'Active' ? '#FEF3C7' : '#ECFDF5'
+                              }
+                            }}
+                          >
+                            {pat.status === 'Active' ? 'Deactivate' : 'Activate'}
+                          </Button>
                           </Box>
                         </TableCell>
                         <Dialog
@@ -2016,6 +2217,510 @@ const AdminDashboardView = () => {
             >
               Next
             </Button>
+          </CardContent>
+        </Card>
+      )}
+
+      {activeTab === 2 && (
+        <Card>
+          <CardContent>
+            <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
+              <Box display="flex" alignItems="center">
+                <GroupOutlinedIcon sx={{ fontSize: 28, color: '#374151', mr: 1 }} />
+                <Typography variant="h6" sx={{ fontWeight: 600 }}>
+                  Admin Management
+                </Typography>
+              </Box>
+              <Button
+                variant="contained"
+                onClick={() => setOpenAddAdmin(true)}
+                sx={{
+                  backgroundColor: '#2563EB',
+                  '&:hover': { backgroundColor: '#1E40AF' },
+                }}
+              >
+                + Add New Admin
+              </Button>
+            </Box>
+
+            <Box mb={2}>
+              <TextField
+                placeholder="Search by name, email, or phone..."
+                variant="outlined"
+                fullWidth
+                size="small"
+                onChange={(e) => setSearchTermAdmin(e.target.value)}
+              />
+            </Box>
+
+            {loadingAdmins ? (
+              <Box display="flex" justifyContent="center" py={3}>
+                <CircularProgress />
+              </Box>
+            ) : admins.length === 0 ? (
+              <Typography>No admins found.</Typography>
+            ) : (
+              <Table
+                sx={{
+                  borderCollapse: 'separate',
+                  borderSpacing: 0,
+                  '& th': {
+                    backgroundColor: 'background.primary',
+                    fontWeight: 'bold',
+                    color: 'primary',
+                  },
+                  '& td': {
+                    py: 0.5,
+                  },
+                  '& td, & th': {
+                    borderBottom: '',
+                  },
+                }}>
+                <TableHead>
+                  <TableRow>
+                    <TableCell>Name</TableCell>
+                    <TableCell>Email</TableCell>
+                    <TableCell>Phone</TableCell>
+                    <TableCell>IDNP</TableCell>
+                    <TableCell>Status</TableCell>
+                    <TableCell>Actions</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {filteredAdmins.map((admin) => (
+                    <TableRow key={admin.id}>
+                      <TableCell>{`${admin.firstName} ${admin.lastName}`}</TableCell>
+                      <TableCell>{admin.email}</TableCell>
+                      <TableCell>{admin.phoneNumber || 'N/A'}</TableCell>
+                      <TableCell>{admin.idnp}</TableCell>
+                      <TableCell>
+                        <Box
+                          sx={{
+                            px: 2,
+                            py: 0.5,
+                            borderRadius: '9999px',
+                            backgroundColor: admin.isActive ? '#2563EB' : '#E5E7EB',
+                            color: admin.isActive ? '#FFFFFF' : '#6B7280',
+                            fontSize: 12,
+                            fontWeight: 500,
+                            display: 'inline-block',
+                            textAlign: 'center'
+                          }}
+                        >
+                          {admin.isActive ? 'Active' : 'Inactive'}
+                        </Box>
+                      </TableCell>
+                      <TableCell>
+                        <Box display="flex" gap={1} flexWrap="wrap">
+                          <Button
+                            size="small"
+                            variant="outlined"
+                            onClick={() => handleViewAdminProfile(admin)}
+                            sx={{
+                              textTransform: 'none',
+                              borderColor: '#2563EB',
+                              color: '#2563EB',
+                              '&:hover': { borderColor: '#1E40AF', backgroundColor: '#EFF6FF' }
+                            }}
+                          >
+                            View
+                          </Button>
+                          <Button
+                            size="small"
+                            variant="outlined"
+                            onClick={() => handleOpenEditAdmin(admin)}
+                            sx={{
+                              textTransform: 'none',
+                              borderColor: '#10B981',
+                              color: '#10B981',
+                              '&:hover': { borderColor: '#059669', backgroundColor: '#ECFDF5' }
+                            }}
+                          >
+                            Edit
+                          </Button>
+                          <Button
+                            size="small"
+                            variant="outlined"
+                            onClick={() => toggleAdminStatus(admin.id, !admin.isActive)}
+                            sx={{
+                              textTransform: 'none',
+                              borderColor: admin.isActive ? '#F59E0B' : '#10B981',
+                              color: admin.isActive ? '#F59E0B' : '#10B981',
+                              '&:hover': {
+                                borderColor: admin.isActive ? '#D97706' : '#059669',
+                                backgroundColor: admin.isActive ? '#FEF3C7' : '#ECFDF5'
+                              }
+                            }}
+                          >
+                            {admin.isActive ? 'Deactivate' : 'Activate'}
+                          </Button>
+                          <Button
+                            size="small"
+                            variant="outlined"
+                            onClick={() => handleDeleteAdmin(admin.id)}
+                            sx={{
+                              textTransform: 'none',
+                              borderColor: '#EF4444',
+                              color: '#EF4444',
+                              '&:hover': { borderColor: '#DC2626', backgroundColor: '#FEE2E2' }
+                            }}
+                          >
+                            Delete
+                          </Button>
+                        </Box>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            )}
+
+            <Box display="flex" gap={2} mt={2}>
+              <Button
+                disabled={adminPage === 1}
+                onClick={() => {
+                  setAdminPage(adminPage - 1);
+                  fetchAdmins(adminPage - 1);
+                }}
+              >
+                Previous
+              </Button>
+              <Typography sx={{ display: 'flex', alignItems: 'center' }}>
+                Page {adminPage} of {totalAdminPages}
+              </Typography>
+              <Button
+                disabled={adminPage >= totalAdminPages}
+                onClick={() => {
+                  setAdminPage(adminPage + 1);
+                  fetchAdmins(adminPage + 1);
+                }}
+              >
+                Next
+              </Button>
+            </Box>
+
+            {/* Add Admin Dialog */}
+            <Dialog
+              open={openAddAdmin}
+              onClose={() => setOpenAddAdmin(false)}
+              fullWidth
+              maxWidth="sm"
+              PaperProps={{
+                sx: {
+                  borderRadius: 3,
+                  p: 2,
+                  backgroundColor: '#FAFAFA',
+                },
+              }}
+            >
+              <DialogTitle sx={{ fontWeight: 700, fontSize: 22, color: '#111827' }}>
+                Add New Admin
+              </DialogTitle>
+              <DialogContent>
+                <Grid container spacing={2} mt={1}>
+                  <Grid item xs={12} sm={6}>
+                    <TextField
+                      label="First Name"
+                      name="firstName"
+                      fullWidth
+                      required
+                      value={newAdmin.firstName}
+                      onChange={(e) => setNewAdmin({ ...newAdmin, firstName: e.target.value })}
+                    />
+                  </Grid>
+                  <Grid item xs={12} sm={6}>
+                    <TextField
+                      label="Last Name"
+                      name="lastName"
+                      fullWidth
+                      required
+                      value={newAdmin.lastName}
+                      onChange={(e) => setNewAdmin({ ...newAdmin, lastName: e.target.value })}
+                    />
+                  </Grid>
+                  <Grid item xs={12}>
+                    <TextField
+                      label="Email"
+                      name="email"
+                      type="email"
+                      fullWidth
+                      required
+                      value={newAdmin.email}
+                      onChange={(e) => setNewAdmin({ ...newAdmin, email: e.target.value })}
+                    />
+                  </Grid>
+                  <Grid item xs={12}>
+                    <TextField
+                      label="Password"
+                      name="password"
+                      type="password"
+                      fullWidth
+                      required
+                      value={newAdmin.password}
+                      onChange={(e) => setNewAdmin({ ...newAdmin, password: e.target.value })}
+                    />
+                  </Grid>
+                  <Grid item xs={12} sm={6}>
+                    <TextField
+                      label="Phone Number"
+                      name="phoneNumber"
+                      fullWidth
+                      value={newAdmin.phoneNumber}
+                      onChange={(e) => setNewAdmin({ ...newAdmin, phoneNumber: e.target.value })}
+                    />
+                  </Grid>
+                  <Grid item xs={12} sm={6}>
+                    <TextField
+                      label="IDNP"
+                      name="idnp"
+                      fullWidth
+                      required
+                      value={newAdmin.idnp}
+                      onChange={(e) => setNewAdmin({ ...newAdmin, idnp: e.target.value })}
+                    />
+                  </Grid>
+                  <Grid item xs={12} sm={6}>
+                    <TextField
+                      label="Date of Birth"
+                      name="dateOfBirth"
+                      type="date"
+                      fullWidth
+                      required
+                      InputLabelProps={{ shrink: true }}
+                      value={newAdmin.dateOfBirth}
+                      onChange={(e) => setNewAdmin({ ...newAdmin, dateOfBirth: e.target.value })}
+                    />
+                  </Grid>
+                  <Grid item xs={12}>
+                    <TextField
+                      label="Address"
+                      name="address"
+                      fullWidth
+                      multiline
+                      rows={2}
+                      value={newAdmin.address}
+                      onChange={(e) => setNewAdmin({ ...newAdmin, address: e.target.value })}
+                    />
+                  </Grid>
+                </Grid>
+              </DialogContent>
+              <DialogActions>
+                <Button onClick={() => setOpenAddAdmin(false)}>Cancel</Button>
+                <Button
+                  variant="contained"
+                  onClick={handleCreateAdmin}
+                  sx={{
+                    backgroundColor: '#2563EB',
+                    '&:hover': { backgroundColor: '#1E40AF' }
+                  }}
+                >
+                  Create Admin
+                </Button>
+              </DialogActions>
+            </Dialog>
+
+            {/* Edit Admin Dialog */}
+            <Dialog
+              open={openEditAdmin}
+              onClose={() => setOpenEditAdmin(false)}
+              fullWidth
+              maxWidth="sm"
+              PaperProps={{ sx: { borderRadius: 3, p: 2, backgroundColor: '#FAFAFA' } }}
+            >
+              <DialogTitle sx={{ fontWeight: 700, fontSize: 22 }}>Edit Admin</DialogTitle>
+              <DialogContent>
+                <Grid container spacing={2} mt={1}>
+                  <Grid item xs={12} sm={6}>
+                    <TextField
+                      label="First Name"
+                      name="firstName"
+                      fullWidth
+                      value={editingAdmin?.firstName || ''}
+                      onChange={(e) => setEditingAdmin({ ...editingAdmin, firstName: e.target.value })}
+                    />
+                  </Grid>
+                  <Grid item xs={12} sm={6}>
+                    <TextField
+                      label="Last Name"
+                      name="lastName"
+                      fullWidth
+                      value={editingAdmin?.lastName || ''}
+                      onChange={(e) => setEditingAdmin({ ...editingAdmin, lastName: e.target.value })}
+                    />
+                  </Grid>
+                  <Grid item xs={12} sm={6}>
+                    <TextField
+                      label="Phone Number"
+                      name="phoneNumber"
+                      fullWidth
+                      value={editingAdmin?.phoneNumber || ''}
+                      onChange={(e) => setEditingAdmin({ ...editingAdmin, phoneNumber: e.target.value })}
+                    />
+                  </Grid>
+                  <Grid item xs={12} sm={6}>
+                    <TextField
+                      label="IDNP"
+                      name="idnp"
+                      fullWidth
+                      value={editingAdmin?.idnp || ''}
+                      onChange={(e) => setEditingAdmin({ ...editingAdmin, idnp: e.target.value })}
+                    />
+                  </Grid>
+                  <Grid item xs={12} sm={6}>
+                    <TextField
+                      label="Date of Birth"
+                      name="dateOfBirth"
+                      type="date"
+                      fullWidth
+                      InputLabelProps={{ shrink: true }}
+                      value={editingAdmin?.dateOfBirth || ''}
+                      onChange={(e) => setEditingAdmin({ ...editingAdmin, dateOfBirth: e.target.value })}
+                    />
+                  </Grid>
+                  <Grid item xs={12}>
+                    <TextField
+                      label="Address"
+                      name="address"
+                      fullWidth
+                      multiline
+                      rows={2}
+                      value={editingAdmin?.address || ''}
+                      onChange={(e) => setEditingAdmin({ ...editingAdmin, address: e.target.value })}
+                    />
+                  </Grid>
+                </Grid>
+              </DialogContent>
+              <DialogActions>
+                <Button onClick={() => setOpenEditAdmin(false)}>Cancel</Button>
+                <Button
+                  variant="contained"
+                  onClick={handleUpdateAdmin}
+                  sx={{ backgroundColor: '#2563EB', '&:hover': { backgroundColor: '#1E40AF' } }}
+                >
+                  Update Admin
+                </Button>
+              </DialogActions>
+            </Dialog>
+
+            {/* Admin Profile Dialog */}
+            <Dialog
+              open={openAdminProfile}
+              onClose={() => setOpenAdminProfile(false)}
+              fullWidth
+              maxWidth="md"
+            >
+              <DialogTitle sx={{ fontWeight: 700, fontSize: 22 }}>
+                Admin Profile
+              </DialogTitle>
+              <DialogContent>
+                {selectedAdmin && (
+                  <Box>
+                    <Grid container spacing={2}>
+                      <Grid item xs={12} sm={6}>
+                        <Typography variant="subtitle2" color="text.secondary">
+                          Name
+                        </Typography>
+                        <Typography variant="body1" fontWeight={500}>
+                          {selectedAdmin.firstName} {selectedAdmin.lastName}
+                        </Typography>
+                      </Grid>
+                      <Grid item xs={12} sm={6}>
+                        <Typography variant="subtitle2" color="text.secondary">
+                          Email
+                        </Typography>
+                        <Typography variant="body1" fontWeight={500}>
+                          {selectedAdmin.email}
+                        </Typography>
+                      </Grid>
+                      <Grid item xs={12} sm={6}>
+                        <Typography variant="subtitle2" color="text.secondary">
+                          Phone Number
+                        </Typography>
+                        <Typography variant="body1" fontWeight={500}>
+                          {selectedAdmin.phoneNumber || 'N/A'}
+                        </Typography>
+                      </Grid>
+                      <Grid item xs={12} sm={6}>
+                        <Typography variant="subtitle2" color="text.secondary">
+                          IDNP
+                        </Typography>
+                        <Typography variant="body1" fontWeight={500}>
+                          {selectedAdmin.idnp}
+                        </Typography>
+                      </Grid>
+                      <Grid item xs={12} sm={6}>
+                        <Typography variant="subtitle2" color="text.secondary">
+                          Date of Birth
+                        </Typography>
+                        <Typography variant="body1" fontWeight={500}>
+                          {new Date(selectedAdmin.dateOfBirth).toLocaleDateString()}
+                        </Typography>
+                      </Grid>
+                      <Grid item xs={12} sm={6}>
+                        <Typography variant="subtitle2" color="text.secondary">
+                          Status
+                        </Typography>
+                        <Typography variant="body1" fontWeight={500}>
+                          {selectedAdmin.isActive ? 'Active' : 'Inactive'}
+                        </Typography>
+                      </Grid>
+                      <Grid item xs={12}>
+                        <Typography variant="subtitle2" color="text.secondary">
+                          Address
+                        </Typography>
+                        <Typography variant="body1" fontWeight={500}>
+                          {selectedAdmin.address || 'N/A'}
+                        </Typography>
+                      </Grid>
+                      <Grid item xs={12} sm={6}>
+                        <Typography variant="subtitle2" color="text.secondary">
+                          Created At
+                        </Typography>
+                        <Typography variant="body1" fontWeight={500}>
+                          {new Date(selectedAdmin.createdAt).toLocaleString()}
+                        </Typography>
+                      </Grid>
+                      {selectedAdmin.updatedAt && (
+                        <Grid item xs={12} sm={6}>
+                          <Typography variant="subtitle2" color="text.secondary">
+                            Last Updated
+                          </Typography>
+                          <Typography variant="body1" fontWeight={500}>
+                            {new Date(selectedAdmin.updatedAt).toLocaleString()}
+                          </Typography>
+                        </Grid>
+                      )}
+                      <Grid item xs={12}>
+                        <Typography variant="subtitle2" color="text.secondary">
+                          Roles
+                        </Typography>
+                        <Box display="flex" gap={1} mt={1}>
+                          {selectedAdmin.roles.map((role, idx) => (
+                            <Box
+                              key={idx}
+                              sx={{
+                                px: 2,
+                                py: 0.5,
+                                borderRadius: '9999px',
+                                backgroundColor: '#2563EB',
+                                color: '#FFFFFF',
+                                fontSize: 12,
+                                fontWeight: 500,
+                              }}
+                            >
+                              {role}
+                            </Box>
+                          ))}
+                        </Box>
+                      </Grid>
+                    </Grid>
+                  </Box>
+                )}
+              </DialogContent>
+              <DialogActions>
+                <Button onClick={() => setOpenAdminProfile(false)}>Close</Button>
+              </DialogActions>
+            </Dialog>
           </CardContent>
         </Card>
       )}

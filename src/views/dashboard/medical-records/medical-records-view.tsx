@@ -39,6 +39,7 @@ import {
   createMedicalRecordRequest,
   MedicalRecord 
 } from '@/requests/patient/patient.requests'
+import { getDoctorMedicalRecords } from '@/requests/doctor/doctor.requests'
 
 interface MedicalRecordForm {
   patientId: string
@@ -84,25 +85,45 @@ export default function MedicalRecordsView() {
     setLoading(true)
     try {
       let response
+      let recordsData = []
+      
       if (userRole === 'patient' && user?.id) {
         // Patient sees their own medical records
         response = await getPatientMedicalRecordsRequest(user.id.toString())
+        // Extract records from patient endpoint response
+        if (response.success && response.data?.data) {
+          recordsData = Array.isArray(response.data.data) ? response.data.data : []
+        } else if (response.success && Array.isArray(response.data)) {
+          recordsData = response.data
+        }
       } else if (userRole === 'doctor') {
-        // For doctor view, we would need patient selection
-        // For now, show empty state
-        response = { success: true, data: [] }
+        // Doctor sees all medical records they created
+        response = await getDoctorMedicalRecords(1, 50)
+        
+        // The backend returns: { success: true, message: "...", data: { medicalRecords: [...], pagination: {} } }
+        // After ApiResponse.success wrapping: { success: true, data: { success: true, data: { medicalRecords: [...] } } }
+        if (response.success && response.data?.data?.medicalRecords) {
+          recordsData = response.data.data.medicalRecords
+        } else if (response.success && response.data?.medicalRecords) {
+          recordsData = response.data.medicalRecords
+        } else if (response.success && Array.isArray(response.data)) {
+          recordsData = response.data
+        }
       } else {
-        response = { success: true, data: [] }
+        recordsData = []
       }
 
-      if (response.error) {
+      if (response?.error) {
         setError(response.message || 'Failed to load medical records')
+        setRecords([])
       } else {
-        setRecords(response.data || [])
+        setRecords(Array.isArray(recordsData) ? recordsData : [])
         setError(null)
       }
     } catch (err) {
+      console.error('Error fetching medical records:', err)
       setError('Failed to load medical records')
+      setRecords([])
       enqueueSnackbar('Failed to load medical records', { variant: 'error' })
     } finally {
       setLoading(false)

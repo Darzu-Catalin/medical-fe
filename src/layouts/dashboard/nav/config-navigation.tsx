@@ -43,7 +43,6 @@ export function useNavData() {
           subheader: 'Administrative',
           items: [
             { title: 'Dashboard', path: paths.dashboard.admin, icon: ICONS.dashboard },
-            { title: 'System Settings', path: '/dashboard/settings', icon: ICONS.settings },
             { title: 'Activity Log', path: paths.dashboard.auditLog.root, icon: ICONS.audit },
           ],
         },
@@ -82,7 +81,6 @@ export function useNavData() {
           items: [
             { title: 'Documents', path: '/dashboard/documents', icon: ICONS.documents },
             { title: 'Patient Ratings', path: '/dashboard/ratings', icon: ICONS.ratings },
-            { title: 'Vaccines', path: paths.dashboard.vaccines.root, icon: ICONS.vaccines },
             { title: 'Reports', path: '/dashboard/reports', icon: ICONS.reports },
           ],
         },
