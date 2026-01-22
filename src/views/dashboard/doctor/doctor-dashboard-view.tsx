@@ -27,8 +27,10 @@ import EditProfileDialog from '@/components/custom/dialogs/EditProfileDialog';
 
 interface Patient {
   id: string;
-  firstName: string;
-  lastName: string;
+  patientId: string;
+  patientName: string;
+  firstName?: string;
+  lastName?: string;
   idnp: string;
   dateOfBirth: string;
   phoneNumber: string;
@@ -74,7 +76,10 @@ const DoctorDashboardView = () => {
     try {
       const response = await getDoctorProfile();
       
-      if (!response.error && response.data) {
+      console.log('Full response:', response);
+      
+      if (response && !response.error && response.data) {
+        // Response.data contains the DoctorProfile
         setDoctorProfile(response.data);
         
         // Update dashboard stats with profile data
@@ -83,12 +88,13 @@ const DoctorDashboardView = () => {
           totalPatients: response.data.totalPatients || 0,
         }));
         
-        console.log('Doctor Profile:', response.data);
+        console.log('Doctor Profile set successfully:', response.data);
       } else {
-        console.error('Error fetching profile:', response.message);
+        console.error('Error fetching profile:', response?.message || response?.error || 'Unknown error');
+        console.error('Full error response:', response);
       }
     } catch (err: any) {
-      console.error('Error fetching doctor profile:', err);
+      console.error('Exception fetching doctor profile:', err);
     } finally {
       setProfileLoading(false);
     }
@@ -478,7 +484,6 @@ const DoctorDashboardView = () => {
                             <TableCell>Date of Birth</TableCell>
                             <TableCell>Contact</TableCell>
                             <TableCell>Blood Type</TableCell>
-                            <TableCell align="center">Actions</TableCell>
                           </TableRow>
                         </TableHead>
                         <TableBody>
@@ -487,14 +492,11 @@ const DoctorDashboardView = () => {
                               <TableCell>
                                 <Box display="flex" alignItems="center" gap={2}>
                                   <Avatar sx={{ bgcolor: 'primary.main' }}>
-                                    {patient.firstName?.[0]}{patient.lastName?.[0]}
+                                    {patient.patientName?.[0] || patient.firstName?.[0] || 'P'}
                                   </Avatar>
                                   <Box>
                                     <Typography variant="body1" fontWeight="medium">
-                                      {patient.firstName} {patient.lastName}
-                                    </Typography>
-                                    <Typography variant="body2" color="text.secondary">
-                                      ID: {patient.id.substring(0, 8)}...
+                                      {patient.patientName || `${patient.firstName} ${patient.lastName}`}
                                     </Typography>
                                   </Box>
                                 </Box>
@@ -525,16 +527,6 @@ const DoctorDashboardView = () => {
                                   variant="outlined" 
                                   size="small"
                                 />
-                              </TableCell>
-                              <TableCell align="center">
-                                <Box display="flex" gap={1}>
-                                  <IconButton size="small" color="primary">
-                                    <Visibility />
-                                  </IconButton>
-                                  <IconButton size="small" color="secondary">
-                                    <Edit />
-                                  </IconButton>
-                                </Box>
                               </TableCell>
                             </TableRow>
                           ))}

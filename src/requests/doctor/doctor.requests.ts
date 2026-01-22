@@ -24,15 +24,40 @@ export interface DoctorProfile {
   lastActivity: string;
 }
 
+// Doctor Specialty Enum (matches backend)
+export const DoctorSpecialty = {
+  GeneralPractice: 0,
+  Cardiology: 1,
+  Neurology: 2,
+  Pediatrics: 3,
+  Dermatology: 4,
+  Orthopedics: 5,
+  Psychiatry: 6,
+  Oncology: 7,
+  Radiology: 8,
+  Surgery: 9,
+  Ophthalmology: 10,
+  ENT: 11,
+  Urology: 12,
+  Gynecology: 13,
+  Endocrinology: 14,
+  Gastroenterology: 15,
+  Pulmonology: 16,
+  Nephrology: 17,
+  Rheumatology: 18,
+  Other: 99
+} as const;
+
+export type DoctorSpecialtyValue = typeof DoctorSpecialty[keyof typeof DoctorSpecialty];
+
 // Update Doctor Profile Interface
 export interface UpdateDoctorProfilePayload {
   firstName?: string;
   lastName?: string;
   phoneNumber?: string;
   address?: string;
-  bloodType?: number;
   clinicId?: string;
-  specialty?: string;
+  specialty?: number; // Numeric enum value
   experience?: string;
 }
 
@@ -65,19 +90,18 @@ export const getDoctorProfile = async (): Promise<ApiResponseType> => {
       throw new Error('No authentication token found');
     }
 
-    const response = await axiosInstance.get('/Doctor', {
+    const response = await axiosInstance.get('/Doctor/profile', {
       headers: { 
         Authorization: `Bearer ${token}`,
         'Content-Type': 'application/json'
       }
     });
 
-    // The API returns an array, we need the first doctor (current user)
-    const doctorData = Array.isArray(response.data) ? response.data[0] : response.data;
-
-    return ApiResponse.success(doctorData);
+    console.log('Doctor profile response:', response.data);
+    return ApiResponse.success(response.data.data || response.data);
   } catch (error: any) {
     console.error('Error fetching doctor profile:', error);
+    console.error('Error response:', error.response?.data);
     return ApiResponse.error(error);
   }
 };
@@ -92,7 +116,9 @@ export const updateDoctorProfile = async (payload: UpdateDoctorProfilePayload): 
       throw new Error('No authentication token found');
     }
 
-    const response = await axiosInstance.put('/Doctor/profile', payload, {
+    console.log('Sending payload to backend:', payload);
+
+    const response = await axiosInstance.put('/Doctor/updateDoctor', payload, {
       headers: { 
         Authorization: `Bearer ${token}`,
         'Content-Type': 'application/json'
