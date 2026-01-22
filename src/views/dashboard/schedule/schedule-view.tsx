@@ -37,7 +37,8 @@ import {
   getDoctorScheduleRequest,
   getAllDoctorAppointmentsRequest,
   AppointmentType,
-  appointmentStatusMap
+  appointmentStatusMap,
+  CalendarEventFromAPI
 } from '@/requests/appointments.requests'
 
 interface ScheduleSlot {
@@ -83,7 +84,7 @@ export default function ScheduleView() {
     try {
       const [scheduleResponse, appointmentsResponse] = await Promise.all([
         getDoctorScheduleRequest(user.id.toString()),
-        getAllDoctorAppointmentsRequest(user.id.toString())
+        getAllDoctorAppointmentsRequest({ doctorId: user.id.toString() })
       ])
 
       if (scheduleResponse.error) {
@@ -92,8 +93,23 @@ export default function ScheduleView() {
         setSchedule(scheduleResponse.data || [])
       }
 
-      if (!appointmentsResponse.error) {
-        setAppointments(appointmentsResponse.data || [])
+      if (!appointmentsResponse.error && appointmentsResponse.data) {
+        // Convert CalendarEventFromAPI to AppointmentType
+        const convertedAppointments: AppointmentType[] = appointmentsResponse.data.map((event: CalendarEventFromAPI) => ({
+          id: event.id,
+          patientId: event.patientId || '',
+          doctorId: event.doctorId || '',
+          patientName: event.patientName || '',
+          doctorName: event.doctorName || '',
+          specialty: event.specialty || '',
+          appointmentDate: event.start,
+          duration: event.duration || 30,
+          status: event.status || 1,
+          reason: event.reason,
+          notes: event.notes,
+          createdAt: event.start,
+        }))
+        setAppointments(convertedAppointments)
       }
 
       setError(null)

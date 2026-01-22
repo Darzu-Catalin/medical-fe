@@ -16,7 +16,7 @@ interface AppointmentStatsProps {
 const AppointmentStats: React.FC<AppointmentStatsProps> = ({ appointments, loading }) => {
   if (loading) {
     return (
-      <Card sx={{ p: 3, mb: 3 }}>
+      <Card sx={{ p: 1, mb: 3 }}>
         <Typography variant="h6" gutterBottom>
           Loading appointment statistics...
         </Typography>

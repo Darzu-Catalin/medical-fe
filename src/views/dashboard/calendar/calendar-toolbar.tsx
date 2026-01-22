@@ -4,6 +4,7 @@ import MenuItem from '@mui/material/MenuItem';
 import IconButton from '@mui/material/IconButton';
 import Typography from '@mui/material/Typography';
 import LinearProgress from '@mui/material/LinearProgress';
+import ButtonGroup from '@mui/material/ButtonGroup';
 
 import { useResponsive } from 'src/hooks/use-responsive';
 
@@ -17,23 +18,10 @@ import { ICalendarView } from 'src/types/calendar';
 // ----------------------------------------------------------------------
 
 const VIEW_OPTIONS = [
-  {
-    value: 'dayGridMonth',
-    label: 'Lună',
-    icon: 'mingcute:calendar-month-line',
-  },
-  { value: 'timeGridWeek', label: 'Săptămână', icon: 'mingcute:calendar-week-line' },
-  { value: 'timeGridDay', label: 'Zi', icon: 'mingcute:calendar-day-line' },
-  {
-    value: 'listWeek',
-    label: 'Agendă',
-    icon: 'fluent:calendar-agenda-24-regular',
-  },
-  {
-    value: 'multiMonthYear',
-    label: 'An',
-    icon: 'mingcute:calendar-month-line',
-  },
+  { value: 'dayGridMonth', label: 'Month', icon: 'mingcute:calendar-month-line' },
+  { value: 'timeGridWeek', label: 'Week', icon: 'mingcute:calendar-week-line' },
+  { value: 'timeGridDay', label: 'Day', icon: 'mingcute:calendar-day-line' },
+  { value: 'listWeek', label: 'List', icon: 'fluent:calendar-agenda-24-regular' },
 ] as const;
 
 // ----------------------------------------------------------------------
@@ -45,8 +33,10 @@ type Props = {
   onToday: VoidFunction;
   onNextDate: VoidFunction;
   onPrevDate: VoidFunction;
-  onOpenFilters: VoidFunction;
+  onAddEvent: VoidFunction;
   onChangeView: (newView: ICalendarView) => void;
+  action?: React.ReactNode;
+  onRefresh?: VoidFunction;
 };
 
 export default function CalendarToolbar({
@@ -57,7 +47,9 @@ export default function CalendarToolbar({
   onNextDate,
   onPrevDate,
   onChangeView,
-  onOpenFilters,
+  onAddEvent,
+  action,
+  onRefresh,
 }: Props) {
   const smUp = useResponsive('up', 'sm');
 
@@ -71,40 +63,53 @@ export default function CalendarToolbar({
         direction="row"
         alignItems="center"
         justifyContent="space-between"
-        sx={{ p: 2.5, pr: 2, position: 'relative' }}
+        sx={{ p: 2.5, pr: 2, position: 'relative', borderBottom: '1px solid', borderColor: 'divider' }}
       >
-        {smUp && (
-          <Button
-            size="small"
-            color="inherit"
-            onClick={popover.onOpen}
-            startIcon={<Iconify icon={selectedItem.icon} />}
-            endIcon={<Iconify icon="eva:arrow-ios-downward-fill" sx={{ ml: -0.5 }} />}
-          >
-            {selectedItem.label}
-          </Button>
-        )}
+        {/* Left: Add Task & Navigation */}
+        <Stack direction="row" alignItems="center" spacing={2}>
+          <ButtonGroup variant="outlined" color="inherit" size="small">
+            <Button startIcon={<Iconify icon="eva:plus-fill" />} onClick={onAddEvent}>Add task</Button>
+          </ButtonGroup>
+        </Stack>
 
-        <Stack direction="row" alignItems="center" spacing={1}>
-          <IconButton onClick={onPrevDate}>
-            <Iconify icon="eva:arrow-ios-back-fill" />
+        <Stack direction="row" alignItems="center" spacing={1} sx={{ position: 'absolute', left: '50%', transform: 'translateX(-50%)' }}>
+          <IconButton onClick={onPrevDate} size="small">
+            <Iconify icon="eva:arrow-ios-back-fill" width={18} />
           </IconButton>
-
-          <Typography variant="h6">{fDate(date)}</Typography>
-
-          <IconButton onClick={onNextDate}>
-            <Iconify icon="eva:arrow-ios-forward-fill" />
+          <Typography variant="subtitle1" sx={{ ml: 1 }}>
+            {fDate(date, 'MMMM yyyy')}
+          </Typography>
+          <IconButton onClick={onNextDate} size="small">
+            <Iconify icon="eva:arrow-ios-forward-fill" width={18} />
           </IconButton>
         </Stack>
 
+        {/* Right: View Options & Filters */}
         <Stack direction="row" alignItems="center" spacing={1}>
-          <Button size="small" color="error" variant="contained" onClick={onToday}>
-            Astăzi
+          {action && action}
+
+          {onRefresh && (
+            <IconButton onClick={onRefresh} size="small">
+              <Iconify icon="eva:refresh-fill" />
+            </IconButton>
+          )}
+          
+          <Button 
+            color="inherit" 
+            size="small" 
+            startIcon={<Iconify icon={selectedItem?.icon} />}
+            onClick={popover.onOpen}
+          >
+            {selectedItem?.label}
           </Button>
 
-          <IconButton onClick={onOpenFilters}>
-            <Iconify icon="ic:round-filter-list" />
-          </IconButton>
+          <Button 
+            color="inherit" 
+            size="small" 
+            startIcon={<Iconify icon="eva:options-2-fill" />}
+          >
+            Options
+          </Button>
         </Stack>
 
         {loading && (
