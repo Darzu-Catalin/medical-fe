@@ -17,6 +17,8 @@ export const paths = {
     register: `${ROOTS.AUTH}/register`,
     resetPassword: `${ROOTS.AUTH}/reset-password`,
     verifyEmail: `${ROOTS.AUTH}/verify-email`,
+    forgotPassword: `${ROOTS.AUTH}/forgot-password`,
+    changePasswordMandatory: `${ROOTS.AUTH}/change-password-mandatory`,
   },
   app: {
     root: ROOTS.APP,

@@ -145,3 +145,97 @@ export const getCurrentUserRequest = async (): Promise<ApiResponseType> => {
     return ApiResponse.error(error)
   }
 }
+
+export const sendLoginOtpRequest = async (payload: {
+  email: string
+}): Promise<ApiResponseType> => {
+  try {
+    const response = await axiosInstance.post('/mfa/send-login-otp', {
+      ...payload,
+    })
+
+    return ApiResponse.success(response.data)
+  } catch (error) {
+    return ApiResponse.error(error)
+  }
+}
+
+export const verifyLoginOtpRequest = async (payload: {
+  email: string
+  otp: string
+}): Promise<ApiResponseType> => {
+  try {
+    const response = await axiosInstance.post('/mfa/verify-login-otp', {
+      ...payload,
+    })
+
+    return ApiResponse.success(response.data)
+  } catch (error) {
+    return ApiResponse.error(error)
+  }
+}
+
+export const forgotPasswordRequest = async (payload: {
+  email: string
+}): Promise<ApiResponseType> => {
+  try {
+    const response = await axiosInstance.post('/auth/forgot-password', {
+      ...payload,
+    })
+
+    return ApiResponse.success(response.data)
+  } catch (error) {
+    return ApiResponse.error(error)
+  }
+}
+
+export const resetPasswordRequest = async (payload: {
+  email: string
+  resetCode: string
+  newPassword: string
+  confirmPassword: string
+}): Promise<ApiResponseType> => {
+  try {
+    const response = await axiosInstance.post('/auth/reset-password', {
+      ...payload,
+    })
+
+    return ApiResponse.success(response.data)
+  } catch (error) {
+    return ApiResponse.error(error)
+  }
+}
+
+export const changePasswordWithTokenRequest = async (payload: {
+  email: string
+  passwordChangeToken: string
+  newPassword: string
+  confirmPassword: string
+}): Promise<ApiResponseType> => {
+  try {
+    const response = await axiosInstance.post('/auth/change-password-with-token', {
+      ...payload,
+    })
+
+    return ApiResponse.success(response.data)
+  } catch (error) {
+    return ApiResponse.error(error)
+  }
+}
+
+export const changePasswordAuthenticatedRequest = async (payload: {
+  currentPassword: string
+  newPassword: string
+  confirmNewPassword: string
+}): Promise<ApiResponseType> => {
+  try {
+    const response = await axiosInstance.post('/auth/change-password', {
+      ...payload,
+    })
+
+    return ApiResponse.success(response.data)
+  } catch (error) {
+    return ApiResponse.error(error)
+  }
+}
+
